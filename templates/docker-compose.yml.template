@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  dev:
+    image: ${IMAGE_NAME}
+    container_name: my-container
+    volumes:
+      - ./:/home/${USERNAME}/${WORKDIR}
+    stdin_open: true
+    tty: true 
