@@ -17,9 +17,11 @@ fi
 
 # 언어 설정 - 우선순위:
 # 1. 환경 변수 LANGUAGE (사용자가 명시적으로 지정)
+#    - local: 시스템 로케일 사용
+#    - ko/en: 지정된 언어 사용
 # 2. LANG 환경 변수에서 감지 (시스템 로케일)
 # 3. settings.env 파일 설정 (persistent 설정)
-# 4. 기본값 (ko)
+# 4. 기본값 (local)
 
 # 디버그 모드에서 초기 상태 출력
 if [ "$DEBUG" = "true" ]; then
@@ -36,14 +38,27 @@ fi
 
 # 1. 먼저 환경 변수가 있는지 확인
 if [ -n "$LANGUAGE" ]; then
-    DETECTED_LANGUAGE="$LANGUAGE"
-    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_ENV"
+    if [ "$LANGUAGE" = "local" ]; then
+        # local인 경우 시스템 로케일 사용
+        if [[ -n "$LANG" && "$LANG" == ko_* ]]; then
+            DETECTED_LANGUAGE="ko"
+        elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
+            DETECTED_LANGUAGE="en"
+        else
+            DETECTED_LANGUAGE="en"  # 기본값
+        fi
+        LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
+    else
+        # 명시적으로 지정된 언어 사용
+        DETECTED_LANGUAGE="$LANGUAGE"
+        LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_ENV"
+    fi
 # 2. LANG 환경 변수에서 감지
-elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
-    DETECTED_LANGUAGE="en"
-    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
 elif [[ -n "$LANG" && "$LANG" == ko_* ]]; then
     DETECTED_LANGUAGE="ko"
+    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
+elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
+    DETECTED_LANGUAGE="en"
     LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
 else
     # 3&4. settings.env 파일이나 기본값은 나중에 처리
@@ -51,56 +66,55 @@ else
     LANGUAGE_SOURCE=""
 fi
 
-# 기본 설정 파일 로드
-if [ -f "$SCRIPT_DIR/settings.env" ]; then
-    # 설정 파일의 내용 백업
-    SETTINGS_CONTENT=$(cat "$SCRIPT_DIR/settings.env")
-    
-    # 설정 파일에서 LANGUAGE 값을 추출
-    SETTINGS_LANGUAGE=$(echo "$SETTINGS_CONTENT" | grep "^LANGUAGE=" | cut -d= -f2)
-    
-    # 설정 파일 로드
-    set -a
-    source "$SCRIPT_DIR/settings.env"
-    set +a
-    
-    # 디버그 모드에서 설정 파일 로드 후 상태 출력
-    if [ "$DEBUG" = "true" ]; then
-        echo "$MSG_SYSTEM_DEBUG_AFTER_LOAD"
-        printf "$MSG_SYSTEM_DEBUG_LOADED_LANG\n" "$LANGUAGE"
-        printf "$MSG_SYSTEM_DEBUG_CONFIG_LANG_VALUE\n" "$SETTINGS_LANGUAGE"
-        echo "$MSG_SYSTEM_DEBUG_LOAD_END"
-    fi
-    
-    # 사용자가 환경 변수나 LANG으로 언어를 지정하지 않았다면
-    # settings.env의 값 사용
-    if [ -z "$DETECTED_LANGUAGE" ] && [ -n "$SETTINGS_LANGUAGE" ]; then
-        DETECTED_LANGUAGE="$SETTINGS_LANGUAGE"
-        LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_CONFIG"
-        
-        if [ "$DEBUG" = "true" ]; then
-            printf "$MSG_SYSTEM_DEBUG_LOAD_FROM_CONFIG\n" "$DETECTED_LANGUAGE"
+# 3. settings.env 파일에서 설정 확인
+if [ -z "$DETECTED_LANGUAGE" ] && [ -f "$SCRIPT_DIR/settings.env" ]; then
+    CONFIG_LANGUAGE=$(grep LANGUAGE= "$SCRIPT_DIR/settings.env" | cut -d= -f2)
+    if [ -n "$CONFIG_LANGUAGE" ]; then
+        if [ "$CONFIG_LANGUAGE" = "local" ]; then
+            # local인 경우 시스템 로케일 사용
+            if [[ -n "$LANG" && "$LANG" == ko_* ]]; then
+                DETECTED_LANGUAGE="ko"
+            elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
+                DETECTED_LANGUAGE="en"
+            else
+                DETECTED_LANGUAGE="en"  # 기본값
+            fi
+            LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
+        else
+            DETECTED_LANGUAGE="$CONFIG_LANGUAGE"
+            LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_CONFIG"
         fi
     fi
-else
-    printf "$MSG_SYSTEM_NO_CONFIG_FILE\n" "$SCRIPT_DIR/settings.env"
-    exit 1
 fi
 
-# 최종 LANGUAGE 값 설정
-if [ -n "$DETECTED_LANGUAGE" ]; then
-    LANGUAGE="$DETECTED_LANGUAGE"
-    
-    if [ "$DEBUG" = "true" ]; then
-        printf "$MSG_SYSTEM_FINAL_LANG\n" "$LANGUAGE" "$LANGUAGE_SOURCE"
+# 4. 기본값 설정 (local)
+if [ -z "$DETECTED_LANGUAGE" ]; then
+    if [[ -n "$LANG" && "$LANG" == ko_* ]]; then
+        DETECTED_LANGUAGE="ko"
+    elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
+        DETECTED_LANGUAGE="en"
+    else
+        DETECTED_LANGUAGE="en"  # 기본값
     fi
+    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_DEFAULT"
+fi
+
+# 최종 언어 설정
+LANGUAGE="$DETECTED_LANGUAGE"
+
+# 디버그 모드에서 최종 언어 설정 출력
+if [ "$DEBUG" = "true" ]; then
+    echo "$MSG_SYSTEM_DEBUG_FINAL_LANG"
+    printf "$MSG_SYSTEM_DEBUG_SELECTED_LANG\n" "$LANGUAGE"
+    printf "$MSG_SYSTEM_DEBUG_LANG_SOURCE\n" "$LANGUAGE_SOURCE"
+    echo "$MSG_SYSTEM_DEBUG_END"
 fi
 
 # 기본값 설정
-TIMEZONE="${TIMEZONE:-Asia/Seoul}"
-DEFAULT_PASSWORD="${DEFAULT_PASSWORD:-1234}"
-DEFAULT_WORKDIR="${DEFAULT_WORKDIR:-work/project}"
-DEBUG="${DEBUG:-false}"
+TIMEZONE=${TIMEZONE:-UTC}
+DEFAULT_PASSWORD=${DEFAULT_PASSWORD:-1234}
+DEFAULT_WORKDIR=${DEFAULT_WORKDIR:-work/project}
+DEBUG=${DEBUG:-false}
 
 # 메시지 파일 로드
 if [ -f "$SCRIPT_DIR/messages/load.sh" ]; then
@@ -141,22 +155,26 @@ print_message() {
     fi
 }
 
+# 언어별 기본 설정
+get_language_settings() {
+    local lang="$1"
+    case "$lang" in
+        "ko")
+            echo "namugach/ubuntu-basic:24.04-kor-deno|ko_KR.UTF-8|Asia/Seoul"
+            ;;
+        "en"|*)
+            echo "ubuntu:24.04|en_US.UTF-8|UTC"
+            ;;
+    esac
+}
+
 # 베이스 이미지 설정
 if [ -n "$CUSTOM_BASE_IMAGE" ]; then
     # 사용자 지정 이미지 사용
     BASE_IMAGE="$CUSTOM_BASE_IMAGE"
 else
     # 자동 언어별 이미지 선택
-    if [ "$LANGUAGE" = "ko" ]; then
-        BASE_IMAGE="namugach/ubuntu-basic:24.04-kor-deno"
-        LOCALE_SETTING="ko_KR.UTF-8"
-    elif [ "$LANGUAGE" = "en" ]; then
-        BASE_IMAGE="ubuntu:24.04"
-        LOCALE_SETTING="en_US.UTF-8"
-    else
-        BASE_IMAGE="ubuntu:24.04"
-        LOCALE_SETTING="en_US.UTF-8"
-    fi
+    IFS='|' read -r BASE_IMAGE LOCALE_SETTING TIMEZONE <<< "$(get_language_settings "$LANGUAGE")"
 fi
 
 # 기존 템플릿 경로 재정의 (Dockerfile 사용)
