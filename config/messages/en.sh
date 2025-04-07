@@ -29,6 +29,18 @@ MSG_FINAL_SETTINGS="Final Settings:"
 MSG_INSTALL_CANCELLED="Installation has been cancelled."
 MSG_INVALID_CHOICE="Invalid choice. Installation has been cancelled."
 
+# Common Messages
+MSG_COMMON_LOADING_CONFIG="Loading configuration file: %s"
+MSG_COMMON_CONFIG_NOT_FOUND="Configuration file not found. Using default values."
+MSG_COMMON_BASE_IMAGE_NOT_SET="BASE_IMAGE is not set. Using default image."
+MSG_COMMON_USING_BASE_IMAGE="Using base image: %s"
+MSG_COMMON_CONTAINER_RUNNING="Container is running: %s"
+MSG_COMMON_CONTAINER_STOPPED="Container is stopped: %s"
+MSG_COMMON_CONTAINER_NOT_FOUND="Container does not exist: %s"
+MSG_COMMON_COMPOSE_NOT_FOUND="docker-compose.yml file not found"
+MSG_COMMON_RUN_INSTALL_FIRST="Please run install command first: ./dockit.sh install"
+MSG_COMMON_DIRECT_EXECUTE_ERROR="This script cannot be executed directly. Please use it through dockit.sh"
+
 # install module messages
 MSG_INSTALL_START="Starting installation..."
 MSG_CREATING_DOCKIT_DIR="Creating .dockit directory..."

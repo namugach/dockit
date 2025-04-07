@@ -100,10 +100,10 @@ load_config() {
 
     # 설정 파일이 있으면 로드
     if [[ -f "$CONFIG_ENV" ]]; then
-        log "INFO" "설정 파일 로드 중: $CONFIG_ENV"
+        log "INFO" "$(printf "$MSG_COMMON_LOADING_CONFIG" "$CONFIG_ENV")"
         source "$CONFIG_ENV"
     else
-        log "WARNING" "설정 파일을 찾을 수 없습니다. 기본값을 사용합니다."
+        log "WARNING" "$MSG_COMMON_CONFIG_NOT_FOUND"
     fi
 
     export CONFIG_LOADED=1
@@ -111,7 +111,7 @@ load_config() {
 
 # 설정 파일 저장 함수
 save_config() {
-    log "INFO" "설정 파일 저장 중: $CONFIG_ENV"
+    log "INFO" "$(printf "$MSG_COMMON_LOADING_CONFIG" "$CONFIG_ENV")"
     cat > "$CONFIG_ENV" << EOF
 # Docker Tools 설정 파일
 # 자동 생성됨: $(date)
@@ -128,7 +128,7 @@ USER_PASSWORD="$USER_PASSWORD"
 WORKDIR="$WORKDIR"
 EOF
     
-    log "SUCCESS" "설정 파일이 저장되었습니다."
+    log "SUCCESS" "$MSG_CONFIG_SAVED"
 }
 
 # 템플릿 처리 함수
@@ -144,11 +144,11 @@ process_template() {
     
     # BASE_IMAGE가 설정되어 있는지 확인
     if [ -z "$BASE_IMAGE" ]; then
-        log "WARNING" "BASE_IMAGE가 설정되지 않았습니다. 기본 이미지를 사용합니다."
+        log "WARNING" "$MSG_COMMON_BASE_IMAGE_NOT_SET"
         BASE_IMAGE="namugach/ubuntu-basic:24.04-kor-deno"
     fi
     
-    log "INFO" "사용할 베이스 이미지: $BASE_IMAGE"
+    log "INFO" "$(printf "$MSG_COMMON_USING_BASE_IMAGE" "$BASE_IMAGE")"
     
     # 템플릿 파일 처리
     sed -e "s|\${USERNAME}|${USERNAME}|g" \
@@ -174,13 +174,13 @@ check_container_status() {
     fi
     
     if docker ps -q --filter "name=$container_name" | grep -q .; then
-        log "INFO" "컨테이너가 실행 중입니다: $container_name"
+        log "INFO" "$(printf "$MSG_COMMON_CONTAINER_RUNNING" "$container_name")"
         return 0
     elif docker ps -aq --filter "name=$container_name" | grep -q .; then
-        log "INFO" "컨테이너가 중지되었습니다: $container_name"
+        log "INFO" "$(printf "$MSG_COMMON_CONTAINER_STOPPED" "$container_name")"
         return 1
     else
-        log "INFO" "컨테이너가 존재하지 않습니다: $container_name"
+        log "INFO" "$(printf "$MSG_COMMON_CONTAINER_NOT_FOUND" "$container_name")"
         return 2
     fi
 }
@@ -188,8 +188,8 @@ check_container_status() {
 # Docker Compose 파일 존재 확인
 check_docker_compose_file() {
     if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
-        log "ERROR" "docker-compose.yml 파일을 찾을 수 없습니다"
-        log "INFO" "먼저 install 명령을 실행하세요: ./dockit.sh install"
+        log "ERROR" "$MSG_COMMON_COMPOSE_NOT_FOUND"
+        log "INFO" "$MSG_COMMON_RUN_INSTALL_FIRST"
         return 1
     fi
     return 0
@@ -197,7 +197,7 @@ check_docker_compose_file() {
 
 # 직접 실행 시 헬프 메시지
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    echo "이 스크립트는 직접 실행할 수 없습니다. dockit.sh를 통해 사용하세요."
+    echo "$MSG_COMMON_DIRECT_EXECUTE_ERROR"
     exit 1
 fi
 
