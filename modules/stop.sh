@@ -26,9 +26,9 @@ stop_container() {
         confirm=${confirm:-y}
         
         if [[ $confirm == "y" || $confirm == "Y" ]]; then
-            log "INFO" "docker-compose down 실행 중..."
+            log "INFO" "docker compose down 실행 중..."
             
-            if docker-compose -f "$PROJECT_ROOT/docker-compose.yml" down; then
+            if $DOCKER_COMPOSE_CMD -f "$PROJECT_ROOT/docker-compose.yml" down; then
                 log "SUCCESS" "컨테이너가 성공적으로 정지되었습니다!"
                 return 0
             else
@@ -48,9 +48,9 @@ stop_container() {
         remove=${remove:-y}
         
         if [[ $remove == "y" || $remove == "Y" ]]; then
-            log "INFO" "docker-compose down 실행 중..."
+            log "INFO" "docker compose down 실행 중..."
             
-            if docker-compose -f "$PROJECT_ROOT/docker-compose.yml" down; then
+            if $DOCKER_COMPOSE_CMD -f "$PROJECT_ROOT/docker-compose.yml" down; then
                 log "SUCCESS" "컨테이너가 성공적으로 제거되었습니다!"
                 return 0
             else

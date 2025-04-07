@@ -23,9 +23,9 @@ start_container() {
         log "INFO" "컨테이너가 이미 실행 중입니다: $CONTAINER_NAME"
     else
         # docker-compose를 사용하여 컨테이너 시작
-        log "INFO" "docker-compose로 컨테이너 시작 중..."
+        log "INFO" "docker compose로 컨테이너 시작 중..."
         
-        if docker-compose -f "$PROJECT_ROOT/docker-compose.yml" up -d; then
+        if $DOCKER_COMPOSE_CMD -f "$PROJECT_ROOT/docker-compose.yml" up -d; then
             log "SUCCESS" "컨테이너가 성공적으로 시작되었습니다!"
         else
             log "ERROR" "컨테이너 시작 중 오류가 발생했습니다."

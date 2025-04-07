@@ -221,7 +221,7 @@ ask_start_container() {
         log "INFO" "컨테이너 시작 중..."
         
         # docker-compose를 사용하여 컨테이너 시작
-        if docker-compose -f "$PROJECT_ROOT/docker-compose.yml" up -d; then
+        if $DOCKER_COMPOSE_CMD -f "$PROJECT_ROOT/docker-compose.yml" up -d; then
             log "SUCCESS" "컨테이너가 성공적으로 시작되었습니다!"
             
             # 컨테이너 접속 여부 확인

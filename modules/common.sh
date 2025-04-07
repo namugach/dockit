@@ -16,6 +16,13 @@ TEMPLATES_DIR="$PROJECT_ROOT/templates"
 DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile.template"
 DOCKER_COMPOSE_TEMPLATE="$TEMPLATES_DIR/docker-compose.yml.template"
 
+# Docker Compose 명령어 확인
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    DOCKER_COMPOSE_CMD="docker compose"
+fi
+
 # 기본 설정값
 DEFAULT_IMAGE_NAME="my-ubuntu"
 DEFAULT_CONTAINER_NAME="my-container"
