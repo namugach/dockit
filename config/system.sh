@@ -36,17 +36,42 @@ if [ "$DEBUG" = "true" ]; then
     echo "$MSG_SYSTEM_DEBUG_END"
 fi
 
+# 시스템 로케일 감지 함수
+detect_system_locale() {
+    # WSL인지 확인
+    if [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]]; then
+        # WSL에서는 기본값을 한국어로
+        echo "ko"
+        return
+    fi
+    
+    # 1. LC_ALL 체크
+    if [[ -n "$LC_ALL" && "$LC_ALL" == ko_* ]]; then
+        echo "ko"
+        return
+    fi
+    
+    # 2. LC_MESSAGES 체크
+    if [[ -n "$LC_MESSAGES" && "$LC_MESSAGES" == ko_* ]]; then
+        echo "ko"
+        return
+    fi
+    
+    # 3. LANG 체크
+    if [[ -n "$LANG" && "$LANG" == ko_* ]]; then
+        echo "ko"
+        return
+    fi
+    
+    # 4. 기본값
+    echo "en"
+}
+
 # 1. 먼저 환경 변수가 있는지 확인
 if [ -n "$LANGUAGE" ]; then
     if [ "$LANGUAGE" = "local" ]; then
         # local인 경우 시스템 로케일 사용
-        if [[ -n "$LANG" && "$LANG" == ko_* ]]; then
-            DETECTED_LANGUAGE="ko"
-        elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
-            DETECTED_LANGUAGE="en"
-        else
-            DETECTED_LANGUAGE="en"  # 기본값
-        fi
+        DETECTED_LANGUAGE=$(detect_system_locale)
         LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
     else
         # 명시적으로 지정된 언어 사용
@@ -54,16 +79,9 @@ if [ -n "$LANGUAGE" ]; then
         LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_ENV"
     fi
 # 2. LANG 환경 변수에서 감지
-elif [[ -n "$LANG" && "$LANG" == ko_* ]]; then
-    DETECTED_LANGUAGE="ko"
-    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
-elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
-    DETECTED_LANGUAGE="en"
-    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
 else
-    # 3&4. settings.env 파일이나 기본값은 나중에 처리
-    DETECTED_LANGUAGE=""
-    LANGUAGE_SOURCE=""
+    DETECTED_LANGUAGE=$(detect_system_locale)
+    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
 fi
 
 # 3. settings.env 파일에서 설정 확인
@@ -72,13 +90,7 @@ if [ -z "$DETECTED_LANGUAGE" ] && [ -f "$SCRIPT_DIR/settings.env" ]; then
     if [ -n "$CONFIG_LANGUAGE" ]; then
         if [ "$CONFIG_LANGUAGE" = "local" ]; then
             # local인 경우 시스템 로케일 사용
-            if [[ -n "$LANG" && "$LANG" == ko_* ]]; then
-                DETECTED_LANGUAGE="ko"
-            elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
-                DETECTED_LANGUAGE="en"
-            else
-                DETECTED_LANGUAGE="en"  # 기본값
-            fi
+            DETECTED_LANGUAGE=$(detect_system_locale)
             LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
         else
             DETECTED_LANGUAGE="$CONFIG_LANGUAGE"
@@ -89,13 +101,7 @@ fi
 
 # 4. 기본값 설정 (local)
 if [ -z "$DETECTED_LANGUAGE" ]; then
-    if [[ -n "$LANG" && "$LANG" == ko_* ]]; then
-        DETECTED_LANGUAGE="ko"
-    elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
-        DETECTED_LANGUAGE="en"
-    else
-        DETECTED_LANGUAGE="en"  # 기본값
-    fi
+    DETECTED_LANGUAGE=$(detect_system_locale)
     LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_DEFAULT"
 fi
 
