@@ -58,27 +58,30 @@ log() {
         touch "$LOG_FILE"
     fi
     
+    # 모든 로그는 파일에 기록
     echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
     
-    # 화면에도 표시 (ERROR 레벨일 경우 빨간색으로)
+    # 화면에는 ERROR, WARNING, SUCCESS만 표시
     if [[ "$level" == "ERROR" ]]; then
         echo -e "${RED}[$level] $message${NC}" >&2
     elif [[ "$level" == "WARNING" ]]; then
         echo -e "${YELLOW}[$level] $message${NC}"
     elif [[ "$level" == "SUCCESS" ]]; then
         echo -e "${GREEN}[$level] $message${NC}"
-    elif [[ "$level" == "INFO" ]]; then
-        echo -e "${BLUE}[$level] $message${NC}"
-    else
-        echo "[$level] $message"
     fi
 }
 
 # 설정 파일 로드 함수
 load_config() {
+    # 이미 설정이 로드되었는지 확인
+    if [ -n "$CONFIG_LOADED" ]; then
+        return 0
+    fi
+
     if [[ -f "$CONFIG_ENV" ]]; then
         log "INFO" "설정 파일 로드 중: $CONFIG_ENV"
         source "$CONFIG_ENV"
+        export CONFIG_LOADED=1
     else
         log "WARNING" "설정 파일을 찾을 수 없습니다. 기본값을 사용합니다."
         # 기본값 사용
@@ -89,6 +92,7 @@ load_config() {
         USER_GID="$DEFAULT_GID"
         USER_PASSWORD="$DEFAULT_PASSWORD"
         WORKDIR="$DEFAULT_WORKDIR"
+        export CONFIG_LOADED=1
     fi
 }
 
