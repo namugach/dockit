@@ -10,6 +10,7 @@ Dockit은 Docker를 사용하여 개발 환경을 빠르게 설정하고 관리�
 - 현재 사용자 설정(UID/GID)을 자동으로 컨테이너에 적용
 - 호스트-컨테이너 간 볼륨 마운트 지원
 - 모듈식 설계로 쉽게 확장 가능
+- 깔끔한 프로젝트 구조 (.dockit 디렉토리에 생성 파일 관리)
 
 ## 사용 방법
 
@@ -51,14 +52,22 @@ Dockit은 Docker를 사용하여 개발 환경을 빠르게 설정하고 관리�
 ├── templates/                    # 템플릿 파일 디렉토리
 │   ├── Dockerfile.template       # Docker 이미지 템플릿
 │   └── docker-compose.yml.template # Docker Compose 템플릿
+├── .dockit/                      # 생성 파일 디렉토리 (자동 생성)
+│   ├── .env                      # 사용자 설정 파일
+│   ├── docker-compose.yml        # Docker Compose 구성 파일
+│   └── dockit.log                # 로그 파일
 └── README.md                     # 이 파일
 ```
 
 ## 자동 생성 파일
 
-- `.env`: 설정 파일
-- `docker-compose.yml`: Docker Compose 구성 파일
-- `dockit.log`: 로그 파일
+설치 및 실행 시 자동으로 생성되는 모든 파일은 `.dockit` 디렉토리에 저장됩니다:
+
+- `.dockit/.env`: 사용자 설정 파일
+- `.dockit/docker-compose.yml`: Docker Compose 구성 파일
+- `.dockit/dockit.log`: 로그 파일
+
+이 구조로 인해 프로젝트 루트 디렉토리가 깔끔하게 유지되며, 버전 관리 시스템에서도 생성 파일을 쉽게 제외할 수 있습니다.
 
 ## Docker 이미지 정보
 
@@ -66,4 +75,13 @@ Dockit은 Docker를 사용하여 개발 환경을 빠르게 설정하고 관리�
 
 - sudo
 - git
-- 한국어 로케일 설정 
+- 한국어 로케일 설정
+
+## 개발 철학
+
+이 프로젝트는 다음과 같은 원칙을 따릅니다:
+
+1. 모듈식 구조 - 각 기능이 분리되어 있어 유지보수가 용이
+2. 설정 파일과 소스 파일의 명확한 분리 - 정적 파일과 동적 파일 구분
+3. 사용자 친화적 인터페이스 - 대화형 설치 및 명확한 상태 표시
+4. 컨테이너 내부 사용자 권한 문제 해결 - 호스트와 동일한 UID/GID 사용 
