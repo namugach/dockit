@@ -6,5 +6,7 @@ services:
     container_name: ${CONTAINER_NAME}
     volumes:
       - ${PROJECT_ROOT}:${CONTAINER_WORKDIR}
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig
+      - ~/.ssh:/home/${USERNAME}/.ssh
     stdin_open: true
     tty: true 
