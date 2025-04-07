@@ -18,6 +18,17 @@ CONTAINER_WORKDIR="/workspace"
 # 설정 파일 경로
 LOG_FILE="$CONFIG_DIR/dockit.log"
 
+# 메시지 시스템 로드
+if [ -f "$PROJECT_ROOT/config/messages/load.sh" ]; then
+    # LANGUAGE 환경 변수가 설정되어 있지 않으면 기본값 설정
+    if [ -z "$LANGUAGE" ]; then
+        export LANGUAGE="ko"
+    fi
+    
+    source "$PROJECT_ROOT/config/messages/load.sh"
+    load_messages
+fi
+
 # Docker Compose 명령어 확인
 if command -v docker-compose &> /dev/null; then
     DOCKER_COMPOSE_CMD="docker-compose"
@@ -78,22 +89,24 @@ load_config() {
         return 0
     fi
 
+    # 기본값 설정
+    export IMAGE_NAME="$DEFAULT_IMAGE_NAME"
+    export CONTAINER_NAME="$DEFAULT_CONTAINER_NAME"
+    export USERNAME="$DEFAULT_USERNAME"
+    export USER_UID="$DEFAULT_UID"
+    export USER_GID="$DEFAULT_GID"
+    export USER_PASSWORD="$DEFAULT_PASSWORD"
+    export WORKDIR="$DEFAULT_WORKDIR"
+
+    # 설정 파일이 있으면 로드
     if [[ -f "$CONFIG_ENV" ]]; then
         log "INFO" "설정 파일 로드 중: $CONFIG_ENV"
         source "$CONFIG_ENV"
-        export CONFIG_LOADED=1
     else
         log "WARNING" "설정 파일을 찾을 수 없습니다. 기본값을 사용합니다."
-        # 기본값 사용
-        IMAGE_NAME="$DEFAULT_IMAGE_NAME"
-        CONTAINER_NAME="$DEFAULT_CONTAINER_NAME"
-        USERNAME="$DEFAULT_USERNAME"
-        USER_UID="$DEFAULT_UID"
-        USER_GID="$DEFAULT_GID"
-        USER_PASSWORD="$DEFAULT_PASSWORD"
-        WORKDIR="$DEFAULT_WORKDIR"
-        export CONFIG_LOADED=1
     fi
+
+    export CONFIG_LOADED=1
 }
 
 # 설정 파일 저장 함수
