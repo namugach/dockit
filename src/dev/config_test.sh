@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# 설정 디버그 스크립트
+# 설정 디버그 스크립트 
 # config 시스템이 제대로 작동하는지 테스트
 
 # 스크립트 경로 설정
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
-export DOCKIT_ROOT="$SCRIPT_DIR"
-export CONFIG_DIR="$SCRIPT_DIR/config"
+PROJECT_ROOT=$(dirname "$(dirname "$SCRIPT_DIR")")
+export DOCKIT_ROOT="$PROJECT_ROOT"
+export CONFIG_DIR="$PROJECT_ROOT/config"
 
 echo "===== 설정 시스템 테스트 ====="
 

@@ -5,12 +5,13 @@
 
 # 현재 스크립트 경로 설정
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-DOCKIT_ROOT=$(dirname "$SCRIPT_DIR")
+PROJECT_ROOT=$(dirname "$(dirname "$SCRIPT_DIR")")
+CONFIG_DIR="$PROJECT_ROOT/config"
 
 # 시스템 설정 파일 로드
-if [ -f "$SCRIPT_DIR/system.sh" ]; then
-    source "$SCRIPT_DIR/system.sh"
-    echo "시스템 설정 파일 로드됨: $SCRIPT_DIR/system.sh"
+if [ -f "$CONFIG_DIR/system.sh" ]; then
+    source "$CONFIG_DIR/system.sh"
+    echo "시스템 설정 파일 로드됨: $CONFIG_DIR/system.sh"
 else
     echo "오류: 시스템 설정 파일을 찾을 수 없습니다."
     exit 1
@@ -35,10 +36,9 @@ echo "확인 메시지: $MSG_CONFIRM_STOP"
 echo "=========================="
 
 # Dockerfile 템플릿 경로 테스트
-TEMPLATE_PATH=$(get_dockerfile_template)
 echo "===== Dockerfile 템플릿 ====="
-echo "선택된 템플릿 경로: $TEMPLATE_PATH"
-if [ -f "$TEMPLATE_PATH" ]; then
+echo "템플릿 경로: $DOCKERFILE_TEMPLATE"
+if [ -f "$DOCKERFILE_TEMPLATE" ]; then
     echo "템플릿 파일이 존재합니다."
 else
     echo "템플릿 파일이 존재하지 않습니다."
