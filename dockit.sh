@@ -8,9 +8,12 @@ SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
 export DOCKIT_ROOT="$SCRIPT_DIR"
 export MODULES_DIR="$SCRIPT_DIR/src/modules"
 export TEMPLATES_DIR="$SCRIPT_DIR/src/templates"
+export CONFIG_DIR="$SCRIPT_DIR/config"
 
-# 디버깅을 위한 로그 출력 제거
-# echo "MODULES_DIR=$MODULES_DIR"
+# 시스템 설정 파일 로드 (존재하는 경우)
+if [ -f "$CONFIG_DIR/system.sh" ]; then
+    source "$CONFIG_DIR/system.sh"
+fi
 
 # 공통 모듈 로드
 source "$MODULES_DIR/common.sh"
