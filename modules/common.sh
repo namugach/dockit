@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# docker-tools 공통 모듈
+# dockit 공통 모듈
 # 모든 스크립트에서 공통으로 사용하는 함수와 변수를 정의합니다.
 
 # 이 스크립트가 있는 디렉토리를 기준으로 상대 경로 설정
@@ -9,7 +9,7 @@ PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
 
 # 설정 파일 경로
 CONFIG_FILE="$PROJECT_ROOT/.env"
-LOG_FILE="$PROJECT_ROOT/docker-tools.log"
+LOG_FILE="$PROJECT_ROOT/dockit.log"
 
 # 템플릿 파일 경로
 TEMPLATES_DIR="$PROJECT_ROOT/templates"
