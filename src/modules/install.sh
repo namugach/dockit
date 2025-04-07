@@ -189,7 +189,18 @@ build_docker_image() {
     
     # 치환된 Dockerfile 생성 (임시 파일)
     local temp_dockerfile="$PROJECT_ROOT/.dockerfile.tmp"
-    process_template "$DOCKERFILE_TEMPLATE" "$temp_dockerfile"
+    
+    # config/system.sh가 있고 process_template_with_base_image 함수가 사용 가능한지 확인
+    if [ -f "$PROJECT_ROOT/config/system.sh" ] && type process_template_with_base_image &>/dev/null; then
+        log "INFO" "다국어 설정 시스템 활용: BASE_IMAGE=$BASE_IMAGE"
+        
+        # 다국어 설정 시스템의 템플릿 처리 함수 사용
+        process_template_with_base_image "$DOCKERFILE_TEMPLATE" "$temp_dockerfile"
+    else
+        # 기존 방식으로 템플릿 처리
+        log "INFO" "기존 방식으로 템플릿 처리 중..."
+        process_template "$DOCKERFILE_TEMPLATE" "$temp_dockerfile"
+    fi
     
     # 이미지 빌드
     if docker build \

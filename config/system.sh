@@ -6,6 +6,15 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# 다른 디렉토리 경로 설정 (재정의 하지 않고 추가만 함)
+CONFIG_DIR="$SCRIPT_DIR"
+if [ -z "$MODULES_DIR" ]; then
+    MODULES_DIR="$ROOT_DIR/src/modules"
+fi
+if [ -z "$TEMPLATES_DIR" ]; then
+    TEMPLATES_DIR="$ROOT_DIR/src/templates"
+fi
+
 # 기본 설정 파일 로드
 if [ -f "$SCRIPT_DIR/settings.env" ]; then
     set -a
@@ -50,7 +59,6 @@ else
 fi
 
 # 기존 템플릿 경로 재정의 (Dockerfile.template 사용)
-TEMPLATES_DIR="$ROOT_DIR/src/templates"
 DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile.template"
 
 # 디버그 정보 출력

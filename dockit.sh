@@ -12,7 +12,20 @@ export CONFIG_DIR="$SCRIPT_DIR/config"
 
 # 시스템 설정 파일 로드 (존재하는 경우)
 if [ -f "$CONFIG_DIR/system.sh" ]; then
+    # 디버깅을 위한 설정 표시
+    if [ "$DEBUG" = "true" ]; then
+        echo "시스템 설정 파일 로드: $CONFIG_DIR/system.sh"
+    fi
+    
+    # 설정 파일 로드
     source "$CONFIG_DIR/system.sh"
+fi
+
+# 디버깅을 위한 경로 표시
+if [ "$DEBUG" = "true" ]; then
+    echo "MODULES_DIR=$MODULES_DIR"
+    echo "TEMPLATES_DIR=$TEMPLATES_DIR"
+    echo "CONFIG_DIR=$CONFIG_DIR"
 fi
 
 # 공통 모듈 로드
@@ -40,27 +53,27 @@ shift # 첫 번째 인자 제거
 case "$COMMAND" in
     install)
         # 설치 및 초기 설정 실행
-        "$SCRIPT_DIR/src/modules/install.sh" "$@"
+        "$MODULES_DIR/install.sh" "$@"
         ;;
     start)
         # 컨테이너 시작
-        "$SCRIPT_DIR/src/modules/start.sh" "$@"
+        "$MODULES_DIR/start.sh" "$@"
         ;;
     stop)
         # 컨테이너 정지
-        "$SCRIPT_DIR/src/modules/stop.sh" "$@"
+        "$MODULES_DIR/stop.sh" "$@"
         ;;
     connect)
         # 컨테이너 접속
-        "$SCRIPT_DIR/src/modules/connect.sh" "$@"
+        "$MODULES_DIR/connect.sh" "$@"
         ;;
     status)
         # 컨테이너 상태 확인
-        "$SCRIPT_DIR/src/modules/status.sh" "$@"
+        "$MODULES_DIR/status.sh" "$@"
         ;;
     help)
         # 도움말 표시
-        "$SCRIPT_DIR/src/modules/help.sh" "$@"
+        "$MODULES_DIR/help.sh" "$@"
         ;;
     *)
         # 알 수 없는 명령
