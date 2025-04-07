@@ -23,28 +23,28 @@ fi
 
 # 디버그 모드에서 초기 상태 출력
 if [ "$DEBUG" = "true" ]; then
-    echo "===== 초기 언어 설정 상태 ====="
-    echo "환경 변수 LANGUAGE: ${LANGUAGE:-없음}"
-    echo "시스템 로케일 LANG: ${LANG:-없음}"
+    echo "$MSG_SYSTEM_DEBUG_INITIAL_LANG"
+    printf "$MSG_SYSTEM_DEBUG_LANG_VAR\n" "${LANGUAGE:-없음}"
+    printf "$MSG_SYSTEM_DEBUG_SYS_LANG\n" "${LANG:-없음}"
     if [ -f "$SCRIPT_DIR/settings.env" ]; then
-        echo "설정 파일 언어: $(grep LANGUAGE= $SCRIPT_DIR/settings.env | cut -d= -f2)"
+        printf "$MSG_SYSTEM_DEBUG_CONFIG_LANG\n" "$(grep LANGUAGE= $SCRIPT_DIR/settings.env | cut -d= -f2)"
     else
-        echo "설정 파일 언어: 파일 없음"
+        echo "$MSG_SYSTEM_DEBUG_NO_CONFIG"
     fi
-    echo "================================="
+    echo "$MSG_SYSTEM_DEBUG_END"
 fi
 
 # 1. 먼저 환경 변수가 있는지 확인
 if [ -n "$LANGUAGE" ]; then
     DETECTED_LANGUAGE="$LANGUAGE"
-    LANGUAGE_SOURCE="환경 변수 LANGUAGE"
+    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_ENV"
 # 2. LANG 환경 변수에서 감지
 elif [[ -n "$LANG" && "$LANG" == en_* ]]; then
     DETECTED_LANGUAGE="en"
-    LANGUAGE_SOURCE="시스템 로케일 LANG"
+    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
 elif [[ -n "$LANG" && "$LANG" == ko_* ]]; then
     DETECTED_LANGUAGE="ko"
-    LANGUAGE_SOURCE="시스템 로케일 LANG"
+    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
 else
     # 3&4. settings.env 파일이나 기본값은 나중에 처리
     DETECTED_LANGUAGE=""
@@ -66,24 +66,24 @@ if [ -f "$SCRIPT_DIR/settings.env" ]; then
     
     # 디버그 모드에서 설정 파일 로드 후 상태 출력
     if [ "$DEBUG" = "true" ]; then
-        echo "===== 설정 파일 로드 후 상태 ====="
-        echo "로드된 LANGUAGE 값: $LANGUAGE"
-        echo "설정 파일의 LANGUAGE 값: $SETTINGS_LANGUAGE"
-        echo "==================================="
+        echo "$MSG_SYSTEM_DEBUG_AFTER_LOAD"
+        printf "$MSG_SYSTEM_DEBUG_LOADED_LANG\n" "$LANGUAGE"
+        printf "$MSG_SYSTEM_DEBUG_CONFIG_LANG_VALUE\n" "$SETTINGS_LANGUAGE"
+        echo "$MSG_SYSTEM_DEBUG_LOAD_END"
     fi
     
     # 사용자가 환경 변수나 LANG으로 언어를 지정하지 않았다면
     # settings.env의 값 사용
     if [ -z "$DETECTED_LANGUAGE" ] && [ -n "$SETTINGS_LANGUAGE" ]; then
         DETECTED_LANGUAGE="$SETTINGS_LANGUAGE"
-        LANGUAGE_SOURCE="설정 파일"
+        LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_CONFIG"
         
         if [ "$DEBUG" = "true" ]; then
-            echo "설정 파일에서 언어 설정 로드: $DETECTED_LANGUAGE"
+            printf "$MSG_SYSTEM_DEBUG_LOAD_FROM_CONFIG\n" "$DETECTED_LANGUAGE"
         fi
     fi
 else
-    echo "설정 파일이 없습니다: $SCRIPT_DIR/settings.env"
+    printf "$MSG_SYSTEM_NO_CONFIG_FILE\n" "$SCRIPT_DIR/settings.env"
     exit 1
 fi
 
@@ -92,7 +92,7 @@ if [ -n "$DETECTED_LANGUAGE" ]; then
     LANGUAGE="$DETECTED_LANGUAGE"
     
     if [ "$DEBUG" = "true" ]; then
-        echo "최종 언어 설정: $LANGUAGE (출처: $LANGUAGE_SOURCE)"
+        printf "$MSG_SYSTEM_FINAL_LANG\n" "$LANGUAGE" "$LANGUAGE_SOURCE"
     fi
 fi
 
@@ -105,22 +105,22 @@ DEBUG="${DEBUG:-false}"
 # 메시지 파일 로드
 if [ -f "$SCRIPT_DIR/messages/load.sh" ]; then
     if [ "$DEBUG" = "true" ]; then
-        echo "통합 메시지 로딩 시스템 사용: $SCRIPT_DIR/messages/load.sh"
+        printf "$MSG_SYSTEM_DEBUG_INTEGRATED_MSG\n" "$SCRIPT_DIR/messages/load.sh"
     fi
     source "$SCRIPT_DIR/messages/load.sh"
     load_messages "$LANGUAGE"
 else
     if [ "$DEBUG" = "true" ]; then
-        echo "기존 메시지 로딩 방식 사용"
+        echo "$MSG_SYSTEM_DEBUG_LEGACY_MSG"
     fi
     # 기존 방식으로 메시지 파일 로드
     if [ -f "$SCRIPT_DIR/messages/${LANGUAGE}.sh" ]; then
         if [ "$DEBUG" = "true" ]; then
-            echo "메시지 파일 로드: $SCRIPT_DIR/messages/${LANGUAGE}.sh"
+            printf "$MSG_SYSTEM_DEBUG_LOAD_MSG_FILE\n" "$SCRIPT_DIR/messages/${LANGUAGE}.sh"
         fi
         source "$SCRIPT_DIR/messages/${LANGUAGE}.sh"
     else
-        echo "언어 파일을 찾을 수 없습니다: $LANGUAGE. 영어로 대체합니다."
+        printf "$MSG_SYSTEM_LANG_FILE_NOT_FOUND\n" "$LANGUAGE"
         source "$SCRIPT_DIR/messages/en.sh"
     fi
 fi
@@ -136,7 +136,7 @@ print_message() {
         if [ -n "${!message_key}" ]; then
             echo "${!message_key}"
         else
-            echo "메시지를 찾을 수 없음: $message_key"
+            printf "$MSG_SYSTEM_MSG_NOT_FOUND\n" "$message_key"
         fi
     fi
 }
@@ -164,15 +164,15 @@ DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile"
 
 # 디버그 정보 출력
 if [ "$DEBUG" = "true" ]; then
-    echo "===== 시스템 설정 정보 ====="
-    echo "언어: $LANGUAGE"
-    echo "베이스 이미지: $BASE_IMAGE"
-    echo "로케일: $LOCALE_SETTING"
-    echo "시간대: $TIMEZONE"
-    echo "작업 디렉토리: $DEFAULT_WORKDIR"
-    echo "템플릿 디렉토리: $TEMPLATES_DIR"
-    echo "Dockerfile 템플릿: $DOCKERFILE_TEMPLATE"
-    echo "=========================="
+    echo "$MSG_SYSTEM_DEBUG_SYS_INFO"
+    printf "$MSG_SYSTEM_DEBUG_LANG\n" "$LANGUAGE"
+    printf "$MSG_SYSTEM_DEBUG_BASE_IMG\n" "$BASE_IMAGE"
+    printf "$MSG_SYSTEM_DEBUG_LOCALE\n" "$LOCALE_SETTING"
+    printf "$MSG_SYSTEM_DEBUG_TIMEZONE\n" "$TIMEZONE"
+    printf "$MSG_SYSTEM_DEBUG_WORKDIR\n" "$DEFAULT_WORKDIR"
+    printf "$MSG_SYSTEM_DEBUG_TEMPLATE_DIR\n" "$TEMPLATES_DIR"
+    printf "$MSG_SYSTEM_DEBUG_DOCKERFILE\n" "$DOCKERFILE_TEMPLATE"
+    echo "$MSG_SYSTEM_DEBUG_INFO_END"
 fi
 
 # 템플릿 처리 함수 (기존 템플릿 처리 함수를 오버라이드)
@@ -181,11 +181,11 @@ process_template_with_base_image() {
     local output_file="$2"
     
     if [ ! -f "$template_file" ]; then
-        echo "템플릿 파일을 찾을 수 없습니다: $template_file"
+        printf "$MSG_SYSTEM_TEMPLATE_NOT_FOUND\n" "$template_file"
         return 1
     fi
     
-    echo "템플릿 처리 중: $template_file -> $output_file"
+    printf "$MSG_SYSTEM_TEMPLATE_PROCESSING\n" "$template_file" "$output_file"
     
     # 템플릿 파일 읽기
     local template_content=$(<"$template_file")
@@ -197,10 +197,10 @@ process_template_with_base_image() {
     echo "$processed_content" > "$output_file"
     
     if [ $? -eq 0 ]; then
-        echo "파일이 생성되었습니다: $output_file"
+        printf "$MSG_SYSTEM_FILE_CREATED\n" "$output_file"
         return 0
     else
-        echo "파일 생성에 실패했습니다: $output_file"
+        printf "$MSG_SYSTEM_FILE_CREATE_FAILED\n" "$output_file"
         return 1
     fi
 }
