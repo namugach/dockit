@@ -58,8 +58,8 @@ else
     fi
 fi
 
-# 기존 템플릿 경로 재정의 (Dockerfile.template 사용)
-DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile.template"
+# 기존 템플릿 경로 재정의 (Dockerfile 사용)
+DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile"
 
 # 디버그 정보 출력
 if [ "$DEBUG" = "true" ]; then

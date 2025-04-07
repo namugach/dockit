@@ -23,8 +23,8 @@ LOG_FILE="$DOCKIT_DIR/dockit.log"
 
 # 템플릿 파일 경로
 TEMPLATES_DIR="$PROJECT_ROOT/src/templates"
-DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile.template"
-DOCKER_COMPOSE_TEMPLATE="$TEMPLATES_DIR/docker-compose.yml.template"
+DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile"
+DOCKER_COMPOSE_TEMPLATE="$TEMPLATES_DIR/docker-compose.yml"
 
 # Docker Compose 파일 경로
 DOCKER_COMPOSE_FILE="$DOCKIT_DIR/docker-compose.yml"
