@@ -103,15 +103,43 @@ DEFAULT_WORKDIR="${DEFAULT_WORKDIR:-work/project}"
 DEBUG="${DEBUG:-false}"
 
 # 메시지 파일 로드
-if [ -f "$SCRIPT_DIR/messages/${LANGUAGE}.sh" ]; then
+if [ -f "$SCRIPT_DIR/messages/load.sh" ]; then
     if [ "$DEBUG" = "true" ]; then
-        echo "메시지 파일 로드: $SCRIPT_DIR/messages/${LANGUAGE}.sh"
+        echo "통합 메시지 로딩 시스템 사용: $SCRIPT_DIR/messages/load.sh"
     fi
-    source "$SCRIPT_DIR/messages/${LANGUAGE}.sh"
+    source "$SCRIPT_DIR/messages/load.sh"
+    load_messages "$LANGUAGE"
 else
-    echo "언어 파일을 찾을 수 없습니다: $LANGUAGE. 영어로 대체합니다."
-    source "$SCRIPT_DIR/messages/en.sh"
+    if [ "$DEBUG" = "true" ]; then
+        echo "기존 메시지 로딩 방식 사용"
+    fi
+    # 기존 방식으로 메시지 파일 로드
+    if [ -f "$SCRIPT_DIR/messages/${LANGUAGE}.sh" ]; then
+        if [ "$DEBUG" = "true" ]; then
+            echo "메시지 파일 로드: $SCRIPT_DIR/messages/${LANGUAGE}.sh"
+        fi
+        source "$SCRIPT_DIR/messages/${LANGUAGE}.sh"
+    else
+        echo "언어 파일을 찾을 수 없습니다: $LANGUAGE. 영어로 대체합니다."
+        source "$SCRIPT_DIR/messages/en.sh"
+    fi
 fi
+
+# 메시지 출력 함수
+print_message() {
+    # 통합 메시지 시스템 사용 시
+    if type get_message &>/dev/null; then
+        get_message "$1"
+    else
+        # 기존 방식
+        local message_key="$1"
+        if [ -n "${!message_key}" ]; then
+            echo "${!message_key}"
+        else
+            echo "메시지를 찾을 수 없음: $message_key"
+        fi
+    fi
+}
 
 # 베이스 이미지 설정
 if [ -n "$CUSTOM_BASE_IMAGE" ]; then
@@ -146,16 +174,6 @@ if [ "$DEBUG" = "true" ]; then
     echo "Dockerfile 템플릿: $DOCKERFILE_TEMPLATE"
     echo "=========================="
 fi
-
-# 메시지 출력 함수
-print_message() {
-    local message_key="$1"
-    if [ -n "${!message_key}" ]; then
-        echo "${!message_key}"
-    else
-        echo "메시지를 찾을 수 없음: $message_key"
-    fi
-}
 
 # 템플릿 처리 함수 (기존 템플릿 처리 함수를 오버라이드)
 process_template_with_base_image() {
