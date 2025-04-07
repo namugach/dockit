@@ -20,13 +20,13 @@ show_container_status() {
     echo -e "작업 디렉토리: ${GREEN}$WORKDIR${NC}"
     
     # Docker Compose 파일 확인
-    if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
+    if [ -f "$DOCKER_COMPOSE_FILE" ]; then
         echo -e "\n${YELLOW}Docker Compose 설정:${NC}"
-        echo -e "${GREEN}파일 존재: $PROJECT_ROOT/docker-compose.yml${NC}"
+        echo -e "${GREEN}파일 존재: $DOCKER_COMPOSE_FILE${NC}"
     else
         echo -e "\n${YELLOW}Docker Compose 설정:${NC}"
-        echo -e "${RED}파일 없음: $PROJECT_ROOT/docker-compose.yml${NC}"
-        echo -e "${BLUE}설치를 실행하세요: ./docker-tools.sh install${NC}"
+        echo -e "${RED}파일 없음: $DOCKER_COMPOSE_FILE${NC}"
+        echo -e "${BLUE}설치를 실행하세요: ./dockit.sh install${NC}"
     fi
     
     # 이미지 존재 확인
@@ -43,7 +43,7 @@ show_container_status() {
     else
         echo -e "\n${YELLOW}Docker 이미지 상태:${NC}"
         echo -e "${RED}이미지가 존재하지 않습니다: $IMAGE_NAME${NC}"
-        echo -e "${BLUE}설치를 실행하세요: ./docker-tools.sh install${NC}"
+        echo -e "${BLUE}설치를 실행하세요: ./dockit.sh install${NC}"
     fi
     
     # 컨테이너 상태 확인
@@ -66,15 +66,15 @@ show_container_status() {
         echo -e "상태: ${GREEN}$container_status${NC}"
         
         # 접속 명령어 안내
-        echo -e "\n${BLUE}컨테이너 접속 명령어:${NC} ./docker-tools.sh connect"
+        echo -e "\n${BLUE}컨테이너 접속 명령어:${NC} ./dockit.sh connect"
     elif [ $status -eq 1 ]; then
         # 컨테이너 중지됨
         echo -e "${YELLOW}컨테이너가 중지되었습니다: $CONTAINER_NAME${NC}"
-        echo -e "${BLUE}컨테이너 시작 명령어:${NC} ./docker-tools.sh start"
+        echo -e "${BLUE}컨테이너 시작 명령어:${NC} ./dockit.sh start"
     else
         # 컨테이너 없음
         echo -e "${RED}컨테이너가 존재하지 않습니다: $CONTAINER_NAME${NC}"
-        echo -e "${BLUE}컨테이너 시작 명령어:${NC} ./docker-tools.sh start"
+        echo -e "${BLUE}컨테이너 시작 명령어:${NC} ./dockit.sh start"
     fi
     
     echo -e "\n${BLUE}=================================${NC}"

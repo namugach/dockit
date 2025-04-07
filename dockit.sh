@@ -10,12 +10,6 @@ MODULES_DIR="$SCRIPT_DIR/modules"
 # 공통 모듈 로드
 source "$MODULES_DIR/common.sh"
 
-# 로그 초기화
-# 로그 파일이 없으면 생성
-if [ ! -f "$LOG_FILE" ]; then
-    touch "$LOG_FILE"
-fi
-
 # 사용법 출력 함수
 usage() {
     "$MODULES_DIR/help.sh"

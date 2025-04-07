@@ -35,7 +35,9 @@ show_help() {
   ./modules/connect.sh    # connect 모듈 직접 실행
 
 설정 파일:
-  .env    # 사용자 설정이 저장되는 파일
+  .dockit/.env    # 사용자 설정이 저장되는 파일
+  .dockit/docker-compose.yml    # Docker Compose 설정 파일
+  .dockit/dockit.log    # 로그 파일
 
 =================================
 EOF

@@ -25,7 +25,7 @@ start_container() {
         # docker-compose를 사용하여 컨테이너 시작
         log "INFO" "docker compose로 컨테이너 시작 중..."
         
-        if $DOCKER_COMPOSE_CMD -f "$PROJECT_ROOT/docker-compose.yml" up -d; then
+        if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
             log "SUCCESS" "컨테이너가 성공적으로 시작되었습니다!"
         else
             log "ERROR" "컨테이너 시작 중 오류가 발생했습니다."
@@ -47,7 +47,7 @@ start_container() {
         docker exec -it "$CONTAINER_NAME" /bin/bash
     else
         log "INFO" "컨테이너 접속을 건너뜁니다."
-        echo -e "\n${BLUE}나중에 컨테이너에 접속하려면:${NC} ./docker-tools.sh connect"
+        echo -e "\n${BLUE}나중에 컨테이너에 접속하려면:${NC} ./dockit.sh connect"
     fi
     
     return 0

@@ -29,7 +29,7 @@ connect_to_container() {
         if [[ $start_container == "y" || $start_container == "Y" ]]; then
             log "INFO" "컨테이너 시작 중..."
             
-            if $DOCKER_COMPOSE_CMD -f "$PROJECT_ROOT/docker-compose.yml" up -d; then
+            if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
                 log "SUCCESS" "컨테이너가 성공적으로 시작되었습니다!"
                 log "INFO" "컨테이너에 접속 중..."
                 docker exec -it "$CONTAINER_NAME" /bin/bash
@@ -44,7 +44,7 @@ connect_to_container() {
     else
         # 컨테이너가 없음
         log "ERROR" "컨테이너가 존재하지 않습니다: $CONTAINER_NAME"
-        log "INFO" "먼저 컨테이너를 시작해야 합니다: ./docker-tools.sh start"
+        log "INFO" "먼저 컨테이너를 시작해야 합니다: ./dockit.sh start"
         
         # Docker Compose 파일 존재 확인
         if check_docker_compose_file; then
@@ -55,7 +55,7 @@ connect_to_container() {
             if [[ $start_container == "y" || $start_container == "Y" ]]; then
                 log "INFO" "컨테이너 시작 중..."
                 
-                if $DOCKER_COMPOSE_CMD -f "$PROJECT_ROOT/docker-compose.yml" up -d; then
+                if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
                     log "SUCCESS" "컨테이너가 성공적으로 시작되었습니다!"
                     log "INFO" "컨테이너에 접속 중..."
                     docker exec -it "$CONTAINER_NAME" /bin/bash
@@ -68,7 +68,7 @@ connect_to_container() {
                 return 1
             fi
         else
-            log "ERROR" "설정이 완료되지 않았습니다. 설치를 먼저 실행하세요: ./docker-tools.sh install"
+            log "ERROR" "설정이 완료되지 않았습니다. 설치를 먼저 실행하세요: ./dockit.sh install"
             return 1
         fi
     fi

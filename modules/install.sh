@@ -110,7 +110,7 @@ EOF
     fi
     
     # 템플릿 처리
-    process_template "$DOCKER_COMPOSE_TEMPLATE" "$PROJECT_ROOT/docker-compose.yml"
+    process_template "$DOCKER_COMPOSE_TEMPLATE" "$DOCKER_COMPOSE_FILE"
 }
 
 # Dockerfile 템플릿 파일 생성
@@ -221,7 +221,7 @@ ask_start_container() {
         log "INFO" "컨테이너 시작 중..."
         
         # docker-compose를 사용하여 컨테이너 시작
-        if $DOCKER_COMPOSE_CMD -f "$PROJECT_ROOT/docker-compose.yml" up -d; then
+        if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
             log "SUCCESS" "컨테이너가 성공적으로 시작되었습니다!"
             
             # 컨테이너 접속 여부 확인
@@ -234,20 +234,53 @@ ask_start_container() {
                 docker exec -it "$CONTAINER_NAME" /bin/bash
             else
                 log "INFO" "컨테이너 접속을 건너뜁니다."
-                echo -e "\n${BLUE}나중에 컨테이너에 접속하려면:${NC} ./docker-tools.sh connect"
+                echo -e "\n${BLUE}나중에 컨테이너에 접속하려면:${NC} ./dockit.sh connect"
             fi
         else
             log "ERROR" "컨테이너 시작 중 오류가 발생했습니다."
         fi
     else
         log "INFO" "컨테이너 시작을 건너뜁니다."
-        echo -e "\n${BLUE}나중에 컨테이너를 시작하려면:${NC} ./docker-tools.sh start"
+        echo -e "\n${BLUE}나중에 컨테이너를 시작하려면:${NC} ./dockit.sh start"
     fi
 }
 
 # 메인 함수
 install_main() {
     log "INFO" "설치 시작..."
+    
+    # .dockit 디렉토리 생성
+    if [ ! -d "$DOCKIT_DIR" ]; then
+        log "INFO" ".dockit 디렉토리 생성 중..."
+        mkdir -p "$DOCKIT_DIR"
+        log "SUCCESS" ".dockit 디렉토리가 생성되었습니다."
+    fi
+    
+    # 이전 버전의 파일이 있는지 확인하고 정리
+    if [ -f "$PROJECT_ROOT/docker-tools.log" ]; then
+        log "INFO" "이전 버전의 로그 파일 발견, 삭제 중..."
+        rm -f "$PROJECT_ROOT/docker-tools.log"
+        log "SUCCESS" "이전 버전의 로그 파일이 삭제되었습니다."
+    fi
+    
+    # 이전에 루트에 있던 파일들을 새 위치로 이동
+    if [ -f "$PROJECT_ROOT/.env" ]; then
+        log "INFO" "기존 .env 파일을 새 위치로 이동 중..."
+        mv "$PROJECT_ROOT/.env" "$CONFIG_FILE"
+        log "SUCCESS" ".env 파일이 이동되었습니다."
+    fi
+    
+    if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
+        log "INFO" "기존 docker-compose.yml 파일을 새 위치로 이동 중..."
+        mv "$PROJECT_ROOT/docker-compose.yml" "$DOCKER_COMPOSE_FILE"
+        log "SUCCESS" "docker-compose.yml 파일이 이동되었습니다."
+    fi
+    
+    if [ -f "$PROJECT_ROOT/dockit.log" ]; then
+        log "INFO" "기존 로그 파일을 새 위치로 이동 중..."
+        mv "$PROJECT_ROOT/dockit.log" "$LOG_FILE"
+        log "SUCCESS" "로그 파일이 이동되었습니다."
+    fi
     
     # 사용자 입력 받기
     get_user_input

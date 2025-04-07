@@ -7,14 +7,20 @@
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
 
+# .dockit 디렉토리 경로
+DOCKIT_DIR="$PROJECT_ROOT/.dockit"
+
 # 설정 파일 경로
-CONFIG_FILE="$PROJECT_ROOT/.env"
-LOG_FILE="$PROJECT_ROOT/dockit.log"
+CONFIG_FILE="$DOCKIT_DIR/.env"
+LOG_FILE="$DOCKIT_DIR/dockit.log"
 
 # 템플릿 파일 경로
 TEMPLATES_DIR="$PROJECT_ROOT/templates"
 DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile.template"
 DOCKER_COMPOSE_TEMPLATE="$TEMPLATES_DIR/docker-compose.yml.template"
+
+# Docker Compose 파일 경로
+DOCKER_COMPOSE_FILE="$DOCKIT_DIR/docker-compose.yml"
 
 # Docker Compose 명령어 확인
 if command -v docker-compose &> /dev/null; then
@@ -45,6 +51,17 @@ log() {
     local level="$1"
     local message="$2"
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    
+    # .dockit 디렉토리가 없으면 생성
+    if [ ! -d "$DOCKIT_DIR" ]; then
+        mkdir -p "$DOCKIT_DIR"
+    fi
+    
+    # 로그 파일이 없으면 생성
+    if [ ! -f "$LOG_FILE" ]; then
+        touch "$LOG_FILE"
+    fi
+    
     echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
     
     # 화면에도 표시 (ERROR 레벨일 경우 빨간색으로)
@@ -157,9 +174,9 @@ check_container_status() {
 
 # Docker Compose 파일 존재 확인
 check_docker_compose_file() {
-    if [ ! -f "$PROJECT_ROOT/docker-compose.yml" ]; then
+    if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
         log "ERROR" "docker-compose.yml 파일을 찾을 수 없습니다"
-        log "INFO" "먼저 install 명령을 실행하세요: ./docker-tools.sh install"
+        log "INFO" "먼저 install 명령을 실행하세요: ./dockit.sh install"
         return 1
     fi
     return 0
@@ -167,7 +184,7 @@ check_docker_compose_file() {
 
 # 직접 실행 시 헬프 메시지
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    echo "이 스크립트는 직접 실행할 수 없습니다. docker-tools.sh를 통해 사용하세요."
+    echo "이 스크립트는 직접 실행할 수 없습니다. dockit.sh를 통해 사용하세요."
     exit 1
 fi
 
