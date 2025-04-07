@@ -190,6 +190,14 @@ build_docker_image() {
     # 치환된 Dockerfile 생성 (임시 파일)
     local temp_dockerfile="$PROJECT_ROOT/.dockerfile.tmp"
     
+    # BASE_IMAGE가 설정되어 있는지 확인
+    if [ -z "$BASE_IMAGE" ]; then
+        log "WARNING" "BASE_IMAGE가 설정되지 않았습니다. 기본 이미지를 사용합니다."
+        BASE_IMAGE="namugach/ubuntu-basic:24.04-kor-deno"
+    fi
+    
+    log "INFO" "사용할 베이스 이미지: $BASE_IMAGE"
+    
     # config/system.sh가 있고 process_template_with_base_image 함수가 사용 가능한지 확인
     if [ -f "$PROJECT_ROOT/config/system.sh" ] && type process_template_with_base_image &>/dev/null; then
         log "INFO" "다국어 설정 시스템 활용: BASE_IMAGE=$BASE_IMAGE"
@@ -199,7 +207,19 @@ build_docker_image() {
     else
         # 기존 방식으로 템플릿 처리
         log "INFO" "기존 방식으로 템플릿 처리 중..."
-        process_template "$DOCKERFILE_TEMPLATE" "$temp_dockerfile"
+        
+        # 템플릿 파일 읽기
+        local template_content=$(<"$DOCKERFILE_TEMPLATE")
+        
+        # 첫 줄의 FROM 이미지를 BASE_IMAGE로 교체하고 다른 변수 처리
+        echo "$template_content" | \
+        sed "1s|^FROM .*|FROM $BASE_IMAGE|" | \
+        sed -e "s|\${USERNAME}|${USERNAME}|g" \
+            -e "s|\${USER_UID}|${USER_UID}|g" \
+            -e "s|\${USER_GID}|${USER_GID}|g" \
+            -e "s|\${WORKDIR}|${WORKDIR}|g" \
+            -e "s|\${USER_PASSWORD}|${USER_PASSWORD}|g" \
+        > "$temp_dockerfile"
     fi
     
     # 이미지 빌드

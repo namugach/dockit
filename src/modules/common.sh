@@ -125,6 +125,14 @@ process_template() {
     # 필요한 디렉토리 생성
     mkdir -p "$(dirname "$output_file")"
     
+    # BASE_IMAGE가 설정되어 있는지 확인
+    if [ -z "$BASE_IMAGE" ]; then
+        log "WARNING" "BASE_IMAGE가 설정되지 않았습니다. 기본 이미지를 사용합니다."
+        BASE_IMAGE="namugach/ubuntu-basic:24.04-kor-deno"
+    fi
+    
+    log "INFO" "사용할 베이스 이미지: $BASE_IMAGE"
+    
     # 템플릿 파일 처리
     sed -e "s|\${USERNAME}|${USERNAME}|g" \
         -e "s|\${USER_UID}|${USER_UID}|g" \
@@ -134,6 +142,7 @@ process_template() {
         -e "s|\${CONTAINER_NAME}|${CONTAINER_NAME}|g" \
         -e "s|\${PROJECT_ROOT}|${PROJECT_ROOT}|g" \
         -e "s|\${CONTAINER_WORKDIR}|${CONTAINER_WORKDIR}|g" \
+        -e "s|\${BASE_IMAGE}|${BASE_IMAGE}|g" \
         "$template_file" > "$output_file"
         
     echo "Generated: $output_file"

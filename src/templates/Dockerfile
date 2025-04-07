@@ -1,4 +1,4 @@
-FROM namugach/ubuntu-basic:24.04-kor-deno
+FROM ${BASE_IMAGE}
 
 # 빌드 시 사용할 인자들
 ARG USERNAME=user
