@@ -36,12 +36,13 @@ ORIGINAL_PWD=$(pwd)
 
 # 사용법 출력 함수
 usage() {
-    echo "사용법: $0 [install|start|stop|connect|status|help]"
-    exit 1
+    "$MODULES_DIR/help.sh"
+    exit 0
 }
 
 # 인자 검사
 if [ $# -lt 1 ]; then
+    # 인자가 없으면 자동으로 help 실행
     usage
 fi
 
