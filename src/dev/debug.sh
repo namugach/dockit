@@ -11,38 +11,38 @@ CONFIG_DIR="$PROJECT_ROOT/config"
 # 시스템 설정 파일 로드
 if [ -f "$CONFIG_DIR/system.sh" ]; then
     source "$CONFIG_DIR/system.sh"
-    echo "시스템 설정 파일 로드됨: $CONFIG_DIR/system.sh"
+    printf "$MSG_SYSTEM_DEBUG_LOAD_FROM_CONFIG\n" "$CONFIG_DIR/system.sh"
 else
-    echo "오류: 시스템 설정 파일을 찾을 수 없습니다."
+    printf "$MSG_SYSTEM_FILE_CREATE_FAILED\n" "$CONFIG_DIR/system.sh"
     exit 1
 fi
 
 # 현재 설정 정보 출력
-echo "===== 현재 설정 정보 ====="
-echo "언어: $LANGUAGE"
-echo "BASE_IMAGE: $BASE_IMAGE"
-echo "LOCALE_SETTING: $LOCALE_SETTING"
-echo "DEFAULT_WORKDIR: $DEFAULT_WORKDIR"
-echo "DEFAULT_PASSWORD: $DEFAULT_PASSWORD"
-echo "TIMEZONE: $TIMEZONE"
-echo "=========================="
+echo "$MSG_SYSTEM_DEBUG_SYS_INFO"
+printf "$MSG_SYSTEM_DEBUG_LANG\n" "$LANGUAGE"
+printf "$MSG_SYSTEM_DEBUG_BASE_IMG\n" "$BASE_IMAGE"
+printf "$MSG_SYSTEM_DEBUG_LOCALE\n" "$LOCALE_SETTING"
+printf "$MSG_SYSTEM_DEBUG_WORKDIR\n" "$DEFAULT_WORKDIR"
+printf "$MSG_SYSTEM_DEBUG_PASSWORD\n" "$DEFAULT_PASSWORD"
+printf "$MSG_SYSTEM_DEBUG_TIMEZONE\n" "$TIMEZONE"
+echo "$MSG_SYSTEM_DEBUG_INFO_END"
 
 # 메시지 출력 테스트
-echo "===== 메시지 출력 테스트 ====="
-echo "환영 메시지: $MSG_WELCOME"
-echo "도움말 사용법: $MSG_HELP_USAGE"
-echo "컨테이너 상태 메시지: $MSG_CONTAINER_RUNNING"
-echo "확인 메시지: $MSG_CONFIRM_STOP"
-echo "=========================="
+echo "$MSG_SYSTEM_DEBUG_MSG_TEST"
+printf "$MSG_SYSTEM_DEBUG_WELCOME\n" "$MSG_WELCOME"
+printf "$MSG_SYSTEM_DEBUG_HELP\n" "$MSG_HELP_USAGE"
+printf "$MSG_SYSTEM_DEBUG_CONTAINER\n" "$MSG_CONTAINER_RUNNING"
+printf "$MSG_SYSTEM_DEBUG_CONFIRM\n" "$MSG_CONFIRM_STOP"
+echo "$MSG_SYSTEM_DEBUG_INFO_END"
 
 # Dockerfile 템플릿 경로 테스트
-echo "===== Dockerfile 템플릿 ====="
-echo "템플릿 경로: $DOCKERFILE_TEMPLATE"
+echo "$MSG_SYSTEM_DEBUG_TEMPLATE_TEST"
+printf "$MSG_SYSTEM_DEBUG_TEMPLATE_PATH\n" "$DOCKERFILE_TEMPLATE"
 if [ -f "$DOCKERFILE_TEMPLATE" ]; then
-    echo "템플릿 파일이 존재합니다."
+    printf "$MSG_SYSTEM_FILE_CREATED\n" "$DOCKERFILE_TEMPLATE"
 else
-    echo "템플릿 파일이 존재하지 않습니다."
+    printf "$MSG_SYSTEM_FILE_CREATE_FAILED\n" "$DOCKERFILE_TEMPLATE"
 fi
-echo "=========================="
+echo "$MSG_SYSTEM_DEBUG_INFO_END"
 
-echo "디버그 테스트 완료!" 
+echo "$MSG_SYSTEM_DEBUG_COMPLETE" 

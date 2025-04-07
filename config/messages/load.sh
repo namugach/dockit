@@ -14,7 +14,7 @@ load_messages() {
     
     # 디버그 모드라면 로딩 정보 출력
     if [ "$DEBUG" = "true" ]; then
-        echo "메시지 파일 로드 중: $message_file"
+        printf "$MSG_SYSTEM_DEBUG_LOAD_MSG_FILE\n" "$message_file"
     fi
     
     # 해당 언어 메시지 파일 로드
@@ -23,7 +23,7 @@ load_messages() {
         export CURRENT_LANGUAGE="$lang"
         return 0
     else
-        echo "경고: 언어 '$lang'에 대한 메시지 파일을 찾을 수 없습니다."
+        printf "$MSG_SYSTEM_LANG_FILE_NOT_FOUND\n" "$lang"
         return 1
     fi
 }
@@ -34,7 +34,7 @@ get_message() {
     if [ -n "${!message_key}" ]; then
         echo "${!message_key}"
     else
-        echo "메시지를 찾을 수 없음: $message_key"
+        printf "$MSG_SYSTEM_MSG_NOT_FOUND\n" "$message_key"
     fi
 }
 
