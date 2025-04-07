@@ -26,10 +26,11 @@ stop_container() {
         confirm=${confirm:-y}
         
         if [[ $confirm == "y" || $confirm == "Y" ]]; then
-            log "INFO" "docker compose down 실행 중..."
+            log "INFO" "docker compose stop 실행 중..."
             
-            if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" down; then
+            if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" stop; then
                 log "SUCCESS" "컨테이너가 성공적으로 정지되었습니다!"
+                log "INFO" "컨테이너를 다시 시작하려면 'dockit.sh start', 완전히 제거하려면 'dockit.sh down'을 실행하세요."
                 return 0
             else
                 log "ERROR" "컨테이너 정지 중 오류가 발생했습니다."
@@ -42,25 +43,8 @@ stop_container() {
     elif [ $status -eq 1 ]; then
         # 컨테이너가 이미 중지됨
         log "INFO" "컨테이너가 이미 정지되었습니다: $CONTAINER_NAME"
-        
-        echo -e "\n${YELLOW}컨테이너를 완전히 제거할까요? (y/n):${NC}"
-        read -p "선택 [Y/n]: " remove
-        remove=${remove:-y}
-        
-        if [[ $remove == "y" || $remove == "Y" ]]; then
-            log "INFO" "docker compose down 실행 중..."
-            
-            if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" down; then
-                log "SUCCESS" "컨테이너가 성공적으로 제거되었습니다!"
-                return 0
-            else
-                log "ERROR" "컨테이너 제거 중 오류가 발생했습니다."
-                return 1
-            fi
-        else
-            log "INFO" "컨테이너 제거를 취소했습니다."
-            return 0
-        fi
+        log "INFO" "컨테이너를 다시 시작하려면 'dockit.sh start', 완전히 제거하려면 'dockit.sh down'을 실행하세요."
+        return 0
     else
         # 컨테이너가 없음
         log "WARNING" "실행 중인 컨테이너가 없습니다."

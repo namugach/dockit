@@ -64,6 +64,10 @@ case "$COMMAND" in
         # 컨테이너 정지
         "$MODULES_DIR/stop.sh" "$@"
         ;;
+    down)
+        # 컨테이너 완전 제거
+        "$MODULES_DIR/down.sh" "$@"
+        ;;
     connect)
         # 컨테이너 접속
         "$MODULES_DIR/connect.sh" "$@"

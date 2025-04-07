@@ -27,6 +27,7 @@ $(print_message MSG_HELP_COMMANDS)
 $(print_message MSG_HELP_INSTALL)
 $(print_message MSG_HELP_START)
 $(print_message MSG_HELP_STOP)
+$(print_message MSG_HELP_DOWN)
 $(print_message MSG_HELP_CONNECT)
 $(print_message MSG_HELP_STATUS)
 $(print_message MSG_HELP_HELP)
@@ -34,6 +35,8 @@ $(print_message MSG_HELP_HELP)
 예제:
   ./dockit.sh install    # 초기 설치 및 설정
   ./dockit.sh start      # 컨테이너 시작
+  ./dockit.sh stop       # 컨테이너 정지 (상태 유지)
+  ./dockit.sh down       # 컨테이너 완전 제거
   ./dockit.sh connect    # 컨테이너 접속
 
 직접 모듈 실행:
@@ -62,7 +65,8 @@ EOF
 사용 가능한 명령:
   install    Docker 개발 환경 설치 및 설정
   start      컨테이너 시작
-  stop       컨테이너 정지
+  stop       컨테이너 정지 (상태 유지)
+  down       컨테이너 완전 제거
   connect    실행 중인 컨테이너에 접속
   status     컨테이너 상태 확인
   help       이 도움말 표시
@@ -70,6 +74,8 @@ EOF
 예제:
   ./dockit.sh install    # 초기 설치 및 설정
   ./dockit.sh start      # 컨테이너 시작
+  ./dockit.sh stop       # 컨테이너 정지 (상태 유지)
+  ./dockit.sh down       # 컨테이너 완전 제거
   ./dockit.sh connect    # 컨테이너 접속
 
 직접 모듈 실행:
