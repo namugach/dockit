@@ -1,0 +1,32 @@
+FROM ${BASE_IMAGE}
+
+# Install basic packages
+RUN apt-get update && \
+    apt-get install -y sudo curl git vim && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set locale and timezone
+ENV LANG=${LOCALE_SETTING}
+ENV TZ=${TIMEZONE}
+
+# Create user and grant sudo privileges
+RUN useradd -m -s /bin/bash -u ${USER_ID} -g ${GROUP_ID} ${USER_NAME} && \
+    echo "${USER_NAME}:${DEFAULT_PASSWORD}" | chpasswd && \
+    echo "${USER_NAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USER_NAME} && \
+    chmod 0440 /etc/sudoers.d/${USER_NAME}
+
+# Create working directory and set permissions
+RUN mkdir -p /home/${USER_NAME}/${DEFAULT_WORKDIR} && \
+    chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}
+
+# Switch to user
+USER ${USER_NAME}
+WORKDIR /home/${USER_NAME}/${DEFAULT_WORKDIR}
+
+# Set welcome message
+RUN echo "echo 'Welcome to the development environment!'" >> /home/${USER_NAME}/.bashrc && \
+    echo "echo 'Current location: \$(pwd)'" >> /home/${USER_NAME}/.bashrc
+
+# Default shell when container starts
+CMD ["/bin/bash"] 
