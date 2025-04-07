@@ -11,6 +11,45 @@ Dockit is a modular shell script tool for quickly setting up and managing develo
 - Host-container volume mount support
 - Modular design for easy extension
 - Clean project structure (generated files managed in .dockit directory)
+- Multilingual support (Korean/English)
+
+## Language Settings
+
+Dockit supports both Korean and English. You can change the language settings in the following ways:
+
+### Default Language Settings
+
+- In WSL environment, Korean is set as the default language.
+- In regular Linux environments, the language is automatically detected based on system locale.
+
+### How to Change Language
+
+1. Using environment variables:
+```bash
+LANGUAGE=ko ./dockit.sh status  # Run in Korean
+LANGUAGE=en ./dockit.sh status  # Run in English
+```
+
+2. In settings.env file:
+```bash
+LANGUAGE=ko  # Set to Korean
+LANGUAGE=en  # Set to English
+LANGUAGE=local  # Use system locale
+```
+
+### Checking Language Information in Debug Mode
+
+When debug mode is enabled, you can view detailed information about the current language settings:
+
+```bash
+DEBUG=true ./dockit.sh status
+```
+
+Output information:
+- Currently selected language
+- Language setting source (environment variable/config file/system locale)
+- Locale settings
+- Timezone settings
 
 ## Usage
 
