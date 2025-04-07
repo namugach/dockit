@@ -3,31 +3,20 @@
 # dockit 공통 모듈
 # 모든 스크립트에서 공통으로 사용하는 함수와 변수를 정의합니다.
 
-# 프로젝트 루트와 관련 경로 설정 (환경 변수 활용)
-if [ -z "$DOCKIT_ROOT" ]; then
-    # 환경 변수가 설정되지 않은 경우 (직접 실행 시)
-    SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-    MODULES_DIR=$(dirname "$SCRIPT_DIR")
-    PROJECT_ROOT=$(dirname "$MODULES_DIR")
-else
-    # 환경 변수가 설정된 경우 (dockit.sh에서 호출 시)
-    PROJECT_ROOT="$DOCKIT_ROOT"
-fi
-
-# .dockit 디렉토리 경로
-DOCKIT_DIR="$PROJECT_ROOT/.dockit"
+# 경로 설정
+CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
+MODULES_DIR="${CURRENT_DIR}"
+TEMPLATE_DIR="${PROJECT_ROOT}/src/templates"
+CONFIG_DIR="${PROJECT_ROOT}/.dockit"
+CONFIG_ENV="${CONFIG_DIR}/.env"
+DOCKER_COMPOSE_FILE="${CONFIG_DIR}/docker-compose.yml"
+DOCKER_COMPOSE_TEMPLATE="${TEMPLATE_DIR}/docker-compose.yml"
+DOCKERFILE_TEMPLATE="${TEMPLATE_DIR}/Dockerfile"
+CONTAINER_WORKDIR="/workspace"
 
 # 설정 파일 경로
-CONFIG_FILE="$DOCKIT_DIR/.env"
-LOG_FILE="$DOCKIT_DIR/dockit.log"
-
-# 템플릿 파일 경로
-TEMPLATES_DIR="$PROJECT_ROOT/src/templates"
-DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile"
-DOCKER_COMPOSE_TEMPLATE="$TEMPLATES_DIR/docker-compose.yml"
-
-# Docker Compose 파일 경로
-DOCKER_COMPOSE_FILE="$DOCKIT_DIR/docker-compose.yml"
+LOG_FILE="$CONFIG_DIR/dockit.log"
 
 # Docker Compose 명령어 확인
 if command -v docker-compose &> /dev/null; then
@@ -60,8 +49,8 @@ log() {
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     
     # .dockit 디렉토리가 없으면 생성
-    if [ ! -d "$DOCKIT_DIR" ]; then
-        mkdir -p "$DOCKIT_DIR"
+    if [ ! -d "$CONFIG_DIR" ]; then
+        mkdir -p "$CONFIG_DIR"
     fi
     
     # 로그 파일이 없으면 생성
@@ -87,9 +76,9 @@ log() {
 
 # 설정 파일 로드 함수
 load_config() {
-    if [[ -f "$CONFIG_FILE" ]]; then
-        log "INFO" "설정 파일 로드 중: $CONFIG_FILE"
-        source "$CONFIG_FILE"
+    if [[ -f "$CONFIG_ENV" ]]; then
+        log "INFO" "설정 파일 로드 중: $CONFIG_ENV"
+        source "$CONFIG_ENV"
     else
         log "WARNING" "설정 파일을 찾을 수 없습니다. 기본값을 사용합니다."
         # 기본값 사용
@@ -105,8 +94,8 @@ load_config() {
 
 # 설정 파일 저장 함수
 save_config() {
-    log "INFO" "설정 파일 저장 중: $CONFIG_FILE"
-    cat > "$CONFIG_FILE" << EOF
+    log "INFO" "설정 파일 저장 중: $CONFIG_ENV"
+    cat > "$CONFIG_ENV" << EOF
 # Docker Tools 설정 파일
 # 자동 생성됨: $(date)
 
@@ -127,36 +116,27 @@ EOF
 
 # 템플릿 처리 함수
 process_template() {
-    local template_file="$1"
-    local output_file="$2"
+    local template_file=$1
+    local output_file=$2
     
-    if [ ! -f "$template_file" ]; then
-        log "ERROR" "템플릿 파일을 찾을 수 없습니다: $template_file"
-        return 1
-    fi
+    # 설정 로드
+    load_config
     
-    log "INFO" "템플릿 처리 중: $template_file -> $output_file"
+    # 필요한 디렉토리 생성
+    mkdir -p "$(dirname "$output_file")"
     
-    # 템플릿 파일 읽기
-    local template_content=$(<"$template_file")
-    
-    # 변수 치환
-    local processed_content=$(echo "$template_content" | 
-        sed -e "s|\${USERNAME}|$USERNAME|g" \
-            -e "s|\${WORKDIR}|$WORKDIR|g" \
-            -e "s|\${IMAGE_NAME}|$IMAGE_NAME|g" \
-            -e "s|\${CONTAINER_NAME}|$CONTAINER_NAME|g")
-    
-    # 파일에 저장
-    echo "$processed_content" > "$output_file"
-    
-    if [ $? -eq 0 ]; then
-        log "SUCCESS" "파일이 생성되었습니다: $output_file"
-        return 0
-    else
-        log "ERROR" "파일 생성에 실패했습니다: $output_file"
-        return 1
-    fi
+    # 템플릿 파일 처리
+    sed -e "s|\${USERNAME}|${USERNAME}|g" \
+        -e "s|\${USER_UID}|${USER_UID}|g" \
+        -e "s|\${USER_GID}|${USER_GID}|g" \
+        -e "s|\${WORKDIR}|${WORKDIR}|g" \
+        -e "s|\${USER_PASSWORD}|${USER_PASSWORD}|g" \
+        -e "s|\${CONTAINER_NAME}|${CONTAINER_NAME}|g" \
+        -e "s|\${PROJECT_ROOT}|${PROJECT_ROOT}|g" \
+        -e "s|\${CONTAINER_WORKDIR}|${CONTAINER_WORKDIR}|g" \
+        "$template_file" > "$output_file"
+        
+    echo "Generated: $output_file"
 }
 
 # 컨테이너 상태 확인 함수
