@@ -31,8 +31,8 @@ show_help() {
 
 직접 모듈 실행:
   각 모듈은 직접 실행할 수도 있습니다:
-  ./modules/install.sh    # install 모듈 직접 실행
-  ./modules/connect.sh    # connect 모듈 직접 실행
+  ./src/modules/install.sh    # install 모듈 직접 실행
+  ./src/modules/connect.sh    # connect 모듈 직접 실행
 
 설정 파일:
   .dockit/.env    # 사용자 설정이 저장되는 파일

@@ -3,9 +3,16 @@
 # dockit 공통 모듈
 # 모든 스크립트에서 공통으로 사용하는 함수와 변수를 정의합니다.
 
-# 이 스크립트가 있는 디렉토리를 기준으로 상대 경로 설정
-SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
+# 프로젝트 루트와 관련 경로 설정 (환경 변수 활용)
+if [ -z "$DOCKIT_ROOT" ]; then
+    # 환경 변수가 설정되지 않은 경우 (직접 실행 시)
+    SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+    MODULES_DIR=$(dirname "$SCRIPT_DIR")
+    PROJECT_ROOT=$(dirname "$MODULES_DIR")
+else
+    # 환경 변수가 설정된 경우 (dockit.sh에서 호출 시)
+    PROJECT_ROOT="$DOCKIT_ROOT"
+fi
 
 # .dockit 디렉토리 경로
 DOCKIT_DIR="$PROJECT_ROOT/.dockit"
@@ -15,7 +22,7 @@ CONFIG_FILE="$DOCKIT_DIR/.env"
 LOG_FILE="$DOCKIT_DIR/dockit.log"
 
 # 템플릿 파일 경로
-TEMPLATES_DIR="$PROJECT_ROOT/templates"
+TEMPLATES_DIR="$PROJECT_ROOT/src/templates"
 DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile.template"
 DOCKER_COMPOSE_TEMPLATE="$TEMPLATES_DIR/docker-compose.yml.template"
 
