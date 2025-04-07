@@ -18,7 +18,7 @@ show_help() {
         # 다국어 메시지 시스템 활용
         cat << EOF
 
-===== Dockit - Docker 개발 환경 도구 =====
+===== $(print_message MSG_TITLE) =====
 $(print_message MSG_WELCOME)
 
 $(print_message MSG_HELP_USAGE)
@@ -32,23 +32,23 @@ $(print_message MSG_HELP_CONNECT)
 $(print_message MSG_HELP_STATUS)
 $(print_message MSG_HELP_HELP)
 
-예제:
-  ./dockit.sh install    # 초기 설치 및 설정
-  ./dockit.sh start      # 컨테이너 시작
-  ./dockit.sh stop       # 컨테이너 정지 (상태 유지)
-  ./dockit.sh down       # 컨테이너 완전 제거
-  ./dockit.sh connect    # 컨테이너 접속
+$(print_message MSG_EXAMPLES_HEADER):
+$(print_message MSG_EXAMPLE_INSTALL)
+$(print_message MSG_EXAMPLE_START)
+$(print_message MSG_EXAMPLE_STOP)
+$(print_message MSG_EXAMPLE_DOWN)
+$(print_message MSG_EXAMPLE_CONNECT)
 
-직접 모듈 실행:
-  각 모듈은 직접 실행할 수도 있습니다:
-  ./src/modules/install.sh    # install 모듈 직접 실행
-  ./src/modules/connect.sh    # connect 모듈 직접 실행
+$(print_message MSG_DIRECT_MODULES_HEADER):
+$(print_message MSG_DIRECT_MODULES_DESC)
+$(print_message MSG_EXAMPLE_MODULE_INSTALL)
+$(print_message MSG_EXAMPLE_MODULE_CONNECT)
 
-설정 파일:
-  .dockit/.env                # 사용자 설정이 저장되는 파일
-  .dockit/docker-compose.yml  # Docker Compose 설정 파일
-  .dockit/dockit.log          # 로그 파일
-  config/settings.env         # 언어 및 기본 설정 파일
+$(print_message MSG_CONFIG_FILES_HEADER):
+$(print_message MSG_CONFIG_FILE_ENV)
+$(print_message MSG_CONFIG_FILE_COMPOSE)
+$(print_message MSG_CONFIG_FILE_LOG)
+$(print_message MSG_CONFIG_FILE_SETTINGS)
 
 =================================
 EOF

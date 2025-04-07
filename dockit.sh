@@ -26,6 +26,7 @@ if [ "$DEBUG" = "true" ]; then
     echo "MODULES_DIR=$MODULES_DIR"
     echo "TEMPLATES_DIR=$TEMPLATES_DIR"
     echo "CONFIG_DIR=$CONFIG_DIR"
+    echo "LANGUAGE=$LANGUAGE"
 fi
 
 # 공통 모듈 로드
