@@ -6,19 +6,10 @@
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 source "$SCRIPT_DIR/common.sh"
 
-# 설정 시스템 로드 (존재하는 경우)
-if [ -f "$PROJECT_ROOT/config/system.sh" ]; then
-    source "$PROJECT_ROOT/config/system.sh"
-fi
-
-# 기본 메시지 파일 로드 (메시지 시스템이 없는 경우)
-if ! type print_message &>/dev/null; then
-    # 기본적으로 한국어 메시지 사용
-    if [ -f "$PROJECT_ROOT/config/messages/ko.sh" ]; then
-        source "$PROJECT_ROOT/config/messages/ko.sh"
-    elif [ -f "$PROJECT_ROOT/config/messages/en.sh" ]; then
-        source "$PROJECT_ROOT/config/messages/en.sh"
-    fi
+# 메시지 시스템 로드
+if [ -f "$PROJECT_ROOT/config/messages/load.sh" ]; then
+    source "$PROJECT_ROOT/config/messages/load.sh"
+    load_messages
 fi
 
 # 도움말 출력 함수
