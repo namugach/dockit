@@ -1,18 +1,22 @@
 #!/bin/bash
 
 # help 모듈 - 도움말 표시
+# help module - Display help information
 
 # 공통 모듈 로드
+# Load common module
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 source "$SCRIPT_DIR/common.sh"
 
 # 메시지 시스템 로드
+# Load message system
 if [ -f "$PROJECT_ROOT/config/messages/load.sh" ]; then
     source "$PROJECT_ROOT/config/messages/load.sh"
     load_messages
 fi
 
 # 도움말 출력 함수
+# Function to display help
 show_help() {
     cat << EOF
 
@@ -53,11 +57,13 @@ EOF
 }
 
 # 메인 함수
+# Main function
 help_main() {
     show_help
 }
 
 # 직접 실행 시
+# When executed directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     help_main "$@"
 fi 

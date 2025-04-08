@@ -1,25 +1,31 @@
 #!/bin/bash
 
+# Install module - Initial installation and setup of Docker development environment
 # install 모듈 - Docker 개발 환경 초기 설치 및 설정
 
+# Load common module
 # 공통 모듈 로드
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 source "$SCRIPT_DIR/common.sh"
 
+# Define additional variables
 # 추가 변수 정의
 DOCKIT_DIR="$PROJECT_ROOT/.dockit"
 DOCKERFILE="$DOCKIT_DIR/Dockerfile"
 
+# User input function
 # 사용자 입력 함수
 get_user_input() {
     log "INFO" "사용자 입력 받는 중..."
     
+    # Load default values
     # 기본값 로드
     load_config
     
     echo -e "\n${GREEN}$MSG_WELCOME${NC}"
     echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"
     
+    # Display current settings
     # 현재 설정 표시
     echo -e "\n${YELLOW}$MSG_CURRENT_SETTINGS:${NC}"
     echo -e "$MSG_USERNAME: ${GREEN}${USERNAME:-$DEFAULT_USERNAME}${NC}"
@@ -30,6 +36,7 @@ get_user_input() {
     echo -e "$MSG_IMAGE_NAME: ${GREEN}${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}${NC}"
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}${NC}"
     
+    # Selection options
     # 선택 옵션
     echo -e "\n${BLUE}$MSG_SELECT_OPTION:${NC}"
     echo -e "${GREEN}y${NC} - $MSG_USE_DEFAULT"
@@ -40,6 +47,7 @@ get_user_input() {
     
     case $choice in
         y|Y)
+            # Use default values
             # 기본값 사용
             USERNAME="${USERNAME:-$DEFAULT_USERNAME}"
             USER_UID="${USER_UID:-$DEFAULT_UID}"
@@ -50,6 +58,7 @@ get_user_input() {
             CONTAINER_NAME="${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}"
             ;;
         n|N)
+            # Get each value from user input
             # 각 값을 사용자 입력으로 받기
             read -p "$MSG_INPUT_USERNAME (${USERNAME:-$DEFAULT_USERNAME}): " input
             USERNAME=${input:-${USERNAME:-$DEFAULT_USERNAME}}
@@ -73,17 +82,20 @@ get_user_input() {
             CONTAINER_NAME=${input:-${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}}
             ;;
         c|C)
+            # Cancel
             # 취소
             log "INFO" "$MSG_INSTALL_CANCELLED"
             exit 0
             ;;
         *)
+            # Invalid input
             # 잘못된 입력
             log "ERROR" "$MSG_INVALID_CHOICE"
             exit 1
             ;;
     esac
     
+    # Confirm final settings
     # 최종 설정 정보 확인
     echo -e "\n${YELLOW}$MSG_FINAL_SETTINGS:${NC}"
     echo -e "$MSG_USERNAME: ${GREEN}$USERNAME${NC}"
@@ -94,17 +106,21 @@ get_user_input() {
     echo -e "$MSG_IMAGE_NAME: ${GREEN}$IMAGE_NAME${NC}"
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}$CONTAINER_NAME${NC}"
     
+    # Save settings
     # 설정 저장
     save_config
 }
 
+# Create Dockerfile from template
 # Docker Compose 템플릿 파일 생성
 create_dockerfile() {
     log "INFO" "$MSG_CREATING_DOCKERFILE"
     
+    # Create necessary directories
     # 필요한 디렉토리 생성
     mkdir -p "$(dirname "$DOCKERFILE")"
     
+    # Generate Dockerfile
     # Dockerfile 생성
     process_template "$DOCKERFILE_TEMPLATE" "$DOCKERFILE"
     
@@ -116,13 +132,16 @@ create_dockerfile() {
     fi
 }
 
+# Build Docker image
 # Docker 이미지 빌드
 build_docker_image() {
     log "INFO" "$MSG_BUILDING_IMAGE: $IMAGE_NAME"
     
+    # Create temporary Dockerfile with substitutions
     # 치환된 Dockerfile 생성 (임시 파일)
     local temp_dockerfile="$PROJECT_ROOT/.dockerfile.tmp"
     
+    # Check if BASE_IMAGE is set
     # BASE_IMAGE가 설정되어 있는지 확인
     if [ -z "$BASE_IMAGE" ]; then
         log "WARNING" "$MSG_BASE_IMAGE_NOT_SET"
@@ -131,19 +150,24 @@ build_docker_image() {
     
     log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
     
+    # Check if config/system.sh exists and process_template_with_base_image function is available
     # config/system.sh가 있고 process_template_with_base_image 함수가 사용 가능한지 확인
     if [ -f "$PROJECT_ROOT/config/system.sh" ] && type process_template_with_base_image &>/dev/null; then
         log "INFO" "$MSG_MULTILANG_SETTINGS: BASE_IMAGE=$BASE_IMAGE"
         
+        # Use template processing function from multilingual settings system
         # 다국어 설정 시스템의 템플릿 처리 함수 사용
         process_template_with_base_image "$DOCKERFILE_TEMPLATE" "$temp_dockerfile"
     else
+        # Process template using traditional method
         # 기존 방식으로 템플릿 처리
         log "INFO" "$MSG_PROCESSING_TEMPLATE"
         
+        # Read template file
         # 템플릿 파일 읽기
         local template_content=$(<"$DOCKERFILE_TEMPLATE")
         
+        # Replace FROM image in first line with BASE_IMAGE and process other variables
         # 첫 줄의 FROM 이미지를 BASE_IMAGE로 교체하고 다른 변수 처리
         echo "$template_content" | \
         sed "1s|^FROM .*|FROM $BASE_IMAGE|" | \
@@ -155,6 +179,7 @@ build_docker_image() {
         > "$temp_dockerfile"
     fi
     
+    # Build image
     # 이미지 빌드
     if docker build -t "$IMAGE_NAME" -f "$temp_dockerfile" .; then
         log "SUCCESS" "$MSG_IMAGE_BUILT: $IMAGE_NAME"
@@ -167,13 +192,16 @@ build_docker_image() {
     fi
 }
 
+# Create Docker Compose file
 # Docker Compose 파일 생성
 create_docker_compose() {
     log "INFO" "$MSG_CREATING_COMPOSE"
     
+    # Create necessary directories
     # 필요한 디렉토리 생성
     mkdir -p "$(dirname "$DOCKER_COMPOSE_FILE")"
     
+    # Generate Docker Compose file
     # Docker Compose 파일 생성
     process_template "$DOCKER_COMPOSE_TEMPLATE" "$DOCKER_COMPOSE_FILE"
     
@@ -185,10 +213,12 @@ create_docker_compose() {
     fi
 }
 
+# Main function
 # 메인 함수
 install_main() {
     log "INFO" "$MSG_INSTALL_START"
     
+    # Create .dockit directory
     # .dockit 디렉토리 생성
     if [ ! -d "$DOCKIT_DIR" ]; then
         log "INFO" "$MSG_CREATING_DOCKIT_DIR"
@@ -196,6 +226,7 @@ install_main() {
         log "SUCCESS" "$MSG_DOCKIT_DIR_CREATED"
     fi
     
+    # Check and clean up old version files
     # 이전 버전의 파일이 있는지 확인하고 정리
     if [ -f "$PROJECT_ROOT/docker-tools.log" ]; then
         log "INFO" "$MSG_OLD_LOG_FOUND"
@@ -203,6 +234,7 @@ install_main() {
         log "SUCCESS" "$MSG_OLD_LOG_REMOVED"
     fi
     
+    # Move files from root to new location
     # 이전에 루트에 있던 파일들을 새 위치로 이동
     if [ -f "$PROJECT_ROOT/.env" ]; then
         log "INFO" "$MSG_MOVING_ENV"
@@ -222,18 +254,23 @@ install_main() {
         log "SUCCESS" "$MSG_LOG_MOVED"
     fi
     
+    # Get user input
     # 사용자 입력 받기
     get_user_input
     
+    # Create template files
     # 템플릿 파일 생성
     create_dockerfile
     
+    # Build Docker image
     # Docker 이미지 빌드
     build_docker_image
     
+    # Create Docker Compose file
     # Docker Compose 파일 생성
     create_docker_compose
     
+    # Ask if container should be started
     # 컨테이너 시작 여부 확인
     echo -e "\n${YELLOW}$MSG_START_CONTAINER_NOW?${NC}"
     read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
@@ -245,6 +282,7 @@ install_main() {
         if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
             log "SUCCESS" "$MSG_CONTAINER_STARTED"
             
+            # Ask if user wants to connect to container
             # 컨테이너 접속 여부 확인
             echo -e "\n${YELLOW}$MSG_CONNECT_CONTAINER_NOW?${NC}"
             read -p "$MSG_SELECT_CHOICE [Y/n]: " connect_container
@@ -252,24 +290,19 @@ install_main() {
             
             if [[ $connect_container == "y" || $connect_container == "Y" ]]; then
                 log "INFO" "$MSG_CONNECTING_CONTAINER"
-                docker exec -it "$CONTAINER_NAME" /bin/bash
-            else
-                log "INFO" "$MSG_SKIPPING_CONNECT"
-                echo -e "\n${BLUE}$MSG_CONNECT_LATER${NC} ./dockit.sh connect"
+                docker exec -it "$CONTAINER_NAME" bash
             fi
         else
             log "ERROR" "$MSG_CONTAINER_START_FAILED"
-            log "INFO" "$MSG_CHECK_DOCKER"
-            log "INFO" "$MSG_CHECK_PORTS"
-            log "INFO" "$MSG_CHECK_IMAGE"
+            return 1
         fi
-    else
-        log "INFO" "$MSG_SKIPPING_START"
-        echo -e "\n${BLUE}$MSG_START_LATER${NC} ./dockit.sh start"
     fi
+    
+    log "SUCCESS" "$MSG_INSTALL_COMPLETE"
 }
 
-# 직접 실행 시
+# Execute main function if script is run directly
+# 스크립트가 직접 실행되면 메인 함수 실행
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    install_main "$@"
+    install_main
 fi 

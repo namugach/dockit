@@ -1,7 +1,9 @@
 #!/bin/bash
 
+# 영어 메시지 정의
 # English message definitions
 
+# 공통 메시지
 # Common messages
 MSG_WELCOME="Docker Development Environment Setup"
 MSG_INPUT_DEFAULT="(Press Enter to use the default value in parentheses)"
@@ -29,6 +31,7 @@ MSG_FINAL_SETTINGS="Final Settings:"
 MSG_INSTALL_CANCELLED="Installation has been cancelled."
 MSG_INVALID_CHOICE="Invalid choice. Installation has been cancelled."
 
+# 공통 메시지
 # Common Messages
 MSG_COMMON_LOADING_CONFIG="Loading configuration file: %s"
 MSG_COMMON_CONFIG_NOT_FOUND="Configuration file not found. Using default values."
@@ -41,6 +44,7 @@ MSG_COMMON_COMPOSE_NOT_FOUND="docker-compose.yml file not found"
 MSG_COMMON_RUN_INSTALL_FIRST="Please run install command first: ./dockit.sh install"
 MSG_COMMON_DIRECT_EXECUTE_ERROR="This script cannot be executed directly. Please use it through dockit.sh"
 
+# install 모듈 메시지
 # install module messages
 MSG_INSTALL_START="Starting installation..."
 MSG_CREATING_DOCKIT_DIR="Creating .dockit directory..."
@@ -79,16 +83,19 @@ MSG_SKIPPING_CONNECT="Skipping container connection."
 MSG_CONNECT_LATER="To connect to the container later:"
 MSG_START_LATER="To start the container later:"
 
+# down 모듈 메시지
 # down module messages
 MSG_DOWN_START="Starting container removal module..."
 MSG_COMPOSE_NOT_FOUND="Docker Compose file not found."
 MSG_CONTAINER_STOPPED="Container has been removed successfully."
 MSG_CONTAINER_STOP_FAILED="Failed to remove container."
 
+# stop 모듈 메시지
 # stop module messages
 MSG_STOP_START="Starting container stop module..."
 MSG_CONTAINER_NOT_FOUND="No container to remove."
 
+# connect 모듈 메시지
 # connect module messages
 MSG_CONNECT_START="Starting container connection module..."
 MSG_CONTAINER_NOT_RUNNING="Container is not running."
@@ -96,6 +103,7 @@ MSG_START_CONTAINER_FIRST="You need to start the container first: ./dockit.sh st
 MSG_CONNECTED="Successfully connected to container."
 MSG_CONNECT_FAILED="Failed to connect to container."
 
+# status 모듈 메시지
 # status module messages
 MSG_STATUS_START="Starting status check module..."
 MSG_CONTAINER_STATUS="Container Status:"
@@ -107,19 +115,23 @@ MSG_CONTAINER_IP="IP Address"
 MSG_CONTAINER_PORTS="Ports"
 MSG_STATUS_COMPLETE="Status check completed."
 
+# start 모듈 메시지
 # start module messages
 MSG_START_START="Starting container start module..."
 MSG_CONTAINER_ALREADY_RUNNING="Container is already running."
 
+# 일반 메시지
 # General messages
 MSG_GOODBYE="Exiting Docker environment"
 
+# 상태 메시지
 # Status messages
 MSG_CONTAINER_RUNNING="Container is running"
 MSG_CONTAINER_NOT_EXIST="Container does not exist"
 MSG_IMAGE_EXIST="Docker image exists"
 MSG_IMAGE_NOT_EXIST="Docker image does not exist"
 
+# 명령어 관련 메시지
 # Command related messages
 MSG_START_CONTAINER="Starting container"
 MSG_STOP_CONTAINER="Stopping container"
@@ -130,12 +142,14 @@ MSG_INSTALLING="Performing installation"
 MSG_CMD_SUCCESS="Command executed successfully"
 MSG_CMD_FAILED="Command execution failed"
 
+# 질문 메시지
 # Question messages
 MSG_CONFIRM_STOP="Do you want to stop the running container? (y/n): "
 MSG_CONFIRM_DOWN="Do you want to completely remove the container? (y/n): "
 MSG_CONFIRM_START="Do you want to start a new container? (y/n): "
 MSG_CONFIRM_INSTALL="Do you want to proceed with installation? (y/n): "
 
+# 도움말 메시지
 # Help messages
 MSG_HELP_USAGE="Usage: dockit.sh [command]"
 MSG_HELP_COMMANDS="Available commands:"
@@ -147,6 +161,7 @@ MSG_HELP_CONNECT="  connect  - Connect to container"
 MSG_HELP_STATUS="  status   - Check container status"
 MSG_HELP_HELP="  help     - Display help"
 
+# 도움말 추가 메시지
 # Help additional messages
 MSG_TITLE="Docker Development Environment Tool"
 MSG_EXAMPLES_HEADER="Examples"
@@ -167,6 +182,7 @@ MSG_CONFIG_FILE_COMPOSE="  .dockit/docker-compose.yml  # Docker Compose configur
 MSG_CONFIG_FILE_LOG="  .dockit/dockit.log          # Log file"
 MSG_CONFIG_FILE_SETTINGS="  config/settings.env         # Language and default settings file"
 
+# 시스템 메시지
 # System Messages
 MSG_SYSTEM_DEBUG_INITIAL_LANG="===== Initial Language Settings ====="
 MSG_SYSTEM_DEBUG_LANG_VAR="Environment Variable LANGUAGE: %s"
@@ -203,6 +219,7 @@ MSG_SYSTEM_TEMPLATE_PROCESSING="Processing Template: %s -> %s"
 MSG_SYSTEM_FILE_CREATED="File created: %s"
 MSG_SYSTEM_FILE_CREATE_FAILED="Failed to create file: %s"
 
+# 디버그 테스트 메시지
 # Debug Test Messages
 MSG_SYSTEM_DEBUG_MSG_TEST="===== Message Output Test ====="
 MSG_SYSTEM_DEBUG_WELCOME="Welcome Message: %s"
