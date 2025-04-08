@@ -5,7 +5,7 @@
 
 # 공통 모듈 로드
 # Load common module
-SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
 # 메시지 시스템 로드
