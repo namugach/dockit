@@ -12,6 +12,7 @@ NC='\033[0m' # No Color
 
 # 설치 디렉토리
 # Installation directory
+PROJECT_DIR="$HOME/.local/share/dockit"
 INSTALL_DIR="$HOME/.local/bin"
 COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
 ZSH_COMPLETION_DIR="$HOME/.local/share/zsh/site-functions"
@@ -39,6 +40,18 @@ remove_dockit() {
         log_info "dockit script removed successfully."
     else
         log_warn "dockit script not found in $INSTALL_DIR"
+    fi
+}
+
+# 프로젝트 파일 제거
+# Remove project files
+remove_project() {
+    log_info "Removing project files..."
+    if [ -d "$PROJECT_DIR" ]; then
+        rm -rf "$PROJECT_DIR"
+        log_info "Project files removed successfully."
+    else
+        log_warn "Project directory not found: $PROJECT_DIR"
     fi
 }
 
@@ -118,6 +131,7 @@ main() {
     log_info "Starting dockit uninstallation..."
     
     remove_dockit
+    remove_project
     remove_completion
     remove_from_path
     cleanup_directories
