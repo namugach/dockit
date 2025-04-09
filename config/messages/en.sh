@@ -92,8 +92,11 @@ MSG_CONTAINER_STOP_FAILED="Failed to remove container."
 
 # stop 모듈 메시지
 # stop module messages
-MSG_STOP_START="Starting container stop module..."
-MSG_CONTAINER_NOT_FOUND="No container to remove."
+MSG_STOP_START="Container stop module running..."
+MSG_CONTAINER_NOT_FOUND="No container to stop."
+MSG_CONTAINER_STOPPED="Container has been successfully stopped."
+MSG_CONTAINER_STOP_FAILED="Failed to stop container."
+MSG_CONTAINER_STOPPED_INFO="Container has been stopped. To start again: ./dockit.sh start"
 
 # connect 모듈 메시지
 # connect module messages

@@ -83,6 +83,9 @@ MSG_CONTAINER_STOP_FAILED="컨테이너 제거 중 오류가 발생했습니다.
 # stop 모듈 메시지
 MSG_STOP_START="컨테이너 정지 모듈 실행 중..."
 MSG_CONTAINER_NOT_FOUND="제거할 컨테이너가 없습니다."
+MSG_CONTAINER_STOPPED="컨테이너가 성공적으로 중지되었습니다."
+MSG_CONTAINER_STOP_FAILED="컨테이너 중지 중 오류가 발생했습니다."
+MSG_CONTAINER_STOPPED_INFO="컨테이너가 중지되었습니다. 다시 시작하려면: ./dockit.sh start"
 
 # connect 모듈 메시지
 MSG_CONNECT_START="컨테이너 접속 모듈 실행 중..."

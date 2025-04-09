@@ -31,6 +31,7 @@ stop_main() {
     # Stop container
     if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" stop; then
         log "SUCCESS" "$MSG_CONTAINER_STOPPED"
+        echo -e "\n${BLUE}$MSG_CONTAINER_STOPPED_INFO${NC}"
     else
         log "ERROR" "$MSG_CONTAINER_STOP_FAILED"
         exit 1
