@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Install module - Initial installation and setup of Docker development environment
-# install 모듈 - Docker 개발 환경 초기 설치 및 설정
+# Init module - Initial setup of Docker development environment
+# init 모듈 - Docker 개발 환경 초기 설정
 
 # Load common module
 # 공통 모듈 로드
@@ -45,46 +45,46 @@ get_user_input() {
     read -p "$MSG_SELECT_CHOICE [Y/n/c]: " choice
     choice=${choice:-y}
     
-    case $choice in
+    case "$choice" in
         y|Y)
             # Use default values
             # 기본값 사용
-            USERNAME="${USERNAME:-$DEFAULT_USERNAME}"
-            USER_UID="${USER_UID:-$DEFAULT_UID}"
-            USER_GID="${USER_GID:-$DEFAULT_GID}"
-            USER_PASSWORD="${USER_PASSWORD:-$DEFAULT_PASSWORD}"
-            WORKDIR="${WORKDIR:-$DEFAULT_WORKDIR}"
-            IMAGE_NAME="${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}"
-            CONTAINER_NAME="${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}"
+            USERNAME=${USERNAME:-$DEFAULT_USERNAME}
+            USER_UID=${USER_UID:-$DEFAULT_UID}
+            USER_GID=${USER_GID:-$DEFAULT_GID}
+            USER_PASSWORD=${USER_PASSWORD:-$DEFAULT_PASSWORD}
+            WORKDIR=${WORKDIR:-$DEFAULT_WORKDIR}
+            IMAGE_NAME=${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}
+            CONTAINER_NAME=${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}
             ;;
         n|N)
-            # Get each value from user input
-            # 각 값을 사용자 입력으로 받기
-            read -p "$MSG_INPUT_USERNAME (${USERNAME:-$DEFAULT_USERNAME}): " input
+            # Get user input for each value
+            # 각 값에 대한 사용자 입력 받기
+            read -p "$MSG_INPUT_USERNAME [${USERNAME:-$DEFAULT_USERNAME}]: " input
             USERNAME=${input:-${USERNAME:-$DEFAULT_USERNAME}}
             
-            read -p "$MSG_INPUT_UID (${USER_UID:-$DEFAULT_UID}): " input
+            read -p "$MSG_INPUT_UID [${USER_UID:-$DEFAULT_UID}]: " input
             USER_UID=${input:-${USER_UID:-$DEFAULT_UID}}
             
-            read -p "$MSG_INPUT_GID (${USER_GID:-$DEFAULT_GID}): " input
+            read -p "$MSG_INPUT_GID [${USER_GID:-$DEFAULT_GID}]: " input
             USER_GID=${input:-${USER_GID:-$DEFAULT_GID}}
             
-            read -p "$MSG_INPUT_PASSWORD (${USER_PASSWORD:-$DEFAULT_PASSWORD}): " input
+            read -p "$MSG_INPUT_PASSWORD [${USER_PASSWORD:-$DEFAULT_PASSWORD}]: " input
             USER_PASSWORD=${input:-${USER_PASSWORD:-$DEFAULT_PASSWORD}}
             
-            read -p "$MSG_INPUT_WORKDIR (${WORKDIR:-$DEFAULT_WORKDIR}): " input
+            read -p "$MSG_INPUT_WORKDIR [${WORKDIR:-$DEFAULT_WORKDIR}]: " input
             WORKDIR=${input:-${WORKDIR:-$DEFAULT_WORKDIR}}
             
-            read -p "$MSG_INPUT_IMAGE_NAME (${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}): " input
+            read -p "$MSG_INPUT_IMAGE_NAME [${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}]: " input
             IMAGE_NAME=${input:-${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}}
             
-            read -p "$MSG_INPUT_CONTAINER_NAME (${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}): " input
+            read -p "$MSG_INPUT_CONTAINER_NAME [${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}]: " input
             CONTAINER_NAME=${input:-${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}}
             ;;
         c|C)
             # Cancel
             # 취소
-            log "INFO" "$MSG_INSTALL_CANCELLED"
+            log "INFO" "$MSG_INIT_CANCELLED"
             exit 0
             ;;
         *)
@@ -215,8 +215,8 @@ create_docker_compose() {
 
 # Main function
 # 메인 함수
-install_main() {
-    log "INFO" "$MSG_INSTALL_START"
+init_main() {
+    log "INFO" "$MSG_INIT_START"
     
     # Create .dockit directory
     # .dockit 디렉토리 생성
@@ -298,7 +298,7 @@ install_main() {
         fi
     fi
     
-    log "SUCCESS" "$MSG_INSTALL_COMPLETE"
+    log "SUCCESS" "$MSG_INIT_COMPLETE"
 }
 
 # Execute main function if script is run directly

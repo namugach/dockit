@@ -14,8 +14,8 @@ cd dockit
 # Make the script executable
 chmod +x dockit.sh
 
-# Run the installation
-./dockit.sh install
+# Run the initialization
+./dockit.sh init
 ```
 
 ## Language Selection

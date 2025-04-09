@@ -17,9 +17,9 @@ main() {
     shift
 
     case "$command" in
-        install)
-            source "$MODULES_DIR/install.sh"
-            install_main "$@"
+        init)
+            source "$MODULES_DIR/init.sh"
+            init_main "$@"
             ;;
         start)
             source "$MODULES_DIR/start.sh"
