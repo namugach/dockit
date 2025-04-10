@@ -25,9 +25,9 @@ get_user_input() {
     # 기본값 로드
     load_config
     
-    # Add current directory name to container name
-    # 현재 디렉토리 이름을 컨테이너 이름에 추가
-    CONTAINER_NAME="${DEFAULT_CONTAINER_NAME}-$(basename "$(pwd)")"
+    # Get relative path from project root and replace '/' with '-'
+    local rel_path=$(realpath --relative-to="$PROJECT_ROOT" "$(pwd)" | tr '/' '-')
+    CONTAINER_NAME="dockit-${rel_path}"
     
     echo -e "\n${GREEN}$MSG_WELCOME${NC}"
     echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"

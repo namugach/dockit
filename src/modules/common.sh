@@ -109,7 +109,9 @@ load_config() {
     # Set default values
     # 기본값 설정
     export IMAGE_NAME="$DEFAULT_IMAGE_NAME"
-    export CONTAINER_NAME="${DEFAULT_CONTAINER_NAME}-$(basename "$(pwd)")"
+    # Get relative path from project root and replace '/' with '-'
+    local rel_path=$(realpath --relative-to="$PROJECT_ROOT" "$(pwd)" | tr '/' '-')
+    export CONTAINER_NAME="dockit-${rel_path}"
     export USERNAME="$DEFAULT_USERNAME"
     export USER_UID="$DEFAULT_UID"
     export USER_GID="$DEFAULT_GID"
