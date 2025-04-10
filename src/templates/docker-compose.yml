@@ -9,4 +9,14 @@ services:
       - ~/.gitconfig:/home/${USERNAME}/.gitconfig
       - ~/.ssh:/home/${USERNAME}/.ssh
     stdin_open: true
-    tty: true 
+    tty: true
+    networks:
+      - ${CONTAINER_NAME}
+    labels:
+      - "com.dockit=true"
+      - "com.dockit.project=${CONTAINER_NAME}"
+
+networks:
+  ${CONTAINER_NAME}:
+    name: ${CONTAINER_NAME}
+    driver: bridge 
