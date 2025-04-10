@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 # 설치 디렉토리
 # Installation directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT_DIR="$HOME/.local/share/dockit"
+PROJECT_DIR="$(pwd)"
 INSTALL_DIR="$HOME/.local/bin"
 COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
 ZSH_COMPLETION_DIR="$HOME/.local/share/zsh/site-functions"

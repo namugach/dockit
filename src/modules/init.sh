@@ -10,8 +10,11 @@ source "$SCRIPT_DIR/common.sh"
 
 # Define additional variables
 # 추가 변수 정의
-DOCKIT_DIR="$PROJECT_ROOT/.dockit"
+DOCKIT_DIR="$(pwd)/.dockit"
 DOCKERFILE="$DOCKIT_DIR/Dockerfile"
+DOCKER_COMPOSE_FILE="$DOCKIT_DIR/docker-compose.yml"
+CONFIG_FILE="$DOCKIT_DIR/.env"
+LOG_FILE="$DOCKIT_DIR/dockit.log"
 
 # User input function
 # 사용자 입력 함수
@@ -21,6 +24,10 @@ get_user_input() {
     # Load default values
     # 기본값 로드
     load_config
+    
+    # Add current directory name to container name
+    # 현재 디렉토리 이름을 컨테이너 이름에 추가
+    CONTAINER_NAME="${DEFAULT_CONTAINER_NAME}-$(basename "$(pwd)")"
     
     echo -e "\n${GREEN}$MSG_WELCOME${NC}"
     echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"
