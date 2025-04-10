@@ -97,6 +97,24 @@ log() {
     fi
 }
 
+# Container name generation function
+# 컨테이너 이름 생성 함수
+generate_container_name() {
+    local path=$1
+    # Get full path and remove leading slash
+    local full_path=$(cd "$path" && pwd | sed 's|^/||' | tr '/' '-')
+    echo "dockit-${full_path}"
+}
+
+# Test generate_container_name function
+# generate_container_name 함수 테스트
+test_generate_container_name() {
+    echo "Testing generate_container_name function..."
+    echo "Current directory: $(pwd)"
+    echo "Generated name: $(generate_container_name "$(pwd)")"
+    echo "Testing with explicit path: $(generate_container_name "/home/hgs/work/dockit/test/c")"
+}
+
 # Configuration loading function
 # 설정 파일 로드 함수
 load_config() {
@@ -109,9 +127,7 @@ load_config() {
     # Set default values
     # 기본값 설정
     export IMAGE_NAME="$DEFAULT_IMAGE_NAME"
-    # Get full path and replace '/' with '-'
-    local full_path=$(realpath "$(pwd)" | tr '/' '-')
-    export CONTAINER_NAME="dockit-${full_path}"
+    export CONTAINER_NAME=$(generate_container_name "$(pwd)")
     export USERNAME="$DEFAULT_USERNAME"
     export USER_UID="$DEFAULT_UID"
     export USER_GID="$DEFAULT_GID"
@@ -231,8 +247,8 @@ check_docker_compose_file() {
 # Help message for direct execution
 # 직접 실행 시 헬프 메시지
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    echo "$MSG_COMMON_DIRECT_EXECUTE_ERROR"
-    exit 1
+    test_generate_container_name
+    exit 0
 fi
 
 # Initialize

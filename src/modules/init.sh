@@ -25,10 +25,6 @@ get_user_input() {
     # 기본값 로드
     load_config
     
-    # Get full path and replace '/' with '-'
-    local full_path=$(realpath "$(pwd)" | tr '/' '-')
-    CONTAINER_NAME="dockit-${full_path}"
-    
     echo -e "\n${GREEN}$MSG_WELCOME${NC}"
     echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"
     
@@ -41,7 +37,7 @@ get_user_input() {
     echo -e "$MSG_PASSWORD: ${GREEN}${USER_PASSWORD:-$DEFAULT_PASSWORD}${NC}"
     echo -e "$MSG_WORKDIR: ${GREEN}${WORKDIR:-$DEFAULT_WORKDIR}${NC}"
     echo -e "$MSG_IMAGE_NAME: ${GREEN}${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}${NC}"
-    echo -e "$MSG_CONTAINER_NAME: ${GREEN}${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}${NC}"
+    echo -e "$MSG_CONTAINER_NAME: ${GREEN}${CONTAINER_NAME}${NC}"
     
     # Selection options
     # 선택 옵션
