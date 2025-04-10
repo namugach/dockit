@@ -5,7 +5,7 @@ services:
     image: ${IMAGE_NAME}
     container_name: ${CONTAINER_NAME}
     volumes:
-      - ${PROJECT_ROOT}:${CONTAINER_WORKDIR}
+      - ${PWD}:${CONTAINER_WORKDIR}
       - ~/.gitconfig:/home/${USERNAME}/.gitconfig
       - ~/.ssh:/home/${USERNAME}/.ssh
     stdin_open: true
