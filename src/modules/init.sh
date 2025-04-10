@@ -25,9 +25,9 @@ get_user_input() {
     # 기본값 로드
     load_config
     
-    # Get relative path from project root and replace '/' with '-'
-    local rel_path=$(realpath --relative-to="$PROJECT_ROOT" "$(pwd)" | tr '/' '-')
-    CONTAINER_NAME="dockit-${rel_path}"
+    # Get full path and replace '/' with '-'
+    local full_path=$(realpath "$(pwd)" | tr '/' '-')
+    CONTAINER_NAME="dockit-${full_path}"
     
     echo -e "\n${GREEN}$MSG_WELCOME${NC}"
     echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"
