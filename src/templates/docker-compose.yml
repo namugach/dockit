@@ -1,5 +1,5 @@
 version: '3.8'
-
+name: ${CONTAINER_NAME}
 services:
   dev:
     image: ${IMAGE_NAME}
