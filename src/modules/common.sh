@@ -70,21 +70,19 @@ log() {
     local message="$2"
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     
-    # Create .dockit directory if it doesn't exist
-    # .dockit 디렉토리가 없으면 생성
-    if [ ! -d "$CONFIG_DIR" ]; then
-        mkdir -p "$CONFIG_DIR"
+    # Only write to log file if .dockit directory exists
+    # .dockit 디렉토리가 있을 때만 로그 파일에 기록
+    if [ -d "$CONFIG_DIR" ]; then
+        # Create log file if it doesn't exist
+        # 로그 파일이 없으면 생성
+        if [ ! -f "$LOG_FILE" ]; then
+            touch "$LOG_FILE"
+        fi
+        
+        # Write all logs to file
+        # 모든 로그는 파일에 기록
+        echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
     fi
-    
-    # Create log file if it doesn't exist
-    # 로그 파일이 없으면 생성
-    if [ ! -f "$LOG_FILE" ]; then
-        touch "$LOG_FILE"
-    fi
-    
-    # Write all logs to file
-    # 모든 로그는 파일에 기록
-    echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
     
     # Display only ERROR, WARNING, SUCCESS on screen
     # 화면에는 ERROR, WARNING, SUCCESS만 표시
@@ -122,6 +120,14 @@ load_config() {
     # 이미 설정이 로드되었는지 확인
     if [ -n "$CONFIG_LOADED" ]; then
         return 0
+    fi
+
+    # init 명령어가 아닐 경우에만 유효성 검사 실행
+    # Run validity check only if not init command
+    if [[ "$1" != "init" ]]; then
+        if ! check_dockit_validity; then
+            return 1
+        fi
     fi
 
     # Set default values
@@ -238,19 +244,46 @@ check_container_status() {
 check_docker_compose_file() {
     if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
         log "ERROR" "$MSG_COMMON_COMPOSE_NOT_FOUND"
-        log "INFO" "$MSG_COMMON_RUN_INSTALL_FIRST"
+        log "INFO" "$MSG_COMMON_RUN_INIT_FIRST"
         return 1
     fi
     return 0
 }
 
-# Help message for direct execution
-# 직접 실행 시 헬프 메시지
+# Check dockit directory validity
+# dockit 디렉토리 유효성 검사
+check_dockit_validity() {
+    local dockit_dir=".dockit"
+    
+    # Check if .dockit directory exists first
+    # 먼저 .dockit 디렉토리가 있는지 확인
+    if [ ! -d "$dockit_dir" ]; then
+        log "ERROR" "dockit이 초기화되지 않았습니다. (.dockit 디렉토리가 없습니다)"
+        log "INFO" "먼저 init 명령을 실행하세요: dockit init"
+        exit 1
+    fi
+    
+    # Only check files if directory exists
+    # 디렉토리가 있을 때만 파일 확인
+    local required_files=("docker-compose.yml" "Dockerfile" ".env")
+    for file in "${required_files[@]}"; do
+        if [ ! -f "$dockit_dir/$file" ]; then
+            log "ERROR" "dockit이 올바르게 초기화되지 않았습니다.. ($file 파일이 없습니다)"
+            log "INFO" "먼저 init 명령을 실행하세요: dockit init"
+            exit 1
+        fi
+    done
+    
+    return 0
+}
+
+# Initialize with current command
+# 현재 명령어로 초기화
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     test_generate_container_name
     exit 0
-fi
-
-# Initialize
-# 초기화
-load_config 
+else
+    # Get the current command from the parent script
+    CURRENT_COMMAND=$(basename "${BASH_SOURCE[1]}" .sh)
+    load_config "$CURRENT_COMMAND"
+fi 

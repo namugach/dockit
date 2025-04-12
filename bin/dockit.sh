@@ -6,8 +6,8 @@
 # 스크립트 디렉토리 설정
 # Script directory setup
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-    MODULES_DIR="$SCRIPT_DIR/src/modules"
-    CONFIG_DIR="$SCRIPT_DIR/config"
+MODULES_DIR="$SCRIPT_DIR/src/modules"
+CONFIG_DIR="$SCRIPT_DIR/config"
 
 # 공통 모듈 로드
 # Load common module
@@ -18,6 +18,22 @@ source "$MODULES_DIR/common.sh"
 main() {
     local command="$1"
     shift
+
+    # 명령어가 비어있을 때만 도움말 표시
+    # Show help only when command is empty
+    if [[ -z "$command" ]]; then
+        source "$MODULES_DIR/help.sh"
+        show_help
+        exit 0
+    fi
+
+    # init과 help를 제외한 모든 명령어에 대해 유효성 검사
+    # Check validity for all commands except init and help
+    if [[ "$command" != "init" ]] && [[ "$command" != "help" ]]; then
+        if ! check_dockit_validity; then
+            exit 1
+        fi
+    fi
 
     case "$command" in
         init)
@@ -44,7 +60,11 @@ main() {
             source "$MODULES_DIR/status.sh"
             status_main "$@"
             ;;
-        help|*)
+        help)
+            source "$MODULES_DIR/help.sh"
+            show_help
+            ;;
+        *)
             source "$MODULES_DIR/help.sh"
             show_help
             ;;
