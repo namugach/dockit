@@ -11,12 +11,27 @@ Dockit is a modular shell script tool for quickly setting up and managing develo
 git clone https://github.com/yourusername/dockit.git
 cd dockit
 
-# Make the script executable
-chmod +x dockit.sh
+# Install Dockit to your system
+./bin/install.sh
 
-# Run the initialization
-./dockit.sh init
+# Initialize a new development environment
+dockit init
 ```
+
+This will install Dockit to your system and make the `dockit` command available in your path. After installation, you can use Dockit from any directory.
+
+## Uninstallation
+
+To remove Dockit from your system:
+
+```bash
+./bin/uninstall.sh
+```
+
+## Documentation
+
+- [English Manual](docs/en/MANUAL.md) - Detailed usage instructions
+- [한국어 메뉴얼](docs/ko/MANUAL.md) - 자세한 사용 방법
 
 ## Language Selection
 
@@ -33,6 +48,16 @@ chmod +x dockit.sh
 - Modular design for easy extension
 - Clean project structure
 - Multi-language support (English, Korean)
+
+## Commands
+
+- `init`: Initialize and configure the development environment
+- `start`: Start the container
+- `stop`: Stop the container (preserving state)
+- `down`: Remove the container completely
+- `connect`: Connect to a running container
+- `status`: Check container status
+- `help`: Display help information
 
 ## License
 

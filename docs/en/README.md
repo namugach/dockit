@@ -1,6 +1,6 @@
 # Dockit - Docker Development Environment Tool
 
-[English](docs/en/README.md) | [한국어](docs/ko/README.md)
+[English](../../docs/en/README.md) | [한국어](../../docs/ko/README.md)
 
 Dockit is a modular shell script tool for quickly setting up and managing development environments using Docker.
 
@@ -11,19 +11,28 @@ Dockit is a modular shell script tool for quickly setting up and managing develo
 git clone https://github.com/yourusername/dockit.git
 cd dockit
 
-# Make the script executable
-chmod +x dockit.sh
+# Install Dockit to your system
+./bin/install.sh
 
-# Run the initialization
-./dockit.sh init
+# Initialize a new development environment
+dockit init
 ```
 
-## Language Selection
+This will install Dockit to your system and make the `dockit` command available in your path. After installation, you can use Dockit from any directory.
 
-- [English Documentation](docs/en/README.md)
-- [한국어 문서](docs/ko/README.md)
+## Uninstallation
 
-## Features
+To remove Dockit from your system:
+
+```bash
+./bin/uninstall.sh
+```
+
+## Documentation
+
+- [Detailed Manual](./MANUAL.md) - Complete guide to all Dockit features
+
+## Key Features
 
 - Docker development environment installation and configuration
 - Container start/stop/remove management
@@ -33,6 +42,31 @@ chmod +x dockit.sh
 - Modular design for easy extension
 - Clean project structure
 - Multi-language support (English, Korean)
+
+## Commands
+
+Dockit provides the following main commands:
+
+- `init`: Initialize and configure the development environment
+- `start`: Start the container
+- `stop`: Stop the container (preserving state)
+- `down`: Remove the container completely
+- `connect`: Connect to a running container
+- `status`: Check container status
+- `help`: Display help information
+
+## Project Structure
+
+```
+dockit/
+├── bin/             # Executable scripts
+├── src/             # Source code
+│   ├── modules/     # Function-specific modules
+│   └── templates/   # Dockerfile and docker-compose.yml templates
+├── config/          # Configuration files
+│   └── messages/    # Multilingual message files
+└── docs/            # Documentation files
+```
 
 ## License
 

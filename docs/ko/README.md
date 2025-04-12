@@ -1,39 +1,73 @@
-# Dockit - Docker Development Environment Tool
+# Dockit - Docker 개발 환경 도구
 
-[English](docs/en/README.md) | [한국어](docs/ko/README.md)
+[English](../../docs/en/README.md) | [한국어](../../docs/ko/README.md)
 
-Dockit is a modular shell script tool for quickly setting up and managing development environments using Docker.
+Dockit은 Docker를 사용하여 개발 환경을 빠르게 설정하고 관리하기 위한 모듈식 쉘 스크립트 도구입니다.
 
-## Quick Start
+## 빠른 시작
 
 ```bash
-# Clone the repository
+# 저장소 복제
 git clone https://github.com/yourusername/dockit.git
 cd dockit
 
-# Make the script executable
-chmod +x dockit.sh
+# Dockit을 시스템에 설치
+./bin/install.sh
 
-# Run the initialization
-./dockit.sh init
+# 새 개발 환경 초기화
+dockit init
 ```
 
-## Language Selection
+이 명령어는 Dockit을 시스템에 설치하고 `dockit` 명령을 경로에 추가합니다. 설치 후에는 어떤 디렉토리에서든 Dockit을 사용할 수 있습니다.
 
-- [English Documentation](docs/en/README.md)
-- [한국어 문서](docs/ko/README.md)
+## 제거하기
 
-## Features
+Dockit을 시스템에서 제거하려면:
 
-- Docker development environment installation and configuration
-- Container start/stop/remove management
-- Container access and status checking
-- Automatic application of current user settings (UID/GID) to container
-- Host-container volume mount support
-- Modular design for easy extension
-- Clean project structure
-- Multi-language support (English, Korean)
+```bash
+./bin/uninstall.sh
+```
 
-## License
+## 문서
+
+- [자세한 메뉴얼](./MANUAL.md) - Dockit의 모든 기능에 대한 상세 설명
+
+## 주요 기능
+
+- Docker 개발 환경 설치 및 구성
+- 컨테이너 시작/정지/제거 관리
+- 컨테이너 접속 및 상태 확인
+- 현재 사용자 설정(UID/GID)을 컨테이너에 자동 적용
+- 호스트-컨테이너 볼륨 마운트 지원
+- 쉬운 확장을 위한 모듈식 설계
+- 깔끔한 프로젝트 구조
+- 다국어 지원 (영어, 한국어)
+
+## 명령어
+
+다음은 Dockit에서 사용할 수 있는 주요 명령어입니다:
+
+- `init`: 개발 환경 초기화 및 설정
+- `start`: 컨테이너 시작
+- `stop`: 컨테이너 정지 (상태 유지)
+- `down`: 컨테이너 완전 제거
+- `connect`: 실행 중인 컨테이너에 접속
+- `status`: 컨테이너 상태 확인
+- `help`: 도움말 표시
+
+## 프로젝트 구조
+
+```
+dockit/
+├── bin/             # 실행 스크립트
+├── src/             # 소스 코드
+│   ├── modules/     # 기능별 모듈
+│   └── templates/   # Dockerfile 및 docker-compose.yml 템플릿
+├── config/          # 설정 파일
+│   └── messages/    # 다국어 메시지 파일
+└── docs/            # 문서 파일
+```
+
+## 라이센스
 
 MIT License 
