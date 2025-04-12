@@ -15,6 +15,15 @@ if [ -f "$PROJECT_ROOT/config/messages/load.sh" ]; then
     load_messages
 fi
 
+# 버전 정보 로드
+# Load version information
+VERSION_FILE="$PROJECT_ROOT/bin/VERSION"
+if [ -f "$VERSION_FILE" ]; then
+    VERSION=$(cat "$VERSION_FILE")
+else
+    VERSION="unknown"
+fi
+
 # 도움말 출력 함수
 # Function to display help
 show_help() {
@@ -42,6 +51,11 @@ $MSG_EXAMPLE_STOP
 $MSG_EXAMPLE_DOWN
 $MSG_EXAMPLE_CONNECT
 
+$MSG_DIRECT_MODULES_HEADER:
+$MSG_DIRECT_MODULES_DESC
+$MSG_EXAMPLE_MODULE_INIT
+$MSG_EXAMPLE_MODULE_CONNECT
+
 $MSG_CONFIG_FILES_HEADER:
 $MSG_CONFIG_FILE_ENV
 $MSG_CONFIG_FILE_COMPOSE
@@ -49,6 +63,8 @@ $MSG_CONFIG_FILE_LOG
 $MSG_CONFIG_FILE_SETTINGS
 
 =================================
+
+Dockit v$VERSION
 EOF
 }
 
