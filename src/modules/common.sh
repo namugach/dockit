@@ -244,7 +244,7 @@ check_container_status() {
 check_docker_compose_file() {
     if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
         log "ERROR" "$MSG_COMMON_COMPOSE_NOT_FOUND"
-        log "INFO" "$MSG_COMMON_RUN_INIT_FIRST"
+        log "INFO" "$MSG_COMMON_NOT_INITIALIZED"
         return 1
     fi
     return 0
@@ -265,7 +265,7 @@ check_dockit_validity() {
     # 먼저 .dockit 디렉토리가 있는지 확인
     if [ ! -d "$dockit_dir" ]; then
         log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
-        log "INFO" "$MSG_COMMON_RUN_INIT_FIRST"
+        log "INFO" "$MSG_COMMON_NOT_INITIALIZED"
         exit 1
     fi
     
@@ -274,8 +274,8 @@ check_dockit_validity() {
     local required_files=("docker-compose.yml" "Dockerfile" ".env")
     for file in "${required_files[@]}"; do
         if [ ! -f "$dockit_dir/$file" ]; then
-            log "ERROR" "$MSG_COMMON_NOT_PROPERLY_INITIALIZED"
-            log "INFO" "$MSG_COMMON_RUN_INIT_FIRST"
+            log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
+            log "INFO" "$MSG_COMMON_INIT_REQUIRED"
             exit 1
         fi
     done

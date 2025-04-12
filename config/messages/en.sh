@@ -41,9 +41,8 @@ MSG_COMMON_CONTAINER_RUNNING="Container is running: %s"
 MSG_COMMON_CONTAINER_STOPPED="Container is stopped: %s"
 MSG_COMMON_CONTAINER_NOT_FOUND="Container does not exist: %s"
 MSG_COMMON_COMPOSE_NOT_FOUND="docker-compose.yml file not found"
-MSG_COMMON_RUN_INIT_FIRST="Please run init command first: ./dockit.sh init"
 MSG_COMMON_DIRECT_EXECUTE_ERROR="This script cannot be executed directly. Please use it through dockit.sh"
-MSG_COMMON_NOT_INITIALIZED="dockit is not initialized. (.dockit directory does not exist)"
+MSG_COMMON_NOT_INITIALIZED="Initialization required. Please run init command: \n\ndockit.sh init"
 
 # init 모듈 메시지
 # init module messages
