@@ -101,9 +101,11 @@ MSG_CONTAINER_STOPPED_INFO="Container has been stopped. To start again: dockit s
 
 # connect 모듈 메시지
 # connect module messages
-MSG_CONNECT_START="Starting container connection module..."
+MSG_CONNECT_START="Running connect module..."
 MSG_CONTAINER_NOT_RUNNING="Container is not running."
-MSG_START_CONTAINER_FIRST="You need to start the container first: dockit start"
+MSG_START_CONTAINER_FIRST="You need to start the container first:"
+MSG_WANT_START_CONTAINER="Do you want to start the container now?"
+MSG_START_CANCELLED="Container start cancelled."
 MSG_CONNECTED="Successfully connected to container."
 MSG_CONNECT_FAILED="Failed to connect to container."
 

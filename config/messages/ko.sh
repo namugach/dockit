@@ -89,7 +89,9 @@ MSG_CONTAINER_STOPPED_INFO="컨테이너가 중지되었습니다. 다시 시작
 # connect 모듈 메시지
 MSG_CONNECT_START="컨테이너 접속 모듈 실행 중..."
 MSG_CONTAINER_NOT_RUNNING="컨테이너가 실행 중이지 않습니다."
-MSG_START_CONTAINER_FIRST="먼저 컨테이너를 시작해야 합니다: dockit start"
+MSG_START_CONTAINER_FIRST="먼저 컨테이너를 시작해야 합니다:"
+MSG_WANT_START_CONTAINER="컨테이너를 지금 시작할까요?"
+MSG_START_CANCELLED="컨테이너 시작이 취소되었습니다."
 MSG_CONNECTED="컨테이너에 성공적으로 접속했습니다."
 MSG_CONNECT_FAILED="컨테이너 접속 중 오류가 발생했습니다."
 

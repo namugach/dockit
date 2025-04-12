@@ -24,11 +24,12 @@ connect_main() {
         exit 1
     fi
     
-    # 컨테이너 상태 확인
-    # Check container status
+    # 컨테이너 존재 여부 확인
+    # Check if container exists
     if ! docker container inspect "$CONTAINER_NAME" &>/dev/null; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
-        log "INFO" "$MSG_START_CONTAINER_FIRST"
+        echo -e "\n${YELLOW}$MSG_START_CONTAINER_FIRST${NC}"
+        echo -e "${BLUE}dockit start${NC}"
         exit 1
     fi
     
@@ -36,8 +37,28 @@ connect_main() {
     # Check if container is running
     if [ "$(docker container inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" != "true" ]; then
         log "WARNING" "$MSG_CONTAINER_NOT_RUNNING"
-        log "INFO" "$MSG_START_CONTAINER_FIRST"
-        exit 1
+        
+        # 컨테이너 시작 여부 확인
+        # Ask if container should be started
+        echo -e "\n${YELLOW}$MSG_WANT_START_CONTAINER${NC}"
+        read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
+        start_container=${start_container:-y}
+        
+        if [[ $start_container == "y" || $start_container == "Y" ]]; then
+            log "INFO" "$MSG_STARTING_CONTAINER"
+            
+            # 컨테이너 시작
+            # Start container
+            if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" start; then
+                log "SUCCESS" "$MSG_CONTAINER_STARTED"
+            else
+                log "ERROR" "$MSG_CONTAINER_START_FAILED"
+                exit 1
+            fi
+        else
+            log "INFO" "$MSG_START_CANCELLED"
+            exit 0
+        fi
     fi
     
     # 컨테이너 접속
