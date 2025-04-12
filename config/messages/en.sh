@@ -41,8 +41,7 @@ MSG_COMMON_CONTAINER_RUNNING="Container is running: %s"
 MSG_COMMON_CONTAINER_STOPPED="Container is stopped: %s"
 MSG_COMMON_CONTAINER_NOT_FOUND="Container does not exist: %s"
 MSG_COMMON_COMPOSE_NOT_FOUND="docker-compose.yml file not found"
-MSG_COMMON_DIRECT_EXECUTE_ERROR="This script cannot be executed directly. Please use it through dockit.sh"
-MSG_COMMON_NOT_INITIALIZED="Initialization required. Please run init command: \n\ndockit.sh init"
+MSG_COMMON_NOT_INITIALIZED="Initialization required. Please run init command: \n\ndockit init"
 
 # init 모듈 메시지
 # init module messages
@@ -96,13 +95,13 @@ MSG_STOP_START="Container stop module running..."
 MSG_CONTAINER_NOT_FOUND="No container to stop."
 MSG_CONTAINER_STOPPED="Container has been successfully stopped."
 MSG_CONTAINER_STOP_FAILED="Failed to stop container."
-MSG_CONTAINER_STOPPED_INFO="Container has been stopped. To start again: ./dockit.sh start"
+MSG_CONTAINER_STOPPED_INFO="Container has been stopped. To start again: ./dockit start"
 
 # connect 모듈 메시지
 # connect module messages
 MSG_CONNECT_START="Starting container connection module..."
 MSG_CONTAINER_NOT_RUNNING="Container is not running."
-MSG_START_CONTAINER_FIRST="You need to start the container first: ./dockit.sh start"
+MSG_START_CONTAINER_FIRST="You need to start the container first: ./dockit start"
 MSG_CONNECTED="Successfully connected to container."
 MSG_CONNECT_FAILED="Failed to connect to container."
 
@@ -154,7 +153,7 @@ MSG_CONFIRM_INIT="Do you want to proceed with initialization? (y/n): "
 
 # 도움말 메시지
 # Help messages
-MSG_HELP_USAGE="Usage: dockit.sh [command]"
+MSG_HELP_USAGE="Usage: dockit [command]"
 MSG_HELP_COMMANDS="Available commands:"
 MSG_HELP_INIT="  init     - Initialize Docker development environment"
 MSG_HELP_START="  start    - Start container"
@@ -169,16 +168,11 @@ MSG_HELP_VERSION="  version  - Display version information"
 # Help additional messages
 MSG_TITLE="Docker Development Environment Tool"
 MSG_EXAMPLES_HEADER="Examples"
-MSG_EXAMPLE_INIT="  ./dockit.sh init      # Initial setup and configuration"
-MSG_EXAMPLE_START="  ./dockit.sh start    # Start container"
-MSG_EXAMPLE_STOP="  ./dockit.sh stop     # Stop container (preserves state)"
-MSG_EXAMPLE_DOWN="  ./dockit.sh down     # Remove container completely"
-MSG_EXAMPLE_CONNECT="  ./dockit.sh connect  # Connect to container"
-
-MSG_DIRECT_MODULES_HEADER="Direct Module Execution"
-MSG_DIRECT_MODULES_DESC="  Each module can be executed directly:"
-MSG_EXAMPLE_MODULE_INIT="  ./src/modules/init.sh    # Run init module directly"
-MSG_EXAMPLE_MODULE_CONNECT="  ./src/modules/connect.sh    # Run connect module directly"
+MSG_EXAMPLE_INIT="  dockit init      # Initial setup and configuration"
+MSG_EXAMPLE_START="  dockit start    # Start container"
+MSG_EXAMPLE_STOP="  dockit stop     # Stop container (preserves state)"
+MSG_EXAMPLE_DOWN="  dockit down     # Remove container completely"
+MSG_EXAMPLE_CONNECT="  dockit connect  # Connect to container"
 
 MSG_CONFIG_FILES_HEADER="Configuration Files"
 MSG_CONFIG_FILE_ENV="  .dockit/.env                # User settings file"

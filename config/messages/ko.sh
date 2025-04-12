@@ -36,7 +36,6 @@ MSG_COMMON_CONTAINER_RUNNING="컨테이너가 실행 중입니다: %s"
 MSG_COMMON_CONTAINER_STOPPED="컨테이너가 중지되었습니다: %s"
 MSG_COMMON_CONTAINER_NOT_FOUND="컨테이너가 존재하지 않습니다: %s"
 MSG_COMMON_COMPOSE_NOT_FOUND="docker-compose.yml 파일을 찾을 수 없습니다"
-MSG_COMMON_DIRECT_EXECUTE_ERROR="이 스크립트는 직접 실행할 수 없습니다. dockit.sh를 통해 사용하세요."
 MSG_COMMON_NOT_INITIALIZED="초기화가 필요합니다. init 명령을 실행하세요: \n\ndockit init"
 
 # init 모듈 메시지
@@ -85,12 +84,12 @@ MSG_STOP_START="컨테이너 정지 모듈 실행 중..."
 MSG_CONTAINER_NOT_FOUND="제거할 컨테이너가 없습니다."
 MSG_CONTAINER_STOPPED="컨테이너가 성공적으로 중지되었습니다."
 MSG_CONTAINER_STOP_FAILED="컨테이너 중지 중 오류가 발생했습니다."
-MSG_CONTAINER_STOPPED_INFO="컨테이너가 중지되었습니다. 다시 시작하려면: ./dockit.sh start"
+MSG_CONTAINER_STOPPED_INFO="컨테이너가 중지되었습니다. 다시 시작하려면: ./dockit start"
 
 # connect 모듈 메시지
 MSG_CONNECT_START="컨테이너 접속 모듈 실행 중..."
 MSG_CONTAINER_NOT_RUNNING="컨테이너가 실행 중이지 않습니다."
-MSG_START_CONTAINER_FIRST="먼저 컨테이너를 시작해야 합니다: ./dockit.sh start"
+MSG_START_CONTAINER_FIRST="먼저 컨테이너를 시작해야 합니다: ./dockit start"
 MSG_CONNECTED="컨테이너에 성공적으로 접속했습니다."
 MSG_CONNECT_FAILED="컨테이너 접속 중 오류가 발생했습니다."
 
@@ -135,7 +134,7 @@ MSG_CONFIRM_START="새 컨테이너를 시작하시겠습니까? (y/n): "
 MSG_CONFIRM_INIT="초기화를 진행하시겠습니까? (y/n): "
 
 # 도움말 메시지
-MSG_HELP_USAGE="사용법: dockit.sh [명령어]"
+MSG_HELP_USAGE="사용법: dockit [명령어]"
 MSG_HELP_COMMANDS="사용 가능한 명령어:"
 MSG_HELP_INIT="  init     - Docker 개발 환경 초기화"
 MSG_HELP_START="  start    - 컨테이너 시작"
@@ -149,16 +148,11 @@ MSG_HELP_VERSION="  version  - 버전 정보 표시"
 # 도움말 추가 메시지
 MSG_TITLE="Docker 개발 환경 도구"
 MSG_EXAMPLES_HEADER="예제"
-MSG_EXAMPLE_INIT="  ./dockit.sh init      # 초기 설정 및 환경 구성"
-MSG_EXAMPLE_START="  ./dockit.sh start    # 컨테이너 시작"
-MSG_EXAMPLE_STOP="  ./dockit.sh stop     # 컨테이너 정지 (상태 유지)"
-MSG_EXAMPLE_DOWN="  ./dockit.sh down     # 컨테이너 완전 제거"
-MSG_EXAMPLE_CONNECT="  ./dockit.sh connect  # 컨테이너 접속"
-
-MSG_DIRECT_MODULES_HEADER="직접 모듈 실행"
-MSG_DIRECT_MODULES_DESC="  각 모듈은 직접 실행할 수도 있습니다:"
-MSG_EXAMPLE_MODULE_INIT="  ./src/modules/init.sh    # init 모듈 직접 실행"
-MSG_EXAMPLE_MODULE_CONNECT="  ./src/modules/connect.sh    # connect 모듈 직접 실행"
+MSG_EXAMPLE_INIT="  dockit init      # 초기 설정 및 환경 구성"
+MSG_EXAMPLE_START="  dockit start    # 컨테이너 시작"
+MSG_EXAMPLE_STOP="  dockit stop     # 컨테이너 정지 (상태 유지)"
+MSG_EXAMPLE_DOWN="  dockit down     # 컨테이너 완전 제거"
+MSG_EXAMPLE_CONNECT="  dockit connect  # 컨테이너 접속"
 
 MSG_CONFIG_FILES_HEADER="설정 파일"
 MSG_CONFIG_FILE_ENV="  .dockit/.env                # 사용자 설정이 저장되는 파일"
