@@ -162,7 +162,8 @@ MSG_HELP_STOP="  stop     - Stop container (preserves state)"
 MSG_HELP_DOWN="  down     - Remove container completely"
 MSG_HELP_CONNECT="  connect  - Connect to container"
 MSG_HELP_STATUS="  status   - Check container status"
-MSG_HELP_HELP="  help     - Display help"
+MSG_HELP_HELP="  help     - Display this help"
+MSG_HELP_VERSION="  version  - Display version information"
 
 # 도움말 추가 메시지
 # Help additional messages

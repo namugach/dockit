@@ -2,6 +2,9 @@
 
 [English](docs/en/README.md) | [한국어](docs/ko/README.md)
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](docs/meta/VERSION)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](docs/meta/LICENSE)
+
 Dockit is a modular shell script tool for quickly setting up and managing development environments using Docker.
 
 ## Quick Start
@@ -32,6 +35,8 @@ To remove Dockit from your system:
 
 - [English Manual](docs/en/MANUAL.md) - Detailed usage instructions
 - [한국어 메뉴얼](docs/ko/MANUAL.md) - 자세한 사용 방법
+- [Changelog](docs/meta/CHANGELOG.md) - Version history and changes
+- [Project Description](docs/meta/DESCRIPTION.md) - Detailed project description
 
 ## Language Selection
 

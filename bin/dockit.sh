@@ -9,6 +9,23 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODULES_DIR="$SCRIPT_DIR/src/modules"
 CONFIG_DIR="$SCRIPT_DIR/config"
 
+# 버전 정보 로드
+# Load version information
+VERSION_FILE="$(dirname "${BASH_SOURCE[0]}")/VERSION"
+if [ -f "$VERSION_FILE" ]; then
+    VERSION=$(cat "$VERSION_FILE")
+else
+    VERSION="unknown"
+fi
+
+# 버전 표시 함수
+# Display version function
+show_version() {
+    echo "Dockit version $VERSION"
+    echo "Copyright (c) $(date +%Y)"
+    echo "MIT License"
+}
+
 # 메인 함수
 # Main function
 main() {
@@ -20,6 +37,13 @@ main() {
     if [[ -z "$command" ]]; then
         source "$MODULES_DIR/help.sh"
         show_help
+        exit 0
+    fi
+
+    # version 명령어 처리
+    # Handle version command
+    if [[ "$command" == "version" ]]; then
+        show_version
         exit 0
     fi
 

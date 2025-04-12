@@ -144,6 +144,7 @@ MSG_HELP_DOWN="  down     - 컨테이너 완전히 제거"
 MSG_HELP_CONNECT="  connect  - 컨테이너에 접속"
 MSG_HELP_STATUS="  status   - 컨테이너 상태 확인"
 MSG_HELP_HELP="  help     - 도움말 표시"
+MSG_HELP_VERSION="  version  - 버전 정보 표시"
 
 # 도움말 추가 메시지
 MSG_TITLE="Docker 개발 환경 도구"
