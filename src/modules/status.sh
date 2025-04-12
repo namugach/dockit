@@ -24,10 +24,22 @@ status_main() {
         exit 1
     fi
     
+    # 프로젝트 dockit 설정 정보 출력
+    # Display project dockit settings
+    echo -e "\n${YELLOW}$MSG_STATUS_PROJECT_CONFIG:${NC}"
+    echo -e "$MSG_STATUS_VERSION: ${GREEN}${DOCKIT_VERSION:-알 수 없음}${NC}"
+    echo -e "$MSG_STATUS_IMAGE_NAME: ${GREEN}${IMAGE_NAME}${NC}"
+    echo -e "$MSG_STATUS_CONTAINER_NAME: ${GREEN}${CONTAINER_NAME}${NC}"
+    echo -e "$MSG_STATUS_USERNAME: ${GREEN}${USERNAME}${NC}"
+    echo -e "$MSG_STATUS_USER_UID: ${GREEN}${USER_UID}${NC}"
+    echo -e "$MSG_STATUS_USER_GID: ${GREEN}${USER_GID}${NC}"
+    echo -e "$MSG_STATUS_WORKDIR: ${GREEN}${WORKDIR}${NC}"
+    
     # 컨테이너 상태 확인
     # Check container status
     if ! docker container inspect "$CONTAINER_NAME" &>/dev/null; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
+        log "SUCCESS" "$MSG_STATUS_COMPLETE"
         exit 0
     fi
     

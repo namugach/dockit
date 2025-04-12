@@ -42,6 +42,8 @@ MSG_COMMON_CONTAINER_STOPPED="Container is stopped: %s"
 MSG_COMMON_CONTAINER_NOT_FOUND="Container does not exist: %s"
 MSG_COMMON_COMPOSE_NOT_FOUND="docker-compose.yml file not found"
 MSG_COMMON_NOT_INITIALIZED="Initialization required. Please run init command: \n\ndockit init"
+MSG_COMMON_RUN_INIT_FIRST="Run init command first: dockit init"
+MSG_COMMON_REQUIRED_FILES_MISSING="Required configuration files are missing."
 
 # init 모듈 메시지
 # init module messages
@@ -107,15 +109,23 @@ MSG_CONNECT_FAILED="Failed to connect to container."
 
 # status 모듈 메시지
 # status module messages
-MSG_STATUS_START="Starting status check module..."
-MSG_CONTAINER_STATUS="Container Status:"
+MSG_STATUS_START="Running status check module..."
+MSG_CONTAINER_STATUS="Container status:"
 MSG_CONTAINER_ID="Container ID"
 MSG_CONTAINER_STATE="State"
 MSG_CONTAINER_CREATED="Created"
 MSG_CONTAINER_IMAGE="Image"
 MSG_CONTAINER_IP="IP Address"
 MSG_CONTAINER_PORTS="Ports"
-MSG_STATUS_COMPLETE="Status check completed."
+MSG_STATUS_COMPLETE="Status check complete."
+MSG_STATUS_PROJECT_CONFIG="Project Dockit Configuration:"
+MSG_STATUS_VERSION="Dockit Version"
+MSG_STATUS_IMAGE_NAME="Image Name"
+MSG_STATUS_CONTAINER_NAME="Container Name"
+MSG_STATUS_USERNAME="Username"
+MSG_STATUS_USER_UID="User UID"
+MSG_STATUS_USER_GID="User GID"
+MSG_STATUS_WORKDIR="Working Directory"
 
 # start 모듈 메시지
 # start module messages
