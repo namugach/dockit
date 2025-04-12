@@ -38,6 +38,7 @@ MSG_COMMON_CONTAINER_NOT_FOUND="컨테이너가 존재하지 않습니다: %s"
 MSG_COMMON_COMPOSE_NOT_FOUND="docker-compose.yml 파일을 찾을 수 없습니다"
 MSG_COMMON_RUN_INIT_FIRST="먼저 init 명령을 실행하세요: ./dockit.sh init"
 MSG_COMMON_DIRECT_EXECUTE_ERROR="이 스크립트는 직접 실행할 수 없습니다. dockit.sh를 통해 사용하세요."
+MSG_COMMON_NOT_INITIALIZED="dockit이 초기화되지 않았습니다. (.dockit 디렉토리가 없습니다)"
 
 # init 모듈 메시지
 MSG_INIT_START="초기화 시작..."
