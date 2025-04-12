@@ -84,12 +84,12 @@ MSG_STOP_START="컨테이너 정지 모듈 실행 중..."
 MSG_CONTAINER_NOT_FOUND="제거할 컨테이너가 없습니다."
 MSG_CONTAINER_STOPPED="컨테이너가 성공적으로 중지되었습니다."
 MSG_CONTAINER_STOP_FAILED="컨테이너 중지 중 오류가 발생했습니다."
-MSG_CONTAINER_STOPPED_INFO="컨테이너가 중지되었습니다. 다시 시작하려면: ./dockit start"
+MSG_CONTAINER_STOPPED_INFO="컨테이너가 중지되었습니다. 다시 시작하려면: dockit start"
 
 # connect 모듈 메시지
 MSG_CONNECT_START="컨테이너 접속 모듈 실행 중..."
 MSG_CONTAINER_NOT_RUNNING="컨테이너가 실행 중이지 않습니다."
-MSG_START_CONTAINER_FIRST="먼저 컨테이너를 시작해야 합니다: ./dockit start"
+MSG_START_CONTAINER_FIRST="먼저 컨테이너를 시작해야 합니다: dockit start"
 MSG_CONNECTED="컨테이너에 성공적으로 접속했습니다."
 MSG_CONNECT_FAILED="컨테이너 접속 중 오류가 발생했습니다."
 
@@ -122,6 +122,7 @@ MSG_GOODBYE="Docker 환경을 종료합니다"
 # 상태 메시지
 MSG_CONTAINER_RUNNING="컨테이너가 실행 중입니다"
 MSG_CONTAINER_NOT_EXIST="컨테이너가 존재하지 않습니다"
+MSG_CONTAINER_NOT_FOUND="해당 컨테이너를 찾을 수 없습니다"
 MSG_IMAGE_EXIST="도커 이미지가 존재합니다"
 MSG_IMAGE_NOT_EXIST="도커 이미지가 존재하지 않습니다"
 

@@ -13,6 +13,10 @@ source "$SCRIPT_DIR/common.sh"
 stop_main() {
     log "INFO" "$MSG_STOP_START"
     
+    # 설정 로드
+    # Load configuration
+    load_config
+    
     # Docker Compose 파일이 있는지 확인
     # Check if Docker Compose file exists
     if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
@@ -20,8 +24,8 @@ stop_main() {
         exit 1
     fi
     
-    # 컨테이너 상태 확인
-    # Check container status
+    # 컨테이너 상태 확인 - CONTAINER_NAME 변수 사용 (load_config에서 로드됨)
+    # Check container status using CONTAINER_NAME variable (loaded from load_config)
     if ! docker container inspect "$CONTAINER_NAME" &>/dev/null; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
         exit 0

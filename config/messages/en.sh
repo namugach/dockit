@@ -97,13 +97,13 @@ MSG_STOP_START="Container stop module running..."
 MSG_CONTAINER_NOT_FOUND="No container to stop."
 MSG_CONTAINER_STOPPED="Container has been successfully stopped."
 MSG_CONTAINER_STOP_FAILED="Failed to stop container."
-MSG_CONTAINER_STOPPED_INFO="Container has been stopped. To start again: ./dockit start"
+MSG_CONTAINER_STOPPED_INFO="Container has been stopped. To start again: dockit start"
 
 # connect 모듈 메시지
 # connect module messages
 MSG_CONNECT_START="Starting container connection module..."
 MSG_CONTAINER_NOT_RUNNING="Container is not running."
-MSG_START_CONTAINER_FIRST="You need to start the container first: ./dockit start"
+MSG_START_CONTAINER_FIRST="You need to start the container first: dockit start"
 MSG_CONNECTED="Successfully connected to container."
 MSG_CONNECT_FAILED="Failed to connect to container."
 
