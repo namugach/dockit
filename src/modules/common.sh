@@ -12,7 +12,12 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
 MODULES_DIR="${CURRENT_DIR}"
 TEMPLATE_DIR="${PROJECT_ROOT}/src/templates"
-CONFIG_DIR="$(pwd)/.dockit"
+CONFIG_DIR="${CURRENT_DIR}/.dockit"
+
+# 현재 실행 위치를 기준으로 .dockit 디렉토리 경로 설정 (절대 경로)
+# Set .dockit directory path based on current execution location (absolute path)
+EXEC_DIR="$(pwd)"
+CONFIG_DIR="${EXEC_DIR}/.dockit"
 CONFIG_ENV="${CONFIG_DIR}/.env"
 DOCKER_COMPOSE_FILE="${CONFIG_DIR}/docker-compose.yml"
 DOCKER_COMPOSE_TEMPLATE="${TEMPLATE_DIR}/docker-compose.yml"

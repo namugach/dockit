@@ -13,6 +13,10 @@ source "$SCRIPT_DIR/common.sh"
 connect_main() {
     log "INFO" "$MSG_CONNECT_START"
     
+    # 설정 로드
+    # Load configuration
+    load_config
+    
     # Docker Compose 파일이 있는지 확인
     # Check if Docker Compose file exists
     if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
