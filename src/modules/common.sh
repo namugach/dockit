@@ -155,12 +155,27 @@ load_config() {
 # Configuration saving function
 # 설정 파일 저장 함수
 save_config() {
+    # 버전 정보 로드
+    # Load version information
+    local version_file="$PROJECT_ROOT/bin/VERSION"
+    local dockit_version
+    
+    if [ -f "$version_file" ]; then
+        dockit_version=$(cat "$version_file")
+    else
+        dockit_version="unknown"
+    fi
+    
     log "INFO" "$(printf "$MSG_COMMON_LOADING_CONFIG" "$CONFIG_ENV")"
     cat > "$CONFIG_ENV" << EOF
 # Docker Tools Configuration File
 # Docker Tools 설정 파일
 # Auto-generated: $(date)
 # 자동 생성됨: $(date)
+
+# Dockit Version
+# Dockit 버전
+DOCKIT_VERSION="$dockit_version"
 
 # Container Settings
 # 컨테이너 설정

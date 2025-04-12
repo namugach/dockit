@@ -8,6 +8,15 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh" "init"
 
+# 버전 정보 로드
+# Load version information
+VERSION_FILE="$PROJECT_ROOT/bin/VERSION"
+if [ -f "$VERSION_FILE" ]; then
+    VERSION=$(cat "$VERSION_FILE")
+else
+    VERSION="unknown"
+fi
+
 # Define additional variables
 # 추가 변수 정의
 DOCKIT_DIR="$(pwd)/.dockit"
@@ -220,6 +229,11 @@ create_docker_compose() {
 # 메인 함수
 init_main() {
     log "INFO" "$MSG_INIT_START"
+    
+    # 버전 정보 표시
+    # Display version information
+    echo -e "\n${BLUE}Dockit v${VERSION}${NC}"
+    echo -e "${BLUE}=====================${NC}\n"
     
     # Create .dockit directory
     # .dockit 디렉토리 생성
