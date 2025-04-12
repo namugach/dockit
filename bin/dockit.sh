@@ -6,20 +6,8 @@
 # 스크립트 디렉토리 설정
 # Script directory setup
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
-# 시스템 설치 경로 확인
-# Check system installation path
-if [ -f "$HOME/.local/share/dockit/src/modules/common.sh" ]; then
-    # 시스템 설치된 경우
-    # When installed system-wide
-    MODULES_DIR="$HOME/.local/share/dockit/src/modules"
-    CONFIG_DIR="$HOME/.local/share/dockit/config"
-else
-    # 로컬 실행인 경우
-    # When running locally
     MODULES_DIR="$SCRIPT_DIR/src/modules"
     CONFIG_DIR="$SCRIPT_DIR/config"
-fi
 
 # 공통 모듈 로드
 # Load common module
