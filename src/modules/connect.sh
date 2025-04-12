@@ -64,8 +64,11 @@ connect_main() {
     # 컨테이너 접속
     # Connect to container
     log "INFO" "$MSG_CONNECTING_CONTAINER"
+    log "SUCCESS" "$MSG_CONNECTED"
+    
     if docker exec -it "$CONTAINER_NAME" /bin/bash; then
-        log "SUCCESS" "$MSG_CONNECTED"
+        # 접속 종료 후 메시지 없음
+        :
     else
         log "ERROR" "$MSG_CONNECT_FAILED"
         exit 1
