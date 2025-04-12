@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 # 설치 디렉토리
 # Installation directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT_DIR="$(pwd)"
+PROJECT_DIR="$HOME/.local/share/dockit"
 INSTALL_DIR="$HOME/.local/bin"
 COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
 ZSH_COMPLETION_DIR="$HOME/.local/share/zsh/site-functions"
@@ -118,7 +118,11 @@ create_directories() {
 install_project() {
     log_info "프로젝트 파일 설치 중..."
     
+    # 기존 설치 제거
+    rm -rf "$PROJECT_DIR"
+    
     # 프로젝트 파일 복사
+    mkdir -p "$PROJECT_DIR"
     cp -r "$PROJECT_ROOT/src" "$PROJECT_DIR/"
     cp -r "$PROJECT_ROOT/config" "$PROJECT_DIR/"
     cp -r "$PROJECT_ROOT/completion" "$PROJECT_DIR/"
@@ -128,7 +132,10 @@ install_project() {
     chmod +x "$INSTALL_DIR/dockit"
     
     # 스크립트 경로 수정
-    sed -i "s|SCRIPT_DIR=.*|SCRIPT_DIR=\"$PROJECT_DIR\"|" "$INSTALL_DIR/dockit"
+    sed -i "s|MODULES_DIR=.*|MODULES_DIR=\"$PROJECT_DIR/src/modules\"|" "$INSTALL_DIR/dockit"
+    sed -i "s|CONFIG_DIR=.*|CONFIG_DIR=\"$PROJECT_DIR/config\"|" "$INSTALL_DIR/dockit"
+    
+    log_info "설치 경로: $PROJECT_DIR"
 }
 
 # 자동완성 스크립트 설치
