@@ -125,7 +125,7 @@ load_config() {
     # init 명령어가 아닐 경우에만 유효성 검사 실행
     # Run validity check only if not init command
     if [[ "$1" != "init" ]]; then
-        if ! check_dockit_validity; then
+        if ! check_dockit_validity "$1"; then
             return 1
         fi
     fi
@@ -253,6 +253,12 @@ check_docker_compose_file() {
 # Check dockit directory validity
 # dockit 디렉토리 유효성 검사
 check_dockit_validity() {
+    # Skip check for init command
+    # init 명령어일 때는 체크 건너뛰기
+    if [[ "$1" == "init" ]]; then
+        return 0
+    fi
+
     local dockit_dir=".dockit"
     
     # Check if .dockit directory exists first
@@ -268,7 +274,7 @@ check_dockit_validity() {
     local required_files=("docker-compose.yml" "Dockerfile" ".env")
     for file in "${required_files[@]}"; do
         if [ ! -f "$dockit_dir/$file" ]; then
-            log "ERROR" "dockit이 올바르게 초기화되지 않았습니다.. ($file 파일이 없습니다)"
+            log "ERROR" "dockit이 올바르게 초기화되지 않았습니다. ($file 파일이 없습니다)"
             log "INFO" "먼저 init 명령을 실행하세요: dockit init"
             exit 1
         fi
@@ -282,8 +288,4 @@ check_dockit_validity() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     test_generate_container_name
     exit 0
-else
-    # Get the current command from the parent script
-    CURRENT_COMMAND=$(basename "${BASH_SOURCE[1]}" .sh)
-    load_config "$CURRENT_COMMAND"
 fi 

@@ -6,7 +6,7 @@
 # Load common module
 # 공통 모듈 로드
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/common.sh"
+source "$SCRIPT_DIR/common.sh" "init"
 
 # Define additional variables
 # 추가 변수 정의
@@ -23,7 +23,7 @@ get_user_input() {
     
     # Load default values
     # 기본값 로드
-    load_config
+    load_config "init"
     
     echo -e "\n${GREEN}$MSG_WELCOME${NC}"
     echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"

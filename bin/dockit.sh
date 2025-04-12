@@ -9,10 +9,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODULES_DIR="$SCRIPT_DIR/src/modules"
 CONFIG_DIR="$SCRIPT_DIR/config"
 
-# 공통 모듈 로드
-# Load common module
-source "$MODULES_DIR/common.sh"
-
 # 메인 함수
 # Main function
 main() {
@@ -27,10 +23,13 @@ main() {
         exit 0
     fi
 
-    # init과 help를 제외한 모든 명령어에 대해 유효성 검사
-    # Check validity for all commands except init and help
-    if [[ "$command" != "init" ]] && [[ "$command" != "help" ]]; then
-        if ! check_dockit_validity; then
+    # 공통 모듈 로드
+    # Load common module
+    if [[ "$command" == "init" ]] || [[ "$command" == "help" ]]; then
+        source "$MODULES_DIR/common.sh" "init"
+    else
+        source "$MODULES_DIR/common.sh" "$command"
+        if ! check_dockit_validity "$command"; then
             exit 1
         fi
     fi
