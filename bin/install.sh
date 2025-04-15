@@ -208,7 +208,7 @@ check_path() {
         # ZSH 완성 시스템 활성화 확인
         if ! grep -q "autoload -Uz compinit" "$HOME/.zshrc"; then
             echo "" >> "$HOME/.zshrc"
-            echo "# 자동완성 기능 활성화" >> "$HOME/.zshrc"
+            echo "# $(get_message MSG_INSTALL_ZSH_COMPLETION_ACTIVATE)" >> "$HOME/.zshrc"
             echo "autoload -Uz compinit" >> "$HOME/.zshrc"
             echo "compinit" >> "$HOME/.zshrc"
         fi
@@ -216,14 +216,14 @@ check_path() {
         # fpath 설정 확인
         if ! grep -q "fpath=.*$ZSH_COMPLETION_DIR" "$HOME/.zshrc"; then
             echo "" >> "$HOME/.zshrc"
-            echo "# dockit 자동완성 경로 추가" >> "$HOME/.zshrc"
+            echo "# $(get_message MSG_INSTALL_ZSH_COMPLETION_ADD_PATH)" >> "$HOME/.zshrc"
             echo "fpath=($ZSH_COMPLETION_DIR \$fpath)" >> "$HOME/.zshrc"
         fi
         
         # ZSH에서는 특별히 직접 source 명령어 추가
         if ! grep -q "source $ZSH_COMPLETION_DIR/_dockit" "$HOME/.zshrc"; then
             echo "" >> "$HOME/.zshrc"
-            echo "# dockit 자동완성 직접 로드" >> "$HOME/.zshrc"
+            echo "# $(get_message MSG_INSTALL_ZSH_COMPLETION_LOAD)" >> "$HOME/.zshrc"
             echo "[ -f $ZSH_COMPLETION_DIR/_dockit ] && source $ZSH_COMPLETION_DIR/_dockit" >> "$HOME/.zshrc"
         fi
         
@@ -264,9 +264,9 @@ main() {
     log_info "$(get_message MSG_INSTALL_COMPLETION_ENABLE)"
     echo ""
     log_info "$(get_message MSG_INSTALL_BASH_RELOAD)"
-    echo "  source ~/.bashrc"
+    echo "  $(get_message MSG_INSTALL_BASH_RELOAD_CMD)"
     log_info "$(get_message MSG_INSTALL_ZSH_RELOAD)"
-    echo "  source ~/.zshrc"
+    echo "  $(get_message MSG_INSTALL_ZSH_RELOAD_CMD)"
 }
 
 # 메시지 출력 함수 (시스템에 없는 경우를 위한 예비)
