@@ -267,18 +267,27 @@ install_completion() {
     mkdir -p "$ZSH_COMPLETION_DIR"
     
     # Bash completion 설치
-    cp "$PROJECT_DIR/completion/dockit.sh" "$COMPLETION_DIR/dockit"
+    cp "$PROJECT_DIR/completion/bash.sh" "$COMPLETION_DIR/dockit"
     chmod +x "$COMPLETION_DIR/dockit"
     
     # Zsh completion 설치
-    cp "$PROJECT_DIR/completion/dockit.zsh" "$ZSH_COMPLETION_DIR/_dockit"
+    cp "$PROJECT_DIR/completion/zsh.sh" "$ZSH_COMPLETION_DIR/_dockit"
     chmod +x "$ZSH_COMPLETION_DIR/_dockit"
     
     # 시스템 전체 설치 시도 (sudo 권한 있는 경우)
     if [ -d "/etc/bash_completion.d" ] && [ -w "/etc/bash_completion.d" ]; then
-        cp "$PROJECT_DIR/completion/dockit.sh" "/etc/bash_completion.d/dockit"
+        cp "$PROJECT_DIR/completion/bash.sh" "/etc/bash_completion.d/dockit"
         chmod +x "/etc/bash_completion.d/dockit"
         log_info "$(get_message MSG_INSTALL_GLOBAL_COMPLETION)"
+    fi
+    
+    # Bash 자동완성 설정 확인 및 추가
+    if [ -f "$HOME/.bashrc" ]; then
+        if ! grep -q "source $COMPLETION_DIR/dockit" "$HOME/.bashrc"; then
+            echo "" >> "$HOME/.bashrc"
+            echo "# Dockit completion" >> "$HOME/.bashrc"
+            echo "[ -f $COMPLETION_DIR/dockit ] && source $COMPLETION_DIR/dockit" >> "$HOME/.bashrc"
+        fi
     fi
     
     # 현재 세션에 자동완성 로드
