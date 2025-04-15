@@ -264,9 +264,9 @@ main() {
     log_info "$(get_message MSG_INSTALL_COMPLETION_ENABLE)"
     echo ""
     log_info "$(get_message MSG_INSTALL_BASH_RELOAD)"
-    echo "  $(get_message MSG_INSTALL_BASH_RELOAD_CMD)"
+    echo "        source ~/.bashrc"
     log_info "$(get_message MSG_INSTALL_ZSH_RELOAD)"
-    echo "  $(get_message MSG_INSTALL_ZSH_RELOAD_CMD)"
+    echo "        source ~/.zshrc"
 }
 
 # 메시지 출력 함수 (시스템에 없는 경우를 위한 예비)
