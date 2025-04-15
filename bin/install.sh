@@ -424,6 +424,9 @@ main() {
         exit 1
     fi
     
+    # 기존 설치 확인
+    check_existing_installation
+    
     # 기본 디렉토리 생성 (언어 선택에 필요한 최소한의 구조)
     mkdir -p "$PROJECT_DIR/config/messages"
     
@@ -431,7 +434,7 @@ main() {
     cp "$PROJECT_ROOT/config/settings.env" "$PROJECT_DIR/config/"
     cp -r "$PROJECT_ROOT/config/messages/"* "$PROJECT_DIR/config/messages/"
     
-    # 먼저 언어 선택 실행
+    # 언어 선택 실행
     setup_language
     
     # 이제 선택된 언어로 진행
@@ -439,7 +442,6 @@ main() {
     
     # 나머지 검사 및 설치 진행
     check_dependencies
-    check_existing_installation
     check_permissions
     create_directories
     

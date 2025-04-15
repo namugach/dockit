@@ -75,8 +75,22 @@ remove_dockit() {
 remove_project() {
     log_info "$(get_message MSG_UNINSTALL_REMOVING_FILES)"
     if [ -d "$PROJECT_DIR" ]; then
-        rm -rf "$PROJECT_DIR"
-        log_info "$(get_message MSG_UNINSTALL_FILES_REMOVED)"
+        # 강제로 모든 하위 디렉토리와 파일 제거 (config 디렉토리 포함)
+        find "$PROJECT_DIR" -mindepth 1 -delete 2>/dev/null
+        rmdir "$PROJECT_DIR" 2>/dev/null
+        
+        # 디렉토리가 여전히 존재하는지 확인
+        if [ -d "$PROJECT_DIR" ]; then
+            # 더 강력한 방법으로 제거 시도
+            rm -rf "$PROJECT_DIR"
+        fi
+        
+        # 제거 확인
+        if [ ! -d "$PROJECT_DIR" ]; then
+            log_info "$(get_message MSG_UNINSTALL_FILES_REMOVED)"
+        else
+            log_warn "$(get_message MSG_UNINSTALL_REMOVE_FAILED) $PROJECT_DIR"
+        fi
     else
         log_warn "$(get_message MSG_UNINSTALL_DIR_NOT_FOUND) $PROJECT_DIR"
     fi
@@ -152,14 +166,73 @@ verify_uninstallation() {
     fi
 }
 
+# 자동완성 설정 제거
+# Remove completion settings
+remove_completion_settings() {
+    log_info "$(get_message MSG_UNINSTALL_REMOVING_COMPLETION_CONFIG)"
+    
+    # Bash 자동완성 설정 제거
+    if [ -f "$HOME/.bashrc" ]; then
+        # dockit 자동완성 관련 라인 제거
+        sed -i '/# Dockit completion/d' "$HOME/.bashrc"
+        sed -i '/\[ -f.*dockit \] && source.*dockit/d' "$HOME/.bashrc"
+        log_info "$(get_message MSG_UNINSTALL_REMOVED_BASH_COMPLETION)"
+    fi
+    
+    # ZSH 자동완성 설정 제거
+    if [ -f "$HOME/.zshrc" ]; then
+        # dockit 자동완성 관련 라인 제거
+        sed -i '/# dockit 자동완성/d' "$HOME/.zshrc"
+        sed -i '/# Load dockit completion/d' "$HOME/.zshrc"
+        sed -i '/\[ -f.*_dockit \] && source/d' "$HOME/.zshrc"
+        sed -i '/fpath=(.*dockit/d' "$HOME/.zshrc"
+        log_info "$(get_message MSG_UNINSTALL_REMOVED_ZSH_COMPLETION)"
+    fi
+    
+    # 시스템 전역 자동완성 제거
+    if [ -f "/etc/bash_completion.d/dockit" ] && [ -w "/etc/bash_completion.d/dockit" ]; then
+        rm "/etc/bash_completion.d/dockit"
+        log_info "$(get_message MSG_UNINSTALL_REMOVED_GLOBAL_COMPLETION)"
+    fi
+}
+
+# 사용자 설정 디렉토리 제거
+# Remove user config directory
+remove_config_dir() {
+    log_info "$(get_message MSG_UNINSTALL_REMOVING_CONFIG)"
+    local config_dir="$HOME/.config/dockit"
+    
+    if [ -d "$config_dir" ]; then
+        rm -rf "$config_dir"
+        log_info "$(get_message MSG_UNINSTALL_CONFIG_REMOVED)"
+    fi
+}
+
 # 메인 제거 프로세스
 # Main uninstallation process
 main() {
     log_info "$(get_message MSG_UNINSTALL_START)"
     
+    # 제거 확인
+    echo ""
+    log_info "$(get_message MSG_UNINSTALL_CONFIRM) [y/N]"
+    read -r confirm
+    
+    # 소문자로 변환
+    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+    
+    # 'y' 또는 'yes'가 아니면 종료
+    if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
+        log_info "$(get_message MSG_UNINSTALL_CANCELLED)"
+        exit 0
+    fi
+    
+    # 제거 프로세스 시작
     remove_dockit
     remove_project
     remove_completion
+    remove_completion_settings
+    remove_config_dir
     remove_from_path
     cleanup_directories
     verify_uninstallation
