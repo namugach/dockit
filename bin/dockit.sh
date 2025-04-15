@@ -12,6 +12,10 @@ CONFIG_DIR="$SCRIPT_DIR/config"
 # 버전 정보 로드
 # Load version information
 VERSION_FILE="$(dirname "${BASH_SOURCE[0]}")/VERSION"
+# 설치 시에는 bin 디렉토리 경로가 달라짐
+if [ ! -f "$VERSION_FILE" ] && [ -f "$SCRIPT_DIR/bin/VERSION" ]; then
+    VERSION_FILE="$SCRIPT_DIR/bin/VERSION"
+fi
 if [ -f "$VERSION_FILE" ]; then
     VERSION=$(cat "$VERSION_FILE")
 else

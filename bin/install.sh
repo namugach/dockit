@@ -127,11 +127,16 @@ install_project() {
     cp -r "$PROJECT_ROOT/config" "$PROJECT_DIR/"
     cp -r "$PROJECT_ROOT/completion" "$PROJECT_DIR/"
     
+    # VERSION 파일 복사
+    mkdir -p "$PROJECT_DIR/bin"
+    cp "$PROJECT_ROOT/bin/VERSION" "$PROJECT_DIR/bin/"
+    
     # dockit 스크립트 설치
     cp "$PROJECT_ROOT/bin/dockit.sh" "$INSTALL_DIR/dockit"
     chmod +x "$INSTALL_DIR/dockit"
     
     # 스크립트 경로 수정
+    sed -i "s|SCRIPT_DIR=.*|SCRIPT_DIR=\"$PROJECT_DIR\"|" "$INSTALL_DIR/dockit"
     sed -i "s|MODULES_DIR=.*|MODULES_DIR=\"$PROJECT_DIR/src/modules\"|" "$INSTALL_DIR/dockit"
     sed -i "s|CONFIG_DIR=.*|CONFIG_DIR=\"$PROJECT_DIR/config\"|" "$INSTALL_DIR/dockit"
     
