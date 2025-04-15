@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# 언어 메타데이터 / Language Metadata
+LANG_CODE="en"
+LANG_NAME="English"
+LANG_LOCALE="en_US.UTF-8"
+LANG_TIMEZONE="UTC"
+LANG_DIRECTION="ltr"
+LANG_VERSION="1.0"
+LANG_AUTHOR="Dockit Team"
+
 # 영어 메시지 정의
 # English message definitions
 

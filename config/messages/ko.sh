@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# 언어 메타데이터 / Language Metadata
+LANG_CODE="ko"
+LANG_NAME="한국어"
+LANG_LOCALE="ko_KR.UTF-8"
+LANG_TIMEZONE="Asia/Seoul"
+LANG_DIRECTION="ltr"
+LANG_VERSION="1.0"
+LANG_AUTHOR="Dockit Team"
+
 # 한국어 메시지 정의
 
 # 공통 메시지

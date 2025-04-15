@@ -180,77 +180,130 @@ install_project_preserving_lang() {
     log_info "$(printf "$(get_message MSG_INSTALL_PATH)" "$PROJECT_DIR")"
 }
 
-# 언어 설정
-# Setup language
+# 언어 설정 함수
+# Language setup function
 setup_language() {
-    log_info "Language setup..."
-    
-    # 지원되는 언어 목록 (한국어, 중국어, 일본어를 맨 아래로 이동)
-    local langs=("en" "ko" "fr" "de" "es" "zh" "ja")
-    local lang_names=("English" "한국어" "Français" "Deutsch" "Español" "中文" "日本語")
-    
-    # 기본값을 영어로 설정 (인덱스 0)
+    local lang_dir="$PROJECT_ROOT/config/messages"
+    local default_lang="en"
+    local langs=()
+    local lang_names=()
     local default_idx=0
+    local i=0
     
-    # 시스템에서 로케일 추출해서 자동 기본값 설정 시도
-    local sys_lang=$(locale | grep "LANG=" | cut -d= -f2 | cut -d_ -f1)
-    
-    # 추출된 로케일이 지원 언어 목록에 있는지 확인
-    for i in "${!langs[@]}"; do
-        if [ "$sys_lang" = "${langs[$i]}" ]; then
-            default_idx=$i
-            break
+    # 메시지 파일에서 언어 메타데이터 읽기
+    log_info "Finding available languages..."
+    for lang_file in "$lang_dir"/*.sh; do
+        if [ -f "$lang_file" ]; then
+            # 언어 메타데이터 추출
+            local code=""
+            local name=""
+            
+            # 파일에서 언어 코드와 이름 읽기
+            code=$(grep "^LANG_CODE=" "$lang_file" | cut -d'"' -f2)
+            name=$(grep "^LANG_NAME=" "$lang_file" | cut -d'"' -f2)
+            
+            if [ -n "$code" ] && [ -n "$name" ]; then
+                langs+=("$code")
+                lang_names+=("$name")
+                
+                # 기본 언어 인덱스 저장
+                if [ "$code" = "$default_lang" ]; then
+                    default_idx=$i
+                fi
+                
+                i=$((i+1))
+            fi
         fi
     done
     
-    # 언어 목록 표시
-    echo ""
-    echo "Available languages:"
-    for i in "${!langs[@]}"; do
-        if [ $i -eq $default_idx ]; then
-            echo "  $((i+1))) ${lang_names[$i]} (${langs[$i]}) [default]"
-        else
-            echo "  $((i+1))) ${lang_names[$i]} (${langs[$i]})"
-        fi
-    done
-    echo ""
-    
-    # 사용자 입력 받기
-    read -p "Select language [1-${#langs[@]}] (${default_idx+1}): " choice
-    
-    # 빈 입력이면 기본값 사용
-    if [ -z "$choice" ]; then
-        choice=$((default_idx+1))
+    # 언어가 없으면 영어를 기본값으로 설정
+    if [ ${#langs[@]} -eq 0 ]; then
+        langs=("en")
+        lang_names=("English")
+        default_idx=0
     fi
     
-    # 선택한 번호가 유효한지 확인
-    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#langs[@]}" ]; then
-        local selected_idx=$((choice-1))
-        local selected_lang="${langs[$selected_idx]}"
+    # 사용 가능한 언어 목록 표시
+    echo ""
+    log_info "$(get_message MSG_INSTALL_LANGUAGE_AVAILABLE)"
+    echo "  0. $(get_message MSG_CANCEL)"
+    for i in "${!langs[@]}"; do
+        local default_mark=""
+        if [ $i -eq $default_idx ]; then
+            default_mark=" ($(get_message MSG_INSTALL_LANGUAGE_DEFAULT))"
+        fi
+        echo "  $((i+1)). ${lang_names[$i]}${default_mark}"
+    done
+
+    # 언어 선택 받기
+    echo ""
+    log_info "$(get_message MSG_INSTALL_LANGUAGE_SELECT) (0-${#langs[@]}):"
+    read -r lang_choice
+
+    # 취소 옵션 확인
+    if [ "$lang_choice" = "0" ]; then
+        log_info "$(get_message MSG_INSTALL_CANCELLED)"
+        exit 0
+    fi
+    
+    # 선택 처리
+    if [[ "$lang_choice" =~ ^[0-9]+$ ]] && [ "$lang_choice" -ge 1 ] && [ "$lang_choice" -le "${#langs[@]}" ]; then
+        local idx=$((lang_choice-1))
+        local selected_lang="${langs[$idx]}"
+        local selected_name="${lang_names[$idx]}"
         
-        log_info "Selected language: ${lang_names[$selected_idx]} (${selected_lang})"
-        sed -i "s/LANGUAGE=.*/LANGUAGE=$selected_lang/" "$PROJECT_DIR/config/settings.env"
-        
-        # 선택한 언어를 현재 세션에 적용
+        # 언어 설정 저장
+        echo "LANGUAGE=\"$selected_lang\"" > "$PROJECT_DIR/config/settings.env"
         export LANGUAGE="$selected_lang"
         
-        # 메시지 시스템 다시 로드 (이제 PROJECT_DIR의 파일 사용)
-        if [ -f "$PROJECT_DIR/config/messages/load.sh" ]; then
-            source "$PROJECT_DIR/config/messages/load.sh"
-            load_messages
+        # 선택된 언어 파일 로드 
+        if [ -f "$PROJECT_ROOT/config/messages/$selected_lang.sh" ]; then
+            source "$PROJECT_ROOT/config/messages/$selected_lang.sh"
         fi
+        
+        printf "$(get_message MSG_INSTALL_LANGUAGE_SELECTED)\n" "$selected_name" "$selected_lang"
     else
         # 잘못된 선택이면 기본값 사용
-        log_warn "Invalid selection. Using default: ${lang_names[$default_idx]} (${langs[$default_idx]})"
-        sed -i "s/LANGUAGE=.*/LANGUAGE=${langs[$default_idx]}/" "$PROJECT_DIR/config/settings.env"
+        local default_lang="${langs[$default_idx]}"
+        local default_name="${lang_names[$default_idx]}"
         
-        # 기본 언어를 현재 세션에 적용
-        export LANGUAGE="${langs[$default_idx]}"
+        echo "LANGUAGE=\"$default_lang\"" > "$PROJECT_DIR/config/settings.env"
+        export LANGUAGE="$default_lang"
         
-        # 메시지 시스템 다시 로드 (이제 PROJECT_DIR의 파일 사용)
-        if [ -f "$PROJECT_DIR/config/messages/load.sh" ]; then
-            source "$PROJECT_DIR/config/messages/load.sh"
-            load_messages
+        # 기본 언어 파일 로드
+        if [ -f "$PROJECT_ROOT/config/messages/$default_lang.sh" ]; then
+            source "$PROJECT_ROOT/config/messages/$default_lang.sh"
+        fi
+        
+        printf "$(get_message MSG_INSTALL_LANGUAGE_INVALID)\n" "$default_name" "$default_lang"
+    fi
+    
+    # 선택된 언어에 따른 추가 설정 적용
+    apply_language_settings
+}
+
+# 언어 설정에 따른 추가 설정 적용
+# Apply additional settings based on language selection
+apply_language_settings() {
+    local selected_lang="$LANGUAGE"
+    local lang_file="$PROJECT_ROOT/config/messages/$selected_lang.sh"
+    
+    if [ -f "$lang_file" ]; then
+        # 언어 파일에서 메타데이터 읽기
+        local locale=$(grep "^LANG_LOCALE=" "$lang_file" | cut -d'"' -f2)
+        local timezone=$(grep "^LANG_TIMEZONE=" "$lang_file" | cut -d'"' -f2)
+        
+        # settings.env 파일에 추가 설정 저장
+        if [ -n "$locale" ]; then
+            echo "LOCALE=\"$locale\"" >> "$PROJECT_DIR/config/settings.env"
+            export LOCALE="$locale"
+            log_info "Locale set to: $locale"
+        fi
+        
+        if [ -n "$timezone" ]; then
+            echo "TIMEZONE=\"$timezone\"" >> "$PROJECT_DIR/config/settings.env"
+            export TIMEZONE="$timezone" 
+            log_info "Timezone set to: $timezone"
         fi
     fi
 }
