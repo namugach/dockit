@@ -156,11 +156,11 @@ DEBUG=${DEBUG:-false}
 
 # Load message file
 # 메시지 파일 로드
-if [ -f "$SCRIPT_DIR/messages/load.sh" ]; then
+if [ -f "$SCRIPT_DIR/load.sh" ]; then
     if [ "$DEBUG" = "true" ]; then
-        printf "$MSG_SYSTEM_DEBUG_INTEGRATED_MSG\n" "$SCRIPT_DIR/messages/load.sh"
+        printf "$MSG_SYSTEM_DEBUG_INTEGRATED_MSG\n" "$SCRIPT_DIR/load.sh"
     fi
-    source "$SCRIPT_DIR/messages/load.sh"
+    source "$SCRIPT_DIR/load.sh"
     load_messages "$LANGUAGE"
 else
     if [ "$DEBUG" = "true" ]; then
@@ -168,14 +168,14 @@ else
     fi
     # 기존 방식으로 메시지 파일 로드
     # Load message file in legacy way
-    if [ -f "$SCRIPT_DIR/messages/${LANGUAGE}.sh" ]; then
+    if [ -f "$SCRIPT_DIR/${LANGUAGE}.sh" ]; then
         if [ "$DEBUG" = "true" ]; then
-            printf "$MSG_SYSTEM_DEBUG_LOAD_MSG_FILE\n" "$SCRIPT_DIR/messages/${LANGUAGE}.sh"
+            printf "$MSG_SYSTEM_DEBUG_LOAD_MSG_FILE\n" "$SCRIPT_DIR/${LANGUAGE}.sh"
         fi
-        source "$SCRIPT_DIR/messages/${LANGUAGE}.sh"
+        source "$SCRIPT_DIR/${LANGUAGE}.sh"
     else
         printf "$MSG_SYSTEM_LANG_FILE_NOT_FOUND\n" "$LANGUAGE"
-        source "$SCRIPT_DIR/messages/en.sh"
+        source "$SCRIPT_DIR/en.sh"
     fi
 fi
 
