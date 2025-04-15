@@ -62,10 +62,38 @@ _dockit_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
+    # 명령어 정의 (다국어 설명 포함)
+    local cmd_init="init:$(_dockit_get_message MSG_COMPLETION_INIT 'Initialize dockit project')"
+    local cmd_start="start:$(_dockit_get_message MSG_COMPLETION_START 'Start container')"
+    local cmd_stop="stop:$(_dockit_get_message MSG_COMPLETION_STOP 'Stop container')"
+    local cmd_down="down:$(_dockit_get_message MSG_COMPLETION_DOWN 'Remove container completely')"
+    local cmd_connect="connect:$(_dockit_get_message MSG_COMPLETION_CONNECT 'Connect to container')"
+    local cmd_status="status:$(_dockit_get_message MSG_COMPLETION_STATUS 'Check container status')"
+    local cmd_help="help:$(_dockit_get_message MSG_COMPLETION_HELP 'Display help information')"
+    local cmd_version="version:$(_dockit_get_message MSG_COMPLETION_VERSION 'Display version information')"
+    
+    # 명령어 이름만 추출
     local commands="init start stop down connect status help version"
     
     if [[ ${cur} == * ]] ; then
         COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+        # 설명을 표시하기 위한 코드
+        local i
+        for i in ${!COMPREPLY[@]}; do
+            local cmd=${COMPREPLY[$i]}
+            local desc=""
+            case $cmd in
+                init) desc="$(_dockit_get_message MSG_COMPLETION_INIT 'Initialize dockit project')" ;;
+                start) desc="$(_dockit_get_message MSG_COMPLETION_START 'Start container')" ;;
+                stop) desc="$(_dockit_get_message MSG_COMPLETION_STOP 'Stop container')" ;;
+                down) desc="$(_dockit_get_message MSG_COMPLETION_DOWN 'Remove container completely')" ;;
+                connect) desc="$(_dockit_get_message MSG_COMPLETION_CONNECT 'Connect to container')" ;;
+                status) desc="$(_dockit_get_message MSG_COMPLETION_STATUS 'Check container status')" ;;
+                help) desc="$(_dockit_get_message MSG_COMPLETION_HELP 'Display help information')" ;;
+                version) desc="$(_dockit_get_message MSG_COMPLETION_VERSION 'Display version information')" ;;
+            esac
+            COMPREPLY[$i]="$cmd -- $desc"
+        done
     fi
 }
 complete -F _dockit_completion dockit
