@@ -275,4 +275,12 @@ MSG_INSTALL_CHECK_DOCKER="Check if Docker is running."
 MSG_INSTALL_CHECK_PORTS="Check if ports 80, 443 are available."
 MSG_INSTALL_CHECK_IMAGE="Check if the image exists."
 MSG_INSTALL_COMPLETE="Installation completed successfully."
-MSG_INSTALL_FAILED="Installation failed." 
+MSG_INSTALL_FAILED="Installation failed."
+
+# Completion related messages
+MSG_INSTALL_GLOBAL_COMPLETION="System-wide completion installed"
+MSG_INSTALL_COMPLETION_HELP="* Use TAB key for command completion"
+MSG_INSTALL_COMPLETION_ENABLE="To enable command completion, reload your shell with:"
+MSG_INSTALL_BASH_RELOAD="For Bash shell:"
+MSG_INSTALL_ZSH_RELOAD="For Zsh shell:"
+MSG_INSTALL_ZSH_COMPLETION_ADDED="Zsh completion settings added" 

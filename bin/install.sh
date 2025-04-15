@@ -161,11 +161,37 @@ install_project() {
 install_completion() {
     log_info "$(get_message MSG_INSTALL_INSTALLING_COMPLETION)"
     
-    # Bash completion
-    cp "$PROJECT_DIR/completion/dockit.sh" "$COMPLETION_DIR/dockit"
+    # Bash completion 디렉토리 확인 및 생성
+    mkdir -p "$COMPLETION_DIR"
     
-    # Zsh completion
+    # Zsh completion 디렉토리 확인 및 생성
+    mkdir -p "$ZSH_COMPLETION_DIR"
+    
+    # Bash completion 설치
+    cp "$PROJECT_DIR/completion/dockit.sh" "$COMPLETION_DIR/dockit"
+    chmod +x "$COMPLETION_DIR/dockit"
+    
+    # Zsh completion 설치
     cp "$PROJECT_DIR/completion/dockit.zsh" "$ZSH_COMPLETION_DIR/_dockit"
+    chmod +x "$ZSH_COMPLETION_DIR/_dockit"
+    
+    # 시스템 전체 설치 시도 (sudo 권한 있는 경우)
+    if [ -d "/etc/bash_completion.d" ] && [ -w "/etc/bash_completion.d" ]; then
+        cp "$PROJECT_DIR/completion/dockit.sh" "/etc/bash_completion.d/dockit"
+        chmod +x "/etc/bash_completion.d/dockit"
+        log_info "$(get_message MSG_INSTALL_GLOBAL_COMPLETION)"
+    fi
+    
+    # 현재 세션에 자동완성 로드
+    if [ -n "$BASH_VERSION" ]; then
+        source "$COMPLETION_DIR/dockit"
+    elif [ -n "$ZSH_VERSION" ]; then
+        # ZSH에서는 특별한 처리 필요
+        autoload -U compinit
+        compinit
+    fi
+    
+    log_info "$(get_message MSG_INSTALL_COMPLETION_HELP)"
 }
 
 # PATH 설정 확인
@@ -175,6 +201,33 @@ check_path() {
         log_warn "$(get_message MSG_INSTALL_ADDING_PATH)"
         echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$HOME/.bashrc"
         echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$HOME/.zshrc"
+    fi
+    
+    # ZSH 자동완성 설정 추가
+    if [ -f "$HOME/.zshrc" ]; then
+        # ZSH 완성 시스템 활성화 확인
+        if ! grep -q "autoload -Uz compinit" "$HOME/.zshrc"; then
+            echo "" >> "$HOME/.zshrc"
+            echo "# 자동완성 기능 활성화" >> "$HOME/.zshrc"
+            echo "autoload -Uz compinit" >> "$HOME/.zshrc"
+            echo "compinit" >> "$HOME/.zshrc"
+        fi
+        
+        # fpath 설정 확인
+        if ! grep -q "fpath=.*$ZSH_COMPLETION_DIR" "$HOME/.zshrc"; then
+            echo "" >> "$HOME/.zshrc"
+            echo "# dockit 자동완성 경로 추가" >> "$HOME/.zshrc"
+            echo "fpath=($ZSH_COMPLETION_DIR \$fpath)" >> "$HOME/.zshrc"
+        fi
+        
+        # ZSH에서는 특별히 직접 source 명령어 추가
+        if ! grep -q "source $ZSH_COMPLETION_DIR/_dockit" "$HOME/.zshrc"; then
+            echo "" >> "$HOME/.zshrc"
+            echo "# dockit 자동완성 직접 로드" >> "$HOME/.zshrc"
+            echo "[ -f $ZSH_COMPLETION_DIR/_dockit ] && source $ZSH_COMPLETION_DIR/_dockit" >> "$HOME/.zshrc"
+        fi
+        
+        log_info "$(get_message MSG_INSTALL_ZSH_COMPLETION_ADDED)"
     fi
 }
 
@@ -205,7 +258,15 @@ main() {
     check_path
     verify_installation
     
+    # 설치 후 안내 메시지
+    echo ""
     log_info "$(get_message MSG_INSTALL_SHELL_RESTART)"
+    log_info "$(get_message MSG_INSTALL_COMPLETION_ENABLE)"
+    echo ""
+    log_info "$(get_message MSG_INSTALL_BASH_RELOAD)"
+    echo "  source ~/.bashrc"
+    log_info "$(get_message MSG_INSTALL_ZSH_RELOAD)"
+    echo "  source ~/.zshrc"
 }
 
 # 메시지 출력 함수 (시스템에 없는 경우를 위한 예비)

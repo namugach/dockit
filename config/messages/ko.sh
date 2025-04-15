@@ -252,4 +252,12 @@ MSG_INSTALL_CHECK_DOCKER="Docker가 실행 중인지 확인하세요."
 MSG_INSTALL_CHECK_PORTS="포트 80, 443이 사용 가능한지 확인하세요."
 MSG_INSTALL_CHECK_IMAGE="이미지가 존재하는지 확인하세요."
 MSG_INSTALL_COMPLETE="설치가 완료되었습니다."
-MSG_INSTALL_FAILED="설치에 실패했습니다." 
+MSG_INSTALL_FAILED="설치에 실패했습니다."
+
+# 자동완성 관련 메시지
+MSG_INSTALL_GLOBAL_COMPLETION="시스템 전역 자동완성 설치 완료"
+MSG_INSTALL_COMPLETION_HELP="* 자동완성을 사용하려면 탭(TAB) 키를 누르세요"
+MSG_INSTALL_COMPLETION_ENABLE="자동완성 기능을 활성화하려면 다음 명령어로 셸을 다시 로드하세요:"
+MSG_INSTALL_BASH_RELOAD="Bash 쉘 다시 로드:"
+MSG_INSTALL_ZSH_RELOAD="Zsh 쉘 다시 로드:"
+MSG_INSTALL_ZSH_COMPLETION_ADDED="Zsh 자동완성 설정 추가됨" 

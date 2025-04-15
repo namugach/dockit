@@ -4,7 +4,7 @@ _dockit_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
-    local commands="init start stop status config connect"
+    local commands="init start stop down connect status help version"
     
     if [[ ${cur} == * ]] ; then
         COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
