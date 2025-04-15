@@ -21,6 +21,8 @@ GLOBAL_CONFIG_DIR="/etc/dockit"
 # Load message system
 if [ -f "$PROJECT_ROOT/config/messages/load.sh" ]; then
     source "$PROJECT_ROOT/config/messages/load.sh"
+    # 기본 언어로만 초기화 (언어 선택 전까지만 사용)
+    export LANGUAGE="en"
     load_messages
 fi
 
@@ -126,22 +128,33 @@ create_directories() {
     mkdir -p "$CONFIG_DIR"
 }
 
-# 프로젝트 파일 설치
-# Install project files
-install_project() {
+# 프로젝트 파일 설치 (언어 설정 보존)
+# Install project files while preserving language settings
+install_project_preserving_lang() {
     log_info "$(get_message MSG_INSTALL_INSTALLING_FILES)"
     
-    # 기존 설치 제거
-    rm -rf "$PROJECT_DIR"
+    # 언어 설정 파일 백업
+    local lang_settings=""
+    if [ -f "$PROJECT_DIR/config/settings.env" ]; then
+        lang_settings=$(grep "LANGUAGE=" "$PROJECT_DIR/config/settings.env")
+    fi
     
-    # 프로젝트 파일 복사
-    mkdir -p "$PROJECT_DIR"
-    cp -r "$PROJECT_ROOT/src" "$PROJECT_DIR/"
-    cp -r "$PROJECT_ROOT/config" "$PROJECT_DIR/"
-    cp -r "$PROJECT_ROOT/completion" "$PROJECT_DIR/"
+    # 메시지 디렉토리 백업
+    local temp_dir="/tmp/dockit_messages_backup"
+    if [ -d "$PROJECT_DIR/config/messages" ]; then
+        mkdir -p "$temp_dir"
+        cp -r "$PROJECT_DIR/config/messages/"* "$temp_dir/"
+    fi
+    
+    # 이전 설치 제거 (config 디렉토리 제외)
+    rm -rf "$PROJECT_DIR/src" "$PROJECT_DIR/completion" "$PROJECT_DIR/bin"
+    
+    # 프로젝트 파일 복사 (config 폴더는 제외)
+    mkdir -p "$PROJECT_DIR/src" "$PROJECT_DIR/completion" "$PROJECT_DIR/bin"
+    cp -r "$PROJECT_ROOT/src/"* "$PROJECT_DIR/src/"
+    cp -r "$PROJECT_ROOT/completion/"* "$PROJECT_DIR/completion/"
     
     # VERSION 파일 복사
-    mkdir -p "$PROJECT_DIR/bin"
     cp "$PROJECT_ROOT/bin/VERSION" "$PROJECT_DIR/bin/"
     
     # dockit 스크립트 설치
@@ -153,8 +166,16 @@ install_project() {
     sed -i "s|MODULES_DIR=.*|MODULES_DIR=\"$PROJECT_DIR/src/modules\"|" "$INSTALL_DIR/dockit"
     sed -i "s|CONFIG_DIR=.*|CONFIG_DIR=\"$PROJECT_DIR/config\"|" "$INSTALL_DIR/dockit"
     
-    # 언어 설정
-    setup_language
+    # 언어 설정 복원 (config 폴더는 새로 복사하지 않음)
+    if [ -n "$lang_settings" ]; then
+        sed -i "s/LANGUAGE=.*/$lang_settings/" "$PROJECT_DIR/config/settings.env"
+    fi
+    
+    # 메시지 디렉토리 복원 (필요한 경우)
+    if [ -d "$temp_dir" ] && [ "$(ls -A "$temp_dir")" ]; then
+        cp -r "$temp_dir/"* "$PROJECT_DIR/config/messages/"
+        rm -rf "$temp_dir"
+    fi
     
     log_info "$(printf "$(get_message MSG_INSTALL_PATH)" "$PROJECT_DIR")"
 }
@@ -162,7 +183,7 @@ install_project() {
 # 언어 설정
 # Setup language
 setup_language() {
-    log_info "$(get_message MSG_INSTALL_LANGUAGE_SETUP)"
+    log_info "Language setup..."
     
     # 지원되는 언어 목록 (한국어, 중국어, 일본어를 맨 아래로 이동)
     local langs=("en" "ko" "fr" "de" "es" "zh" "ja")
@@ -184,10 +205,10 @@ setup_language() {
     
     # 언어 목록 표시
     echo ""
-    log_info "$(get_message MSG_INSTALL_LANGUAGE_AVAILABLE)"
+    echo "Available languages:"
     for i in "${!langs[@]}"; do
         if [ $i -eq $default_idx ]; then
-            echo "  $((i+1))) ${lang_names[$i]} (${langs[$i]}) [$(get_message MSG_INSTALL_LANGUAGE_DEFAULT)]"
+            echo "  $((i+1))) ${lang_names[$i]} (${langs[$i]}) [default]"
         else
             echo "  $((i+1))) ${lang_names[$i]} (${langs[$i]})"
         fi
@@ -195,7 +216,7 @@ setup_language() {
     echo ""
     
     # 사용자 입력 받기
-    read -p "$(get_message MSG_INSTALL_LANGUAGE_SELECT) [1-${#langs[@]}] (${default_idx+1}): " choice
+    read -p "Select language [1-${#langs[@]}] (${default_idx+1}): " choice
     
     # 빈 입력이면 기본값 사용
     if [ -z "$choice" ]; then
@@ -207,12 +228,30 @@ setup_language() {
         local selected_idx=$((choice-1))
         local selected_lang="${langs[$selected_idx]}"
         
-        log_info "$(printf "$(get_message MSG_INSTALL_LANGUAGE_SELECTED)" "${lang_names[$selected_idx]}" "${selected_lang}")"
+        log_info "Selected language: ${lang_names[$selected_idx]} (${selected_lang})"
         sed -i "s/LANGUAGE=.*/LANGUAGE=$selected_lang/" "$PROJECT_DIR/config/settings.env"
+        
+        # 선택한 언어를 현재 세션에 적용
+        export LANGUAGE="$selected_lang"
+        
+        # 메시지 시스템 다시 로드 (이제 PROJECT_DIR의 파일 사용)
+        if [ -f "$PROJECT_DIR/config/messages/load.sh" ]; then
+            source "$PROJECT_DIR/config/messages/load.sh"
+            load_messages
+        fi
     else
         # 잘못된 선택이면 기본값 사용
-        log_warn "$(printf "$(get_message MSG_INSTALL_LANGUAGE_INVALID)" "${lang_names[$default_idx]}" "${langs[$default_idx]}")"
+        log_warn "Invalid selection. Using default: ${lang_names[$default_idx]} (${langs[$default_idx]})"
         sed -i "s/LANGUAGE=.*/LANGUAGE=${langs[$default_idx]}/" "$PROJECT_DIR/config/settings.env"
+        
+        # 기본 언어를 현재 세션에 적용
+        export LANGUAGE="${langs[$default_idx]}"
+        
+        # 메시지 시스템 다시 로드 (이제 PROJECT_DIR의 파일 사용)
+        if [ -f "$PROJECT_DIR/config/messages/load.sh" ]; then
+            source "$PROJECT_DIR/config/messages/load.sh"
+            load_messages
+        fi
     fi
 }
 
@@ -307,13 +346,45 @@ verify_installation() {
 # 메인 설치 프로세스
 # Main installation process
 main() {
+    # 최소 메시지만 표시 (언어 설정 전)
+    log_info "Starting dockit installation..."
+    
+    # 최소한의 필수 검사만 수행 (권한 문제나 기존 설치가 있으면 진행 불가)
+    if ! command -v docker >/dev/null 2>&1; then
+        log_error "Docker not installed. Please install Docker first."
+        exit 1
+    fi
+    
+    # 기본 디렉토리 체크 (권한 문제 있으면 진행 불가)
+    if [ ! -w "$(dirname "$PROJECT_DIR")" ] || [ ! -w "$(dirname "$INSTALL_DIR")" ]; then
+        log_error "Permission denied. Please check your permissions."
+        log_info "You may need to run with sudo or check directory permissions."
+        exit 1
+    fi
+    
+    # 기본 디렉토리 생성 (언어 선택에 필요한 최소한의 구조)
+    mkdir -p "$PROJECT_DIR/config/messages"
+    
+    # 언어 선택에 필요한 파일 복사
+    cp "$PROJECT_ROOT/config/settings.env" "$PROJECT_DIR/config/"
+    cp -r "$PROJECT_ROOT/config/messages/"* "$PROJECT_DIR/config/messages/"
+    
+    # 먼저 언어 선택 실행
+    setup_language
+    
+    # 이제 선택된 언어로 진행
     log_info "$(get_message MSG_INSTALL_START)"
     
+    # 나머지 검사 및 설치 진행
     check_dependencies
     check_existing_installation
     check_permissions
     create_directories
-    install_project
+    
+    # 프로젝트 파일 설치 (settings.env와 메시지 파일은 보존)
+    install_project_preserving_lang
+    
+    # 나머지 설치 과정 진행
     install_completion
     check_path
     verify_installation
