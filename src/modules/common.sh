@@ -112,10 +112,17 @@ generate_container_name() {
 # Test generate_container_name function
 # generate_container_name 함수 테스트
 test_generate_container_name() {
-    echo "Testing generate_container_name function..."
-    echo "Current directory: $(pwd)"
-    echo "Generated name: $(generate_container_name "$(pwd)")"
-    echo "Testing with explicit path: $(generate_container_name "/home/hgs/work/dockit/test/c")"
+    if type get_message &>/dev/null; then
+        echo "$(get_message MSG_COMMON_TESTING_FUNCTION)"
+        echo "$(get_message MSG_COMMON_CURRENT_DIR): $(pwd)"
+        echo "$(get_message MSG_COMMON_GENERATED_NAME): $(generate_container_name "$(pwd)")"
+        echo "$(get_message MSG_COMMON_TESTING_EXPLICIT): $(generate_container_name "/home/hgs/work/dockit/test/c")"
+    else
+        echo "Testing generate_container_name function..."
+        echo "Current directory: $(pwd)"
+        echo "Generated name: $(generate_container_name "$(pwd)")"
+        echo "Testing with explicit path: $(generate_container_name "/home/hgs/work/dockit/test/c")"
+    fi
 }
 
 # Configuration loading function

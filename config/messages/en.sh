@@ -324,4 +324,10 @@ MSG_COMPLETION_DOWN="Remove container completely"
 MSG_COMPLETION_STATUS="Check container status"
 MSG_COMPLETION_CONNECT="Connect to container"
 MSG_COMPLETION_HELP="Display help information"
-MSG_COMPLETION_VERSION="Display version information" 
+MSG_COMPLETION_VERSION="Display version information"
+
+# Common module test messages
+MSG_COMMON_TESTING_FUNCTION="Testing generate_container_name function..."
+MSG_COMMON_CURRENT_DIR="Current directory"
+MSG_COMMON_GENERATED_NAME="Generated name"
+MSG_COMMON_TESTING_EXPLICIT="Testing with explicit path" 

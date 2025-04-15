@@ -301,4 +301,10 @@ MSG_COMPLETION_DOWN="컨테이너 완전히 제거"
 MSG_COMPLETION_STATUS="컨테이너 상태 확인"
 MSG_COMPLETION_CONNECT="컨테이너에 접속"
 MSG_COMPLETION_HELP="도움말 표시"
-MSG_COMPLETION_VERSION="버전 정보 표시" 
+MSG_COMPLETION_VERSION="버전 정보 표시"
+
+# 공통 모듈 테스트 메시지
+MSG_COMMON_TESTING_FUNCTION="generate_container_name 함수 테스트 중..."
+MSG_COMMON_CURRENT_DIR="현재 디렉토리"
+MSG_COMMON_GENERATED_NAME="생성된 이름"
+MSG_COMMON_TESTING_EXPLICIT="명시적 경로로 테스트" 
