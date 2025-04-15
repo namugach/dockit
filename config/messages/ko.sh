@@ -260,4 +260,12 @@ MSG_INSTALL_COMPLETION_HELP="* 자동완성을 사용하려면 탭(TAB) 키를 �
 MSG_INSTALL_COMPLETION_ENABLE="자동완성 기능을 활성화하려면 다음 명령어로 셸을 다시 로드하세요:"
 MSG_INSTALL_BASH_RELOAD="Bash 쉘 다시 로드:"
 MSG_INSTALL_ZSH_RELOAD="Zsh 쉘 다시 로드:"
-MSG_INSTALL_ZSH_COMPLETION_ADDED="Zsh 자동완성 설정 추가됨" 
+MSG_INSTALL_ZSH_COMPLETION_ADDED="Zsh 자동완성 설정 추가됨"
+
+# init.sh 추가 메시지
+MSG_INIT_GETTING_USER_INPUT="사용자 입력 받는 중..."
+MSG_CONFIG_SAVED="설정이 저장되었습니다."
+MSG_INIT_VERSION_HEADER="Dockit v%s"
+MSG_INIT_VERSION_SEPARATOR="====================="
+MSG_INIT_COMPLETE="초기화가 완료되었습니다."
+MSG_TEMPLATE_GENERATED="생성됨: %s" 

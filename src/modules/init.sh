@@ -28,7 +28,7 @@ LOG_FILE="$DOCKIT_DIR/dockit.log"
 # User input function
 # 사용자 입력 함수
 get_user_input() {
-    log "INFO" "사용자 입력 받는 중..."
+    log "INFO" "$MSG_INIT_GETTING_USER_INPUT"
     
     # Load default values
     # 기본값 로드
@@ -232,8 +232,8 @@ init_main() {
     
     # 버전 정보 표시
     # Display version information
-    echo -e "\n${BLUE}Dockit v${VERSION}${NC}"
-    echo -e "${BLUE}=====================${NC}\n"
+    echo -e "\n${BLUE}$(printf "$MSG_INIT_VERSION_HEADER" "$VERSION")${NC}"
+    echo -e "${BLUE}$MSG_INIT_VERSION_SEPARATOR${NC}\n"
     
     # Create .dockit directory
     # .dockit 디렉토리 생성
@@ -321,5 +321,5 @@ init_main() {
 # Execute main function if script is run directly
 # 스크립트가 직접 실행되면 메인 함수 실행
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    install_main
+    init_main
 fi 

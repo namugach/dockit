@@ -235,7 +235,7 @@ process_template() {
         -e "s|\${BASE_IMAGE}|${BASE_IMAGE}|g" \
         "$template_file" > "$output_file"
         
-    echo "Generated: $output_file"
+    echo "$(printf "$MSG_TEMPLATE_GENERATED" "$output_file")"
 }
 
 # Container status check function
@@ -295,7 +295,7 @@ check_dockit_validity() {
     for file in "${required_files[@]}"; do
         if [ ! -f "$dockit_dir/$file" ]; then
             log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
-            log "INFO" "$MSG_COMMON_INIT_REQUIRED"
+            log "INFO" "$MSG_COMMON_RUN_INIT_FIRST"
             exit 1
         fi
     done

@@ -283,4 +283,12 @@ MSG_INSTALL_COMPLETION_HELP="* Use TAB key for command completion"
 MSG_INSTALL_COMPLETION_ENABLE="To enable command completion, reload your shell with:"
 MSG_INSTALL_BASH_RELOAD="For Bash shell:"
 MSG_INSTALL_ZSH_RELOAD="For Zsh shell:"
-MSG_INSTALL_ZSH_COMPLETION_ADDED="Zsh completion settings added" 
+MSG_INSTALL_ZSH_COMPLETION_ADDED="Zsh completion settings added"
+
+# Additional messages for init.sh
+MSG_INIT_GETTING_USER_INPUT="Getting user input..."
+MSG_CONFIG_SAVED="Configuration has been saved."
+MSG_INIT_VERSION_HEADER="Dockit v%s"
+MSG_INIT_VERSION_SEPARATOR="====================="
+MSG_INIT_COMPLETE="Initialization completed successfully."
+MSG_TEMPLATE_GENERATED="Generated: %s" 
