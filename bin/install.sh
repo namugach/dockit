@@ -153,7 +153,67 @@ install_project() {
     sed -i "s|MODULES_DIR=.*|MODULES_DIR=\"$PROJECT_DIR/src/modules\"|" "$INSTALL_DIR/dockit"
     sed -i "s|CONFIG_DIR=.*|CONFIG_DIR=\"$PROJECT_DIR/config\"|" "$INSTALL_DIR/dockit"
     
+    # 언어 설정
+    setup_language
+    
     log_info "$(printf "$(get_message MSG_INSTALL_PATH)" "$PROJECT_DIR")"
+}
+
+# 언어 설정
+# Setup language
+setup_language() {
+    log_info "$(get_message MSG_INSTALL_LANGUAGE_SETUP)"
+    
+    # 지원되는 언어 목록 (한국어, 중국어, 일본어를 맨 아래로 이동)
+    local langs=("en" "ko" "fr" "de" "es" "zh" "ja")
+    local lang_names=("English" "한국어" "Français" "Deutsch" "Español" "中文" "日本語")
+    
+    # 기본값을 영어로 설정 (인덱스 0)
+    local default_idx=0
+    
+    # 시스템에서 로케일 추출해서 자동 기본값 설정 시도
+    local sys_lang=$(locale | grep "LANG=" | cut -d= -f2 | cut -d_ -f1)
+    
+    # 추출된 로케일이 지원 언어 목록에 있는지 확인
+    for i in "${!langs[@]}"; do
+        if [ "$sys_lang" = "${langs[$i]}" ]; then
+            default_idx=$i
+            break
+        fi
+    done
+    
+    # 언어 목록 표시
+    echo ""
+    log_info "$(get_message MSG_INSTALL_LANGUAGE_AVAILABLE)"
+    for i in "${!langs[@]}"; do
+        if [ $i -eq $default_idx ]; then
+            echo "  $((i+1))) ${lang_names[$i]} (${langs[$i]}) [$(get_message MSG_INSTALL_LANGUAGE_DEFAULT)]"
+        else
+            echo "  $((i+1))) ${lang_names[$i]} (${langs[$i]})"
+        fi
+    done
+    echo ""
+    
+    # 사용자 입력 받기
+    read -p "$(get_message MSG_INSTALL_LANGUAGE_SELECT) [1-${#langs[@]}] (${default_idx+1}): " choice
+    
+    # 빈 입력이면 기본값 사용
+    if [ -z "$choice" ]; then
+        choice=$((default_idx+1))
+    fi
+    
+    # 선택한 번호가 유효한지 확인
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#langs[@]}" ]; then
+        local selected_idx=$((choice-1))
+        local selected_lang="${langs[$selected_idx]}"
+        
+        log_info "$(printf "$(get_message MSG_INSTALL_LANGUAGE_SELECTED)" "${lang_names[$selected_idx]}" "${selected_lang}")"
+        sed -i "s/LANGUAGE=.*/LANGUAGE=$selected_lang/" "$PROJECT_DIR/config/settings.env"
+    else
+        # 잘못된 선택이면 기본값 사용
+        log_warn "$(printf "$(get_message MSG_INSTALL_LANGUAGE_INVALID)" "${lang_names[$default_idx]}" "${langs[$default_idx]}")"
+        sed -i "s/LANGUAGE=.*/LANGUAGE=${langs[$default_idx]}/" "$PROJECT_DIR/config/settings.env"
+    fi
 }
 
 # 자동완성 스크립트 설치

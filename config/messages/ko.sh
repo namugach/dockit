@@ -307,4 +307,12 @@ MSG_COMPLETION_VERSION="버전 정보 표시"
 MSG_COMMON_TESTING_FUNCTION="generate_container_name 함수 테스트 중..."
 MSG_COMMON_CURRENT_DIR="현재 디렉토리"
 MSG_COMMON_GENERATED_NAME="생성된 이름"
-MSG_COMMON_TESTING_EXPLICIT="명시적 경로로 테스트" 
+MSG_COMMON_TESTING_EXPLICIT="명시적 경로로 테스트"
+
+# language setup messages
+MSG_INSTALL_LANGUAGE_SETUP="언어 설정 중..."
+MSG_INSTALL_LANGUAGE_AVAILABLE="사용 가능한 언어:"
+MSG_INSTALL_LANGUAGE_DEFAULT="기본값"
+MSG_INSTALL_LANGUAGE_SELECT="언어를 선택하세요"
+MSG_INSTALL_LANGUAGE_SELECTED="선택한 언어: %s (%s)"
+MSG_INSTALL_LANGUAGE_INVALID="잘못된 선택입니다. 기본값을 사용합니다: %s (%s)" 

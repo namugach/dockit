@@ -330,4 +330,12 @@ MSG_COMPLETION_VERSION="Display version information"
 MSG_COMMON_TESTING_FUNCTION="Testing generate_container_name function..."
 MSG_COMMON_CURRENT_DIR="Current directory"
 MSG_COMMON_GENERATED_NAME="Generated name"
-MSG_COMMON_TESTING_EXPLICIT="Testing with explicit path" 
+MSG_COMMON_TESTING_EXPLICIT="Testing with explicit path"
+
+# language setup messages
+MSG_INSTALL_LANGUAGE_SETUP="Setting up language..."
+MSG_INSTALL_LANGUAGE_AVAILABLE="Available languages:"
+MSG_INSTALL_LANGUAGE_DEFAULT="default"
+MSG_INSTALL_LANGUAGE_SELECT="Select language"
+MSG_INSTALL_LANGUAGE_SELECTED="Selected language: %s (%s)"
+MSG_INSTALL_LANGUAGE_INVALID="Invalid selection. Using default: %s (%s)" 
