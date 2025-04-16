@@ -34,36 +34,41 @@ _dockit_completion() {
     # List of available commands
     local commands="init start stop down connect status help version migrate"
     
-    if [[ ${cur} == * ]] ; then
+    # 첫 번째 인자만 자동완성 처리
+    # Only handle completion for the first argument
+    if [ "$COMP_CWORD" -eq 1 ]; then
         # 자동완성 항목 생성
         # Generate completion items
         COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
         
-        # 설명 추가
-        # Add descriptions
-        local i
-        for i in ${!COMPREPLY[@]}; do
-            local cmd=${COMPREPLY[$i]}
-            local desc=""
-            
-            # 각 명령어에 대한 설명 가져오기
-            # Get description for each command
-            case $cmd in
-                init) desc="$(dockit_get_message MSG_COMPLETION_INIT)" ;;
-                start) desc="$(dockit_get_message MSG_COMPLETION_START)" ;;
-                stop) desc="$(dockit_get_message MSG_COMPLETION_STOP)" ;;
-                down) desc="$(dockit_get_message MSG_COMPLETION_DOWN)" ;;
-                connect) desc="$(dockit_get_message MSG_COMPLETION_CONNECT)" ;;
-                status) desc="$(dockit_get_message MSG_COMPLETION_STATUS)" ;;
-                help) desc="$(dockit_get_message MSG_COMPLETION_HELP)" ;;
-                version) desc="$(dockit_get_message MSG_COMPLETION_VERSION)" ;;
-                migrate) desc="$(dockit_get_message MSG_COMPLETION_MIGRATE)" ;;
-            esac
-            
-            # 설명 포함한 자동완성 항목
-            # Completion item with description
-            COMPREPLY[$i]="$cmd -- $desc"
-        done
+        # 심플 모드
+        # Simple mode
+        return 0
+        
+        # 아래 코드는 현재 사용하지 않음 - 중복 출력 문제 해결을 위해
+        # The code below is currently not used - to solve duplicate output issues
+        if [ "${#COMPREPLY[@]}" -gt 1 ]; then
+            echo "" >&2
+            for cmd in "${COMPREPLY[@]}"; do
+                local desc=""
+                case $cmd in
+                    init) desc="$(dockit_get_message MSG_COMPLETION_INIT)" ;;
+                    start) desc="$(dockit_get_message MSG_COMPLETION_START)" ;;
+                    stop) desc="$(dockit_get_message MSG_COMPLETION_STOP)" ;;
+                    down) desc="$(dockit_get_message MSG_COMPLETION_DOWN)" ;;
+                    connect) desc="$(dockit_get_message MSG_COMPLETION_CONNECT)" ;;
+                    status) desc="$(dockit_get_message MSG_COMPLETION_STATUS)" ;;
+                    help) desc="$(dockit_get_message MSG_COMPLETION_HELP)" ;;
+                    version) desc="$(dockit_get_message MSG_COMPLETION_VERSION)" ;;
+                    migrate) desc="$(dockit_get_message MSG_COMPLETION_MIGRATE)" ;;
+                esac
+                
+                if [ -n "$desc" ]; then
+                    printf "\033[90m%-15s # %s\033[0m\n" "$cmd" "$desc" >&2
+                fi
+            done
+            echo "" >&2
+        fi
     fi
 }
 
