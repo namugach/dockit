@@ -53,6 +53,7 @@ Dockit provides the following main commands:
 - `down`: Remove the container completely
 - `connect`: Connect to a running container
 - `status`: Check container status
+- `migrate`: Upgrade to a newer version
 - `help`: Display help information
 
 ## Project Structure

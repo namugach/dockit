@@ -13,6 +13,7 @@ This document explains the detailed usage of Dockit.
     - [down](#down---remove-container)
     - [connect](#connect---connect-to-container)
     - [status](#status---check-status)
+    - [migrate](#migrate---upgrade-version)
     - [help](#help---display-help)
 4. [Configuration File](#configuration-file)
 5. [Troubleshooting](#troubleshooting)
@@ -142,6 +143,22 @@ This command displays the following information:
 - Image information
 - IP address (if running)
 - Port information (if running)
+
+### migrate - Upgrade Version
+
+Upgrade Dockit to a newer version while preserving user settings.
+
+```bash
+dockit migrate
+```
+
+This command performs the following tasks:
+- Creates a backup of the current configuration
+- Initializes the environment for the new version
+- Migrates user settings to the new version
+- Preserves custom configuration
+
+The migration process is designed to be safe and includes automatic rollback in case of failure.
 
 ### help - Display Help
 
