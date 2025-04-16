@@ -57,9 +57,6 @@ main() {
         source "$MODULES_DIR/common.sh" "init"
     else
         source "$MODULES_DIR/common.sh" "$command"
-        if ! check_dockit_validity "$command"; then
-            exit 1
-        fi
     fi
 
     case "$command" in
