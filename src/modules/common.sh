@@ -31,6 +31,12 @@ LOG_FILE="$CONFIG_DIR/dockit.log"
 # Load message system
 # 메시지 시스템 로드
 load_language_setting() {
+    # 0. 최우선: 환경 변수 LANGUAGE가 이미 설정된 경우 (명령줄에서 설정된 경우)
+    if [ -n "$LANGUAGE" ]; then
+        # 이미 설정된 환경 변수 사용
+        return 0
+    fi
+    
     # Try to load language setting from project config
     # 프로젝트 설정에서 언어 설정을 로드
     local settings_file="${EXEC_DIR}/.dockit/config/settings.env"
