@@ -356,4 +356,15 @@ MSG_INSTALL_LANGUAGE_AVAILABLE="Available languages:"
 MSG_INSTALL_LANGUAGE_DEFAULT="default"
 MSG_INSTALL_LANGUAGE_SELECT="Select language"
 MSG_INSTALL_LANGUAGE_SELECTED="Selected language: %s (%s)"
-MSG_INSTALL_LANGUAGE_INVALID="Invalid selection. Using default: %s (%s)" 
+MSG_INSTALL_LANGUAGE_INVALID="Invalid selection. Using default: %s (%s)"
+
+# 버전 유효성 검사 메시지
+# Version validation messages
+MSG_VERSION_CHECK_HEADER="Checking version compatibility..."
+MSG_VERSION_PROJECT_HIGHER="Warning: This project was created with a higher version of dockit (Project: %s, Current: %s)."
+MSG_VERSION_DOWNLOAD_LATEST="Please download the latest version: https://github.com/namugach/dockit/archive/refs/heads/main.zip"
+MSG_VERSION_PROJECT_LOWER="Warning: This project was created with an older version of dockit (Project: %s, Current: %s)."
+MSG_VERSION_POSSIBLE_INCOMPATIBILITY="Compatibility issues may occur due to version differences."
+MSG_VERSION_MIN_REQUIRED="This feature requires at least version %s (Current: %s)."
+MSG_VERSION_FEATURE_UNAVAILABLE="This feature is not available in the current version."
+MSG_VERSION_COMPARE_ERROR="Error occurred while comparing versions." 

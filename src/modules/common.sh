@@ -350,6 +350,132 @@ check_dockit_validity() {
         fi
     done
     
+    # Check version compatibility
+    # 버전 호환성 검사
+    check_version_compatibility
+    
+    return 0
+}
+
+# Compare version strings (semver)
+# 버전 문자열 비교 (시맨틱 버전)
+compare_versions() {
+    if [[ $1 == $2 ]]; then
+        echo 0
+        return
+    fi
+    
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    
+    # Fill empty fields with zeros
+    # 비어있는 필드는 0으로 채우기
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=${#ver2[@]}; i<${#ver1[@]}; i++)); do
+        ver2[i]=0
+    done
+    
+    # Compare version numbers
+    # 버전 번호 비교
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ ${ver1[i]} -gt ${ver2[i]} ]]; then
+            echo 1  # ver1 > ver2
+            return
+        fi
+        if [[ ${ver1[i]} -lt ${ver2[i]} ]]; then
+            echo -1  # ver1 < ver2
+            return
+        fi
+    done
+    
+    echo 0  # ver1 == ver2
+}
+
+# Check version compatibility
+# 버전 호환성 검사
+check_version_compatibility() {
+    # Skip if no .env file
+    # .env 파일이 없으면 건너뛰기
+    if [ ! -f ".dockit/.env" ]; then
+        return 0
+    fi
+    
+    # Get current version from VERSION file
+    # VERSION 파일에서 현재 버전 가져오기
+    local current_version
+    local version_file="$PROJECT_ROOT/bin/VERSION"
+    
+    if [ -f "$version_file" ]; then
+        current_version=$(cat "$version_file")
+    else
+        current_version="unknown"
+        return 0
+    fi
+    
+    # Get project version from .env file
+    # .env 파일에서 프로젝트 버전 가져오기
+    local project_version
+    project_version=$(grep "^DOCKIT_VERSION=" ".dockit/.env" | cut -d'"' -f2)
+    
+    if [ -z "$project_version" ] || [ "$project_version" == "unknown" ]; then
+        return 0
+    fi
+    
+    # Check version compatibility
+    # 버전 호환성 검사
+    log "INFO" "$(get_message MSG_VERSION_CHECK_HEADER)"
+    
+    local comparison
+    comparison=$(compare_versions "$project_version" "$current_version")
+    
+    if [ "$comparison" == "1" ]; then
+        # Project version is higher than current version
+        # 프로젝트 버전이 현재 버전보다 높음
+        log "WARNING" "$(printf "$(get_message MSG_VERSION_PROJECT_HIGHER)" "$project_version" "$current_version")"
+        log "WARNING" "$(get_message MSG_VERSION_DOWNLOAD_LATEST)"
+        log "WARNING" "$(get_message MSG_VERSION_POSSIBLE_INCOMPATIBILITY)"
+    elif [ "$comparison" == "-1" ]; then
+        # Project version is lower than current version
+        # 프로젝트 버전이 현재 버전보다 낮음
+        log "WARNING" "$(printf "$(get_message MSG_VERSION_PROJECT_LOWER)" "$project_version" "$current_version")"
+        log "WARNING" "$(get_message MSG_VERSION_POSSIBLE_INCOMPATIBILITY)"
+    fi
+    
+    return 0
+}
+
+# Check minimum version requirement
+# 최소 버전 요구사항 확인
+check_min_version() {
+    local required_version="$1"
+    local current_version
+    
+    # Get current version
+    # 현재 버전 가져오기
+    local version_file="$PROJECT_ROOT/bin/VERSION"
+    
+    if [ -f "$version_file" ]; then
+        current_version=$(cat "$version_file")
+    else
+        current_version="unknown"
+        return 1
+    fi
+    
+    # Compare versions
+    # 버전 비교
+    local comparison
+    comparison=$(compare_versions "$current_version" "$required_version")
+    
+    if [ "$comparison" == "-1" ]; then
+        # Current version is lower than required version
+        # 현재 버전이 필요한 버전보다 낮음
+        log "ERROR" "$(printf "$(get_message MSG_VERSION_MIN_REQUIRED)" "$required_version" "$current_version")"
+        log "ERROR" "$(get_message MSG_VERSION_FEATURE_UNAVAILABLE)"
+        return 1
+    fi
+    
     return 0
 }
 
