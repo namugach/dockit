@@ -80,7 +80,7 @@ create_backup() {
             return 1
         fi
     else
-        log_warn "No existing configuration to backup"
+        log_warn "$(get_message MSG_MIGRATE_NO_CONFIG)"
         return 0
     fi
 }
@@ -102,11 +102,11 @@ initialize_new_environment() {
         if [ $? -eq 0 ]; then
             return 0
         else
-            log_error "Failed to initialize new environment"
+            log_error "$(get_message MSG_MIGRATE_INIT_FAILED)"
             return 1
         fi
     else
-        log_error "Init module not found"
+        log_error "$(get_message MSG_MIGRATE_INIT_NOT_FOUND)"
         return 1
     fi
 }
@@ -128,14 +128,14 @@ create_migration_structure() {
         mv "${CONFIG_DIR}_old" "$version_dir"
         
         if [ $? -eq 0 ]; then
-            log_info "Saved old configuration to $version_dir"
+            log_info "$(printf "$(get_message MSG_MIGRATE_SAVED_CONFIG)" "$version_dir")"
             return 0
         else
-            log_error "Failed to save old configuration"
+            log_error "$(get_message MSG_MIGRATE_SAVE_FAILED)"
             return 1
         fi
     else
-        log_warn "No old configuration found"
+        log_warn "$(get_message MSG_MIGRATE_NO_OLD_CONFIG)"
         return 0
     fi
 }
@@ -171,7 +171,7 @@ migrate_settings() {
     local new_env="${CONFIG_DIR}/.env"
     
     if [ ! -f "$old_env" ]; then
-        log_warn "Old .env file not found"
+        log_warn "$(get_message MSG_MIGRATE_NO_ENV)"
         return 0
     fi
     
@@ -215,7 +215,7 @@ perform_rollback() {
             return 1
         fi
     else
-        log_error "No backup found for rollback"
+        log_error "$(get_message MSG_MIGRATE_NO_BACKUP)"
         return 1
     fi
 }
@@ -226,13 +226,19 @@ check_current_version() {
     local current_version=""
     
     if [ -f "${CONFIG_DIR}/.env" ]; then
-        current_version=$(grep "^VERSION=" "${CONFIG_DIR}/.env" | cut -d'=' -f2)
+        # 먼저 DOCKIT_VERSION 확인
+        current_version=$(grep "^DOCKIT_VERSION=" "${CONFIG_DIR}/.env" | cut -d'"' -f2)
+        
+        # DOCKIT_VERSION이 없으면 VERSION 확인
+        if [ -z "$current_version" ]; then
+            current_version=$(grep "^VERSION=" "${CONFIG_DIR}/.env" | cut -d'=' -f2)
+        fi
     fi
     
     # 버전 정보가 없으면 마이그레이션 불가
     # Migration not possible without version information
     if [ -z "$current_version" ]; then
-        log_error "Cannot determine current version. Migration aborted."
+        log_error "$(get_message MSG_MIGRATE_NO_CURRENT_VERSION)"
         return 1
     fi
     
@@ -243,17 +249,22 @@ check_current_version() {
 # 대상 버전 확인
 # Check target version
 check_target_version() {
-    local version_file="${MODULES_DIR}/../bin/VERSION"
+    local version_file="$PROJECT_ROOT/bin/VERSION"
     
     if [ ! -f "$version_file" ]; then
-        log_error "Version file not found at $version_file"
-        return 1
+        # 설치 경로에서 확인
+        version_file="/home/hgs/.local/share/dockit/bin/VERSION"
+        
+        if [ ! -f "$version_file" ]; then
+            log_error "$(printf "$(get_message MSG_MIGRATE_NO_VERSION_FILE)" "$version_file")"
+            return 1
+        fi
     fi
     
     local target_version=$(cat "$version_file")
     
     if [ -z "$target_version" ]; then
-        log_error "Target version is empty"
+        log_error "$(get_message MSG_MIGRATE_EMPTY_VERSION)"
         return 1
     fi
     
@@ -277,12 +288,12 @@ validate_versions() {
     if [ "$comparison" = "0" ]; then
         # 버전이 같으면 마이그레이션 필요 없음
         # No migration needed if versions are the same
-        log_info "$(get_message MSG_MIGRATE_UP_TO_DATE)"
+        echo -e "${GREEN}$(get_message MSG_MIGRATE_UP_TO_DATE)${NC}"
         return 1
     elif [ "$comparison" = "-1" ]; then
         # 다운그레이드는 지원하지 않음
         # Downgrade not supported
-        log_error "Current version is newer than target version. Downgrade not supported."
+        log_error "$(get_message MSG_MIGRATE_DOWNGRADE_NOT_SUPPORTED)"
         return 1
     fi
     
@@ -298,7 +309,7 @@ get_user_confirmation() {
     read -p "[y/N] " confirm
     
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        log_info "Migration cancelled by user."
+        log_info "$(get_message MSG_MIGRATE_CANCELLED)"
         return 1
     fi
     
@@ -331,30 +342,30 @@ execute_migration_steps() {
     local current_version="$1"
     local target_version="$2"
 
-    log_info "Executing migration steps from $current_version to $target_version"
+    log_info "$(printf "$(get_message MSG_MIGRATE_EXECUTING_STEPS)" "$current_version" "$target_version")"
 
     # 3. 마이그레이션 디렉토리 구조 생성
     # 3. Create migration directory structure
     if ! create_migration_structure "$current_version"; then
-        log_error "Failed to create migration directory structure"
+        log_error "$(get_message MSG_MIGRATE_DIR_STRUCTURE_FAILED)"
         return 1
     fi
 
     # 4. 설정값 마이그레이션
     # 4. Migrate settings
     if ! migrate_settings "$current_version"; then
-        log_error "Failed to migrate settings"
+        log_error "$(get_message MSG_MIGRATE_SETTINGS_FAILED)"
         return 1
     fi
     
     # 5. 버전별 특수 마이그레이션 로직 실행
     # 5. Execute version-specific migration logic
     if ! execute_version_specific_migration "$current_version" "$target_version"; then
-        log_error "Failed to execute version-specific migration logic"
+        log_error "$(get_message MSG_MIGRATE_LOGIC_FAILED)"
         return 1
     fi
 
-    log_info "Successfully completed all migration steps"
+    log_info "$(get_message MSG_MIGRATE_STEPS_COMPLETED)"
     return 0
 }
 
@@ -384,7 +395,7 @@ run_migration_script() {
     local migration_script="${migration_path}/migrate.sh"
     
     if [ -f "$migration_script" ]; then
-        log_info "Found migration script: $migration_script"
+        log_info "$(printf "$(get_message MSG_MIGRATE_SCRIPT_FOUND)" "$migration_script")"
         
         # 스크립트에 실행 권한 부여
         # Give execution permission to script
@@ -393,10 +404,10 @@ run_migration_script() {
         # 마이그레이션 스크립트 실행
         # Execute migration script
         if "$migration_script" "$current_version" "$target_version" "$CONFIG_DIR"; then
-            log_info "Migration script executed successfully"
+            log_info "$(get_message MSG_MIGRATE_SCRIPT_SUCCESS)"
             return 0
         else
-            log_error "Migration script failed"
+            log_error "$(get_message MSG_MIGRATE_SCRIPT_FAILED)"
             return 1
         fi
     fi
@@ -410,20 +421,20 @@ execute_version_specific_migration() {
     local current_version="$1"
     local target_version="$2"
     
-    log_info "Checking for version-specific migration logic from $current_version to $target_version"
+    log_info "$(printf "$(get_message MSG_MIGRATE_CHECKING_LOGIC)" "$current_version" "$target_version")"
     
     # 직접 버전 전환 확인
     # Check for direct version transition
     local migration_path=$(check_migration_path "$current_version" "$target_version")
     if [ -n "$migration_path" ]; then
-        log_info "Found direct migration path from $current_version to $target_version"
+        log_info "$(printf "$(get_message MSG_MIGRATE_PATH_FOUND)" "$current_version" "$target_version")"
         run_migration_script "$migration_path" "$current_version" "$target_version"
         return $?
     fi
     
     # 버전 하나씩 증가하며 확인
     # Check by incrementing version one by one
-    log_info "No direct migration path found, checking for incremental migrations"
+    log_info "$(get_message MSG_MIGRATE_NO_DIRECT_PATH)"
     
     local next_version=""
     local current_major=$(echo "$current_version" | cut -d'.' -f1)
@@ -457,10 +468,10 @@ execute_version_specific_migration() {
     fi
     
     if [ "$current_version" != "$target_version" ]; then
-        log_warn "Migration only reached $current_version, not $target_version"
+        log_warn "$(printf "$(get_message MSG_MIGRATE_PARTIALLY_REACHED)" "$current_version" "$target_version")"
     fi
     
-    log_info "Version-specific migration completed"
+    log_info "$(get_message MSG_MIGRATE_LOGIC_COMPLETED)"
     return 0
 }
 
@@ -477,13 +488,13 @@ increment_major_version() {
         
         migration_path=$(check_migration_path "$current_version" "$next_version")
         if [ -n "$migration_path" ]; then
-            log_info "Migrating from $current_version to $next_version"
+            log_info "$(printf "$(get_message MSG_MIGRATE_MIGRATING)" "$current_version" "$next_version")"
             if ! run_migration_script "$migration_path" "$current_version" "$next_version"; then
-                log_error "Major version migration failed"
+                log_error "$(get_message MSG_MIGRATE_MAJOR_FAILED)"
                 return 1
             fi
         else
-            log_warn "Missing migration path from $current_version to $next_version"
+            log_warn "$(printf "$(get_message MSG_MIGRATE_PATH_MISSING)" "$current_version" "$next_version")"
         fi
         
         current_version="$next_version"
@@ -509,13 +520,13 @@ increment_minor_version() {
             
             migration_path=$(check_migration_path "$current_version" "$next_version")
             if [ -n "$migration_path" ]; then
-                log_info "Migrating from $current_version to $next_version"
+                log_info "$(printf "$(get_message MSG_MIGRATE_MIGRATING)" "$current_version" "$next_version")"
                 if ! run_migration_script "$migration_path" "$current_version" "$next_version"; then
-                    log_error "Minor version migration failed"
+                    log_error "$(get_message MSG_MIGRATE_MINOR_FAILED)"
                     return 1
                 fi
             else
-                log_warn "Missing migration path from $current_version to $next_version"
+                log_warn "$(printf "$(get_message MSG_MIGRATE_PATH_MISSING)" "$current_version" "$next_version")"
             fi
             
             current_version="$next_version"
@@ -541,13 +552,13 @@ increment_patch_version() {
             
             migration_path=$(check_migration_path "$current_version" "$next_version")
             if [ -n "$migration_path" ]; then
-                log_info "Migrating from $current_version to $next_version"
+                log_info "$(printf "$(get_message MSG_MIGRATE_MIGRATING)" "$current_version" "$next_version")"
                 if ! run_migration_script "$migration_path" "$current_version" "$next_version"; then
-                    log_error "Patch version migration failed"
+                    log_error "$(get_message MSG_MIGRATE_PATCH_FAILED)"
                     return 1
                 fi
             else
-                log_warn "Missing migration path from $current_version to $next_version"
+                log_warn "$(printf "$(get_message MSG_MIGRATE_PATH_MISSING)" "$current_version" "$next_version")"
             fi
             
             current_version="$next_version"
@@ -564,23 +575,23 @@ execute_migration_process() {
     local current_version="$1"
     local target_version="$2"
     
-    log_info "Starting migration process from $current_version to $target_version"
+    log_info "$(printf "$(get_message MSG_MIGRATE_PROCESS_STARTED)" "$current_version" "$target_version")"
     
     # 백업 및 초기화 실행
     if ! execute_backup_and_init; then
-        log_error "Backup and initialization failed"
+        log_error "$(get_message MSG_MIGRATE_BACKUP_INIT_FAILED)"
         perform_rollback
         return 1
     fi
 
     # 마이그레이션 단계 실행
     if ! execute_migration_steps "$current_version" "$target_version"; then
-        log_error "Migration steps failed"
+        log_error "$(get_message MSG_MIGRATE_STEPS_FAILED)"
         perform_rollback
         return 1
     fi
 
-    log_info "Migration process completed successfully"
+    log_info "$(get_message MSG_MIGRATE_PROCESS_COMPLETED)"
     return 0
 }
 

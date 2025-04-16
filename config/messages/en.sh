@@ -370,4 +370,79 @@ MSG_VERSION_PROJECT_LOWER="Warning: This project was created with an older versi
 MSG_VERSION_POSSIBLE_INCOMPATIBILITY="Compatibility issues may occur due to version differences."
 MSG_VERSION_MIN_REQUIRED="This feature requires at least version %s (Current: %s)."
 MSG_VERSION_FEATURE_UNAVAILABLE="This feature is not available in the current version."
-MSG_VERSION_COMPARE_ERROR="Error occurred while comparing versions." 
+MSG_VERSION_COMPARE_ERROR="Error occurred while comparing versions."
+
+# Migration module messages
+
+# Basic migration process messages
+MSG_MIGRATE_START="Starting migration module."
+MSG_MIGRATE_PROCESSING="Processing migration..."
+MSG_MIGRATE_SUCCESS="Migration completed successfully. Current version: %s"
+MSG_MIGRATE_FAILED="Migration failed: %s"
+MSG_MIGRATE_PROCESS_STARTED="Starting migration process from %s to %s."
+MSG_MIGRATE_PROCESS_COMPLETED="Migration process completed successfully."
+
+# Version related messages
+MSG_MIGRATE_CHECKING="Checking version information..."
+MSG_MIGRATE_CURRENT_VER="Current version: %s"
+MSG_MIGRATE_TARGET_VER="Target version: %s"
+MSG_MIGRATE_UP_TO_DATE="Already up to date. No migration needed."
+MSG_MIGRATE_DOWNGRADE_NOT_SUPPORTED="Current version is higher than target version. Downgrade not supported."
+MSG_MIGRATE_NO_CURRENT_VERSION="Cannot determine current version. Migration aborted."
+MSG_MIGRATE_NO_VERSION_FILE="Version file not found at %s."
+MSG_MIGRATE_EMPTY_VERSION="Target version is empty."
+
+# User interaction messages
+MSG_MIGRATE_CONFIRM="Do you want to proceed with migration to new version?"
+MSG_MIGRATE_CANCELLED="Migration cancelled by user."
+
+# Backup related messages
+MSG_MIGRATE_BACKING_UP="Backing up existing settings..."
+MSG_MIGRATE_BACKUP_CREATED="Backup created: %s"
+MSG_MIGRATE_BACKUP_FAILED="Failed to create backup."
+MSG_MIGRATE_NO_CONFIG="No existing config to backup."
+MSG_MIGRATE_SAVED_CONFIG="Old settings saved at %s."
+MSG_MIGRATE_NO_OLD_CONFIG="Cannot find old configuration."
+
+# Rollback related messages
+MSG_MIGRATE_ROLLBACK="Rolling back changes..."
+MSG_MIGRATE_ROLLBACK_SUCCESS="Rollback completed successfully."
+MSG_MIGRATE_ROLLBACK_FAILED="Rollback failed: %s"
+MSG_MIGRATE_NO_BACKUP="No backup found for rollback."
+
+# Settings related messages
+MSG_MIGRATE_UPDATING_ENV="Updating environment variables..."
+MSG_MIGRATE_SETTINGS_FAILED="Failed to migrate settings."
+MSG_MIGRATE_NO_ENV="Cannot find old .env file."
+MSG_MIGRATE_SAVE_FAILED="Failed to save old settings."
+
+# Initialization related messages
+MSG_MIGRATE_INIT_FAILED="Failed to initialize new environment."
+MSG_MIGRATE_INIT_NOT_FOUND="Init module not found."
+MSG_MIGRATE_BACKUP_INIT_FAILED="Failed to backup and initialize."
+MSG_MIGRATE_DIR_STRUCTURE_FAILED="Failed to create migration directory structure."
+
+# Migration logic related messages
+MSG_MIGRATE_CHECKING_LOGIC="Checking version-specific migration logic from %s to %s."
+MSG_MIGRATE_PATH_FOUND="Found direct migration path from %s to %s."
+MSG_MIGRATE_NO_DIRECT_PATH="No direct migration path found, checking incremental migrations."
+MSG_MIGRATE_LOGIC_COMPLETED="Version-specific migration completed."
+MSG_MIGRATE_MIGRATING="Migrating from %s to %s..."
+MSG_MIGRATE_PATH_MISSING="No migration path from %s to %s."
+MSG_MIGRATE_PARTIALLY_REACHED="Migration only reached version %s, not target version %s."
+MSG_MIGRATE_LOGIC_FAILED="Failed to execute version-specific migration logic."
+
+# Migration steps related messages
+MSG_MIGRATE_EXECUTING_STEPS="Executing migration steps from %s to %s."
+MSG_MIGRATE_STEPS_COMPLETED="All migration steps completed successfully."
+MSG_MIGRATE_STEPS_FAILED="Failed to execute migration steps."
+
+# Script related messages
+MSG_MIGRATE_SCRIPT_FOUND="Found migration script: %s"
+MSG_MIGRATE_SCRIPT_SUCCESS="Migration script executed successfully."
+MSG_MIGRATE_SCRIPT_FAILED="Failed to execute migration script."
+
+# Version-specific failure messages
+MSG_MIGRATE_MAJOR_FAILED="Failed to migrate major version."
+MSG_MIGRATE_MINOR_FAILED="Failed to migrate minor version."
+MSG_MIGRATE_PATCH_FAILED="Failed to migrate patch version." 

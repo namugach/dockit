@@ -345,4 +345,91 @@ MSG_VERSION_PROJECT_LOWER="경고: 이 프로젝트는 이전 버전의 dockit�
 MSG_VERSION_POSSIBLE_INCOMPATIBILITY="버전 차이로 인한 호환성 문제가 발생할 수 있습니다."
 MSG_VERSION_MIN_REQUIRED="이 기능은 최소 %s 버전 이상이 필요합니다 (현재: %s)."
 MSG_VERSION_FEATURE_UNAVAILABLE="이 기능은 현재 버전에서 사용할 수 없습니다."
-MSG_VERSION_COMPARE_ERROR="버전 비교 중 오류가 발생했습니다." 
+MSG_VERSION_COMPARE_ERROR="버전 비교 중 오류가 발생했습니다."
+
+# 마이그레이션 모듈 메시지
+# Migration module messages
+
+# 마이그레이션 기본 과정 메시지
+# Basic migration process messages
+MSG_MIGRATE_START="마이그레이션 모듈을 시작합니다."
+MSG_MIGRATE_PROCESSING="마이그레이션을 처리하는 중..."
+MSG_MIGRATE_SUCCESS="마이그레이션이 성공적으로 완료되었습니다. 현재 버전: %s"
+MSG_MIGRATE_FAILED="마이그레이션에 실패했습니다: %s"
+MSG_MIGRATE_PROCESS_STARTED="%s에서 %s로 마이그레이션 프로세스를 시작합니다."
+MSG_MIGRATE_PROCESS_COMPLETED="마이그레이션 프로세스가 성공적으로 완료되었습니다."
+
+# 버전 관련 메시지
+# Version related messages
+MSG_MIGRATE_CHECKING="버전 정보를 확인하는 중..."
+MSG_MIGRATE_CURRENT_VER="현재 버전: %s"
+MSG_MIGRATE_TARGET_VER="대상 버전: %s"
+MSG_MIGRATE_UP_TO_DATE="이미 최신 버전입니다. 마이그레이션이 필요하지 않습니다."
+MSG_MIGRATE_DOWNGRADE_NOT_SUPPORTED="현재 버전이 대상 버전보다 높습니다. 다운그레이드는 지원되지 않습니다."
+MSG_MIGRATE_NO_CURRENT_VERSION="현재 버전을 확인할 수 없습니다. 마이그레이션이 중단되었습니다."
+MSG_MIGRATE_NO_VERSION_FILE="%s에서 버전 파일을 찾을 수 없습니다."
+MSG_MIGRATE_EMPTY_VERSION="대상 버전이 비어 있습니다."
+
+# 사용자 상호작용 메시지
+# User interaction messages
+MSG_MIGRATE_CONFIRM="새 버전으로 마이그레이션을 진행하시겠습니까?"
+MSG_MIGRATE_CANCELLED="사용자에 의해 마이그레이션이 취소되었습니다."
+
+# 백업 관련 메시지
+# Backup related messages
+MSG_MIGRATE_BACKING_UP="기존 설정을 백업하는 중..."
+MSG_MIGRATE_BACKUP_CREATED="백업이 생성되었습니다: %s"
+MSG_MIGRATE_BACKUP_FAILED="백업 생성에 실패했습니다."
+MSG_MIGRATE_NO_CONFIG="백업할 기존 설정이 없습니다."
+MSG_MIGRATE_SAVED_CONFIG="이전 설정이 %s에 저장되었습니다."
+MSG_MIGRATE_NO_OLD_CONFIG="이전 설정을 찾을 수 없습니다."
+
+# 롤백 관련 메시지
+# Rollback related messages
+MSG_MIGRATE_ROLLBACK="변경 사항을 롤백하는 중..."
+MSG_MIGRATE_ROLLBACK_SUCCESS="롤백이 성공적으로 완료되었습니다."
+MSG_MIGRATE_ROLLBACK_FAILED="롤백에 실패했습니다: %s"
+MSG_MIGRATE_NO_BACKUP="롤백을 위한 백업을 찾을 수 없습니다."
+
+# 설정 관련 메시지
+# Settings related messages
+MSG_MIGRATE_UPDATING_ENV="환경 설정을 업데이트하는 중..."
+MSG_MIGRATE_SETTINGS_FAILED="설정 마이그레이션에 실패했습니다."
+MSG_MIGRATE_NO_ENV="이전 .env 파일을 찾을 수 없습니다."
+MSG_MIGRATE_SAVE_FAILED="이전 설정 저장에 실패했습니다."
+
+# 초기화 관련 메시지
+# Initialization related messages
+MSG_MIGRATE_INIT_FAILED="새 환경 초기화에 실패했습니다."
+MSG_MIGRATE_INIT_NOT_FOUND="Init 모듈을 찾을 수 없습니다."
+MSG_MIGRATE_BACKUP_INIT_FAILED="백업 및 초기화에 실패했습니다."
+MSG_MIGRATE_DIR_STRUCTURE_FAILED="마이그레이션 디렉토리 구조 생성에 실패했습니다."
+
+# 마이그레이션 로직 관련 메시지
+# Migration logic related messages
+MSG_MIGRATE_CHECKING_LOGIC="%s에서 %s로의 버전별 마이그레이션 로직을 확인하는 중입니다."
+MSG_MIGRATE_PATH_FOUND="%s에서 %s로의 직접 마이그레이션 경로를 찾았습니다."
+MSG_MIGRATE_NO_DIRECT_PATH="직접 마이그레이션 경로를 찾을 수 없어 증분 마이그레이션을 확인합니다."
+MSG_MIGRATE_LOGIC_COMPLETED="버전별 마이그레이션이 완료되었습니다."
+MSG_MIGRATE_MIGRATING="%s에서 %s로 마이그레이션하는 중..."
+MSG_MIGRATE_PATH_MISSING="%s에서 %s로의 마이그레이션 경로가 없습니다."
+MSG_MIGRATE_PARTIALLY_REACHED="마이그레이션이 %s까지만 도달하고 %s에는 도달하지 못했습니다."
+MSG_MIGRATE_LOGIC_FAILED="버전별 마이그레이션 로직 실행에 실패했습니다."
+
+# 마이그레이션 단계 관련 메시지
+# Migration steps related messages
+MSG_MIGRATE_EXECUTING_STEPS="%s에서 %s로 마이그레이션 단계를 실행 중입니다."
+MSG_MIGRATE_STEPS_COMPLETED="모든 마이그레이션 단계가 성공적으로 완료되었습니다."
+MSG_MIGRATE_STEPS_FAILED="마이그레이션 단계 실행에 실패했습니다."
+
+# 스크립트 관련 메시지
+# Script related messages
+MSG_MIGRATE_SCRIPT_FOUND="마이그레이션 스크립트를 찾았습니다: %s"
+MSG_MIGRATE_SCRIPT_SUCCESS="마이그레이션 스크립트가 성공적으로 실행되었습니다."
+MSG_MIGRATE_SCRIPT_FAILED="마이그레이션 스크립트 실행에 실패했습니다."
+
+# 버전별 실패 메시지
+# Version-specific failure messages
+MSG_MIGRATE_MAJOR_FAILED="메이저 버전 마이그레이션에 실패했습니다."
+MSG_MIGRATE_MINOR_FAILED="마이너 버전 마이그레이션에 실패했습니다."
+MSG_MIGRATE_PATCH_FAILED="패치 버전 마이그레이션에 실패했습니다." 
