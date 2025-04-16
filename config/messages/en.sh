@@ -343,6 +343,7 @@ MSG_COMPLETION_STATUS="Check container status"
 MSG_COMPLETION_CONNECT="Connect to container"
 MSG_COMPLETION_HELP="Display help information"
 MSG_COMPLETION_VERSION="Display version information"
+MSG_COMPLETION_MIGRATE="Migrate project to new version"
 
 # Common module test messages
 MSG_COMMON_TESTING_FUNCTION="Testing generate_container_name function..."

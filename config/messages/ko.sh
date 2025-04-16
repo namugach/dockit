@@ -311,7 +311,7 @@ MSG_UNINSTALL_SUCCESSFUL="제거가 성공적으로 완료되었습니다!"
 MSG_UNINSTALL_INCOMPLETE="제거가 완전하지 않을 수 있습니다. 수동으로 확인해주세요."
 MSG_UNINSTALL_RESTART_SHELL="셸을 다시 시작하거나 'source ~/.bashrc' 또는 'source ~/.zshrc'를 실행해주세요."
 
-# 자동완성 명령어 설명
+# 자동완성 메시지
 MSG_COMPLETION_INIT="dockit 프로젝트 초기화"
 MSG_COMPLETION_START="컨테이너 시작"
 MSG_COMPLETION_STOP="컨테이너 중지"
@@ -320,6 +320,7 @@ MSG_COMPLETION_STATUS="컨테이너 상태 확인"
 MSG_COMPLETION_CONNECT="컨테이너에 접속"
 MSG_COMPLETION_HELP="도움말 표시"
 MSG_COMPLETION_VERSION="버전 정보 표시"
+MSG_COMPLETION_MIGRATE="프로젝트를 새 버전으로 마이그레이션"
 
 # 공통 모듈 테스트 메시지
 MSG_COMMON_TESTING_FUNCTION="generate_container_name 함수 테스트 중..."
