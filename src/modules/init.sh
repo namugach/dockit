@@ -367,6 +367,10 @@ display_version_info() {
     echo -e "${BLUE}$MSG_INIT_VERSION_SEPARATOR${NC}\n"
 }
 
+####################################################################
+#                     init_main                                    #
+####################################################################
+
 # Main initialization function
 # 메인 초기화 함수
 init_main() {
