@@ -17,12 +17,28 @@ ZSH_COMPLETION_DIR="$HOME/.local/share/zsh/site-functions"
 CONFIG_DIR="$HOME/.config/dockit"
 GLOBAL_CONFIG_DIR="/etc/dockit"
 
+# 언어 설정 불러오기
+# Load language settings
+load_language_setting() {
+    # 설치된 환경의 설정 파일만 확인
+    local settings_file="$HOME/.local/share/dockit/config/settings.env"
+    
+    # 기본값은 영어
+    export LANGUAGE="en"
+    
+    # 설치된 환경의 설정 파일이 있으면 로드
+    if [ -f "$settings_file" ]; then
+        source "$settings_file"
+    fi
+}
+
+# 언어 설정 로드
+load_language_setting
+
 # 메시지 시스템 로드
 # Load message system
 if [ -f "$PROJECT_ROOT/config/messages/load.sh" ]; then
     source "$PROJECT_ROOT/config/messages/load.sh"
-    # 기본 언어로만 초기화 (언어 선택 전까지만 사용)
-    export LANGUAGE="en"
     load_messages
 fi
 
