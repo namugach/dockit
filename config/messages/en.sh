@@ -393,7 +393,7 @@ MSG_MIGRATE_NO_VERSION_FILE="Version file not found at %s."
 MSG_MIGRATE_EMPTY_VERSION="Target version is empty."
 
 # User interaction messages
-MSG_MIGRATE_CONFIRM="Do you want to proceed with migration to new version?"
+MSG_MIGRATE_CONFIRM="Do you want to proceed with migration from version %s to version %s?"
 MSG_MIGRATE_CANCELLED="Migration cancelled by user."
 
 # Backup related messages

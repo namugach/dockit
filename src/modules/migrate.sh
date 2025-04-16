@@ -305,11 +305,15 @@ validate_versions() {
 # 사용자 확인 획득
 # Get user confirmation
 get_user_confirmation() {
-    log_info "$(get_message MSG_MIGRATE_CONFIRM)"
+    local current_version="$1"
+    local target_version="$2"
+    
+    echo ""
+    echo -e "$(printf "$(get_message MSG_MIGRATE_CONFIRM)" "$current_version" "$target_version")"
     read -p "[y/N] " confirm
     
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        log_info "$(get_message MSG_MIGRATE_CANCELLED)"
+        echo -e "$(get_message MSG_MIGRATE_CANCELLED)"
         return 1
     fi
     
@@ -630,7 +634,7 @@ migrate_main() {
     
     # 사용자 확인
     # User confirmation
-    if ! get_user_confirmation; then
+    if ! get_user_confirmation "$current_version" "$target_version"; then
         return 0
     fi
     

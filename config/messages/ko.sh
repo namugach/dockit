@@ -372,7 +372,7 @@ MSG_MIGRATE_EMPTY_VERSION="대상 버전이 비어 있습니다."
 
 # 사용자 상호작용 메시지
 # User interaction messages
-MSG_MIGRATE_CONFIRM="새 버전으로 마이그레이션을 진행하시겠습니까?"
+MSG_MIGRATE_CONFIRM="현재 버전 %s에서 새 버전 %s(으)로 마이그레이션을 진행하시겠습니까?"
 MSG_MIGRATE_CANCELLED="사용자에 의해 마이그레이션이 취소되었습니다."
 
 # 백업 관련 메시지
