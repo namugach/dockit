@@ -122,6 +122,18 @@ create_migration_structure() {
     mkdir -p "$migrations_dir"
     
     if [ -d "${CONFIG_DIR}_old" ]; then
+        # 기존 migrations 디렉토리가 있으면 먼저 처리
+        # Handle existing migrations directory first if exists
+        if [ -d "${CONFIG_DIR}_old/migrations" ]; then
+            # 기존 migrations의 내용을 새 migrations로 복사
+            # Copy contents of existing migrations to new migrations
+            cp -R "${CONFIG_DIR}_old/migrations"/* "$migrations_dir/" 2>/dev/null
+            
+            # 기존 migrations 디렉토리 삭제 (이중 중첩 방지)
+            # Delete existing migrations directory (prevent nesting)
+            rm -rf "${CONFIG_DIR}_old/migrations"
+        fi
+        
         # 이전 설정을 버전 이름의 디렉토리로 이동
         # Move old config to directory named with version
         local version_dir="${migrations_dir}/${current_version}"
