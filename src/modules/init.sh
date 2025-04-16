@@ -25,20 +25,15 @@ DOCKER_COMPOSE_FILE="$DOCKIT_DIR/docker-compose.yml"
 CONFIG_FILE="$DOCKIT_DIR/.env"
 LOG_FILE="$DOCKIT_DIR/dockit.log"
 
-# User input function
-# 사용자 입력 함수
-get_user_input() {
-    log "INFO" "$MSG_INIT_GETTING_USER_INPUT"
-    
-    # Load default values
-    # 기본값 로드
-    load_config "init"
-    
-    echo -e "\n${GREEN}$MSG_WELCOME${NC}"
-    echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"
-    
-    # Display current settings
-    # 현재 설정 표시
+
+####################################################################
+#                         get_user_input                           #
+####################################################################
+
+
+# Display current configuration settings
+# 현재 설정값 표시
+display_current_settings() {
     echo -e "\n${YELLOW}$MSG_CURRENT_SETTINGS:${NC}"
     echo -e "$MSG_USERNAME: ${GREEN}${USERNAME:-$DEFAULT_USERNAME}${NC}"
     echo -e "$MSG_USER_UID: ${GREEN}${USER_UID:-$DEFAULT_UID}${NC}"
@@ -47,68 +42,57 @@ get_user_input() {
     echo -e "$MSG_WORKDIR: ${GREEN}${WORKDIR:-$DEFAULT_WORKDIR}${NC}"
     echo -e "$MSG_IMAGE_NAME: ${GREEN}${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}${NC}"
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}${CONTAINER_NAME}${NC}"
-    
-    # Selection options
-    # 선택 옵션
+}
+
+# Display selection options
+# 선택 옵션 표시
+display_selection_options() {
     echo -e "\n${BLUE}$MSG_SELECT_OPTION:${NC}"
     echo -e "${GREEN}y${NC} - $MSG_USE_DEFAULT"
     echo -e "${YELLOW}n${NC} - $MSG_MODIFY_VALUES"
     echo -e "${RED}c${NC} - $MSG_CANCEL"
-    read -p "$MSG_SELECT_CHOICE [Y/n/c]: " choice
-    choice=${choice:-y}
+}
+
+# Set default values for configuration
+# 설정의 기본값 지정
+set_default_values() {
+    USERNAME=${USERNAME:-$DEFAULT_USERNAME}
+    USER_UID=${USER_UID:-$DEFAULT_UID}
+    USER_GID=${USER_GID:-$DEFAULT_GID}
+    USER_PASSWORD=${USER_PASSWORD:-$DEFAULT_PASSWORD}
+    WORKDIR=${WORKDIR:-$DEFAULT_WORKDIR}
+    IMAGE_NAME=${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}
+    CONTAINER_NAME=${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}
+}
+
+# Get custom values from user input
+# 사용자 입력으로부터 커스텀 값 받기
+get_custom_values() {
+    read -p "$MSG_INPUT_USERNAME [${USERNAME:-$DEFAULT_USERNAME}]: " input
+    USERNAME=${input:-${USERNAME:-$DEFAULT_USERNAME}}
     
-    case "$choice" in
-        y|Y)
-            # Use default values
-            # 기본값 사용
-            USERNAME=${USERNAME:-$DEFAULT_USERNAME}
-            USER_UID=${USER_UID:-$DEFAULT_UID}
-            USER_GID=${USER_GID:-$DEFAULT_GID}
-            USER_PASSWORD=${USER_PASSWORD:-$DEFAULT_PASSWORD}
-            WORKDIR=${WORKDIR:-$DEFAULT_WORKDIR}
-            IMAGE_NAME=${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}
-            CONTAINER_NAME=${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}
-            ;;
-        n|N)
-            # Get user input for each value
-            # 각 값에 대한 사용자 입력 받기
-            read -p "$MSG_INPUT_USERNAME [${USERNAME:-$DEFAULT_USERNAME}]: " input
-            USERNAME=${input:-${USERNAME:-$DEFAULT_USERNAME}}
-            
-            read -p "$MSG_INPUT_UID [${USER_UID:-$DEFAULT_UID}]: " input
-            USER_UID=${input:-${USER_UID:-$DEFAULT_UID}}
-            
-            read -p "$MSG_INPUT_GID [${USER_GID:-$DEFAULT_GID}]: " input
-            USER_GID=${input:-${USER_GID:-$DEFAULT_GID}}
-            
-            read -p "$MSG_INPUT_PASSWORD [${USER_PASSWORD:-$DEFAULT_PASSWORD}]: " input
-            USER_PASSWORD=${input:-${USER_PASSWORD:-$DEFAULT_PASSWORD}}
-            
-            read -p "$MSG_INPUT_WORKDIR [${WORKDIR:-$DEFAULT_WORKDIR}]: " input
-            WORKDIR=${input:-${WORKDIR:-$DEFAULT_WORKDIR}}
-            
-            read -p "$MSG_INPUT_IMAGE_NAME [${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}]: " input
-            IMAGE_NAME=${input:-${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}}
-            
-            read -p "$MSG_INPUT_CONTAINER_NAME [${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}]: " input
-            CONTAINER_NAME=${input:-${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}}
-            ;;
-        c|C)
-            # Cancel
-            # 취소
-            log "INFO" "$MSG_INIT_CANCELLED"
-            exit 0
-            ;;
-        *)
-            # Invalid input
-            # 잘못된 입력
-            log "ERROR" "$MSG_INVALID_CHOICE"
-            exit 1
-            ;;
-    esac
+    read -p "$MSG_INPUT_UID [${USER_UID:-$DEFAULT_UID}]: " input
+    USER_UID=${input:-${USER_UID:-$DEFAULT_UID}}
     
-    # Confirm final settings
-    # 최종 설정 정보 확인
+    read -p "$MSG_INPUT_GID [${USER_GID:-$DEFAULT_GID}]: " input
+    USER_GID=${input:-${USER_GID:-$DEFAULT_GID}}
+    
+    read -p "$MSG_INPUT_PASSWORD [${USER_PASSWORD:-$DEFAULT_PASSWORD}]: " input
+    USER_PASSWORD=${input:-${USER_PASSWORD:-$DEFAULT_PASSWORD}}
+    
+    read -p "$MSG_INPUT_WORKDIR [${WORKDIR:-$DEFAULT_WORKDIR}]: " input
+    WORKDIR=${input:-${WORKDIR:-$DEFAULT_WORKDIR}}
+    
+    read -p "$MSG_INPUT_IMAGE_NAME [${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}]: " input
+    IMAGE_NAME=${input:-${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}}
+    
+    read -p "$MSG_INPUT_CONTAINER_NAME [${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}]: " input
+    CONTAINER_NAME=${input:-${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}}
+}
+
+# Display final configuration settings
+# 최종 설정값 표시
+display_final_settings() {
     echo -e "\n${YELLOW}$MSG_FINAL_SETTINGS:${NC}"
     echo -e "$MSG_USERNAME: ${GREEN}$USERNAME${NC}"
     echo -e "$MSG_USER_UID: ${GREEN}$USER_UID${NC}"
@@ -117,11 +101,50 @@ get_user_input() {
     echo -e "$MSG_WORKDIR: ${GREEN}$WORKDIR${NC}"
     echo -e "$MSG_IMAGE_NAME: ${GREEN}$IMAGE_NAME${NC}"
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}$CONTAINER_NAME${NC}"
+}
+
+# Main user input function
+# 메인 사용자 입력 함수
+get_user_input() {
+    log "INFO" "$MSG_INIT_GETTING_USER_INPUT"
     
-    # Save settings
-    # 설정 저장
+    # Load default values
+    load_config "init"
+    
+    echo -e "\n${GREEN}$MSG_WELCOME${NC}"
+    echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"
+    
+    display_current_settings
+    display_selection_options
+    
+    read -p "$MSG_SELECT_CHOICE [Y/n/c]: " choice
+    choice=${choice:-y}
+    
+    case "$choice" in
+        y|Y)
+            set_default_values
+            ;;
+        n|N)
+            get_custom_values
+            ;;
+        c|C)
+            log "INFO" "$MSG_INIT_CANCELLED"
+            exit 0
+            ;;
+        *)
+            log "ERROR" "$MSG_INVALID_CHOICE"
+            exit 1
+            ;;
+    esac
+    
+    display_final_settings
     save_config
 }
+
+
+####################################################################
+#                     build_docker_image                           #
+####################################################################
 
 # Create Dockerfile from template
 # Docker Compose 템플릿 파일 생성
@@ -144,55 +167,71 @@ create_dockerfile() {
     fi
 }
 
-# Build Docker image
-# Docker 이미지 빌드
-build_docker_image() {
-    log "INFO" "$MSG_BUILDING_IMAGE: $IMAGE_NAME"
-    
-    # Create temporary Dockerfile with substitutions
-    # 치환된 Dockerfile 생성 (임시 파일)
-    local temp_dockerfile="$PROJECT_ROOT/.dockerfile.tmp"
-    
-    # Check if BASE_IMAGE is set
-    # BASE_IMAGE가 설정되어 있는지 확인
+
+# Check and set BASE_IMAGE if not already set
+# BASE_IMAGE가 설정되지 않은 경우 확인 및 설정
+check_base_image() {
     if [ -z "$BASE_IMAGE" ]; then
         log "WARNING" "$MSG_BASE_IMAGE_NOT_SET"
         BASE_IMAGE="namugach/ubuntu-basic:24.04-kor-deno"
     fi
-    
     log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
+}
+
+
+
+# Process template using multilingual settings system
+# 다국어 설정 시스템을 사용하여 템플릿 처리
+process_multilang_template() {
+    local temp_dockerfile="$1"
+    log "INFO" "$MSG_MULTILANG_SETTINGS: BASE_IMAGE=$BASE_IMAGE"
+    process_template_with_base_image "$DOCKERFILE_TEMPLATE" "$temp_dockerfile"
+}
+
+# Process template using traditional method
+# 기존 방식으로 템플릿 처리
+process_traditional_template() {
+    local temp_dockerfile="$1"
+    log "INFO" "$MSG_PROCESSING_TEMPLATE"
     
-    # Check if config/system.sh exists and process_template_with_base_image function is available
-    # config/system.sh가 있고 process_template_with_base_image 함수가 사용 가능한지 확인
+    # Read and process template content
+    # 템플릿 내용 읽기 및 처리
+    local template_content=$(<"$DOCKERFILE_TEMPLATE")
+    echo "$template_content" | \
+    sed "1s|^FROM .*|FROM $BASE_IMAGE|" | \
+    sed -e "s|\${USERNAME}|${USERNAME}|g" \
+        -e "s|\${USER_UID}|${USER_UID}|g" \
+        -e "s|\${USER_GID}|${USER_GID}|g" \
+        -e "s|\${WORKDIR}|${WORKDIR}|g" \
+        -e "s|\${USER_PASSWORD}|${USER_PASSWORD}|g" \
+    > "$temp_dockerfile"
+}
+
+
+
+# Create temporary Dockerfile with proper base image and substitutions
+# 적절한 베이스 이미지와 치환으로 임시 Dockerfile 생성
+create_temp_dockerfile() {
+    local temp_dockerfile="$1"
+    
+    # Check and set BASE_IMAGE
+    # BASE_IMAGE 확인 및 설정
+    check_base_image
+    
+    # Process template based on available functions
+    # 사용 가능한 함수에 따라 템플릿 처리
     if [ -f "$PROJECT_ROOT/config/system.sh" ] && type process_template_with_base_image &>/dev/null; then
-        log "INFO" "$MSG_MULTILANG_SETTINGS: BASE_IMAGE=$BASE_IMAGE"
-        
-        # Use template processing function from multilingual settings system
-        # 다국어 설정 시스템의 템플릿 처리 함수 사용
-        process_template_with_base_image "$DOCKERFILE_TEMPLATE" "$temp_dockerfile"
+        process_multilang_template "$temp_dockerfile"
     else
-        # Process template using traditional method
-        # 기존 방식으로 템플릿 처리
-        log "INFO" "$MSG_PROCESSING_TEMPLATE"
-        
-        # Read template file
-        # 템플릿 파일 읽기
-        local template_content=$(<"$DOCKERFILE_TEMPLATE")
-        
-        # Replace FROM image in first line with BASE_IMAGE and process other variables
-        # 첫 줄의 FROM 이미지를 BASE_IMAGE로 교체하고 다른 변수 처리
-        echo "$template_content" | \
-        sed "1s|^FROM .*|FROM $BASE_IMAGE|" | \
-        sed -e "s|\${USERNAME}|${USERNAME}|g" \
-            -e "s|\${USER_UID}|${USER_UID}|g" \
-            -e "s|\${USER_GID}|${USER_GID}|g" \
-            -e "s|\${WORKDIR}|${WORKDIR}|g" \
-            -e "s|\${USER_PASSWORD}|${USER_PASSWORD}|g" \
-        > "$temp_dockerfile"
+        process_traditional_template "$temp_dockerfile"
     fi
+}
+
+# Build Docker image from temporary Dockerfile
+# 임시 Dockerfile로 Docker 이미지 빌드
+build_image_from_temp() {
+    local temp_dockerfile="$1"
     
-    # Build image
-    # 이미지 빌드
     if docker build -t "$IMAGE_NAME" -f "$temp_dockerfile" .; then
         log "SUCCESS" "$MSG_IMAGE_BUILT: $IMAGE_NAME"
         rm -f "$temp_dockerfile"
@@ -203,6 +242,24 @@ build_docker_image() {
         return 1
     fi
 }
+
+# Build Docker image
+# Docker 이미지 빌드
+build_docker_image() {
+    log "INFO" "$MSG_BUILDING_IMAGE: $IMAGE_NAME"
+    
+    # Create and process temporary Dockerfile
+    # 임시 Dockerfile 생성 및 처리
+    local temp_dockerfile="$PROJECT_ROOT/.dockerfile.tmp"
+    create_temp_dockerfile "$temp_dockerfile"
+    
+    # Build image using temporary Dockerfile
+    # 임시 Dockerfile을 사용하여 이미지 빌드
+    build_image_from_temp "$temp_dockerfile"
+}
+
+####################################################################
+
 
 # Create Docker Compose file
 # Docker Compose 파일 생성
