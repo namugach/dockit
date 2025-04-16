@@ -30,13 +30,57 @@ LOG_FILE="$CONFIG_DIR/dockit.log"
 
 # Load message system
 # 메시지 시스템 로드
-if [ -f "$PROJECT_ROOT/config/messages/load.sh" ]; then
-    # Set default value if LANGUAGE environment variable is not set
-    # LANGUAGE 환경 변수가 설정되어 있지 않으면 기본값 설정
-    if [ -z "$LANGUAGE" ]; then
-        export LANGUAGE="ko"
+load_language_setting() {
+    # Try to load language setting from project config
+    # 프로젝트 설정에서 언어 설정을 로드
+    local settings_file="${EXEC_DIR}/.dockit/config/settings.env"
+    local global_settings="${PROJECT_ROOT}/config/settings.env"
+    local installed_settings="/home/${USER}/.local/share/dockit/config/settings.env"
+    
+    # 1. 첫번째 시도: 현재 실행 디렉토리 설정 (dockit init 설정 후)
+    if [ -f "$settings_file" ]; then
+        lang_setting=$(grep "LANGUAGE=" "$settings_file" | cut -d'"' -f2)
+        if [ -n "$lang_setting" ]; then
+            export LANGUAGE="$lang_setting"
+            return 0
+        fi
     fi
     
+    # 2. 두번째 시도: 글로벌 설정파일 (프로젝트 루트에 있는)
+    if [ -f "$global_settings" ]; then
+        lang_setting=$(grep "LANGUAGE=" "$global_settings" | cut -d'"' -f2)
+        if [ -n "$lang_setting" ]; then
+            export LANGUAGE="$lang_setting"
+            return 0
+        fi
+    fi
+    
+    # 3. 세번째 시도: 설치된 설정파일 (dockit 설치 경로)
+    if [ -f "$installed_settings" ]; then
+        lang_setting=$(grep "LANGUAGE=" "$installed_settings" | cut -d'"' -f2)
+        if [ -n "$lang_setting" ]; then
+            export LANGUAGE="$lang_setting"
+            return 0
+        fi
+    fi
+    
+    # 4. 시스템 로케일에서 언어 추출 시도
+    local system_lang=$(locale | grep "LANG=" | cut -d= -f2 | cut -d_ -f1)
+    if [ -n "$system_lang" ]; then
+        export LANGUAGE="$system_lang"
+        return 0
+    fi
+    
+    # 5. 최종 기본값: 영어
+    export LANGUAGE="en"
+    return 0
+}
+
+# Before loading messages, ensure we have the correct language setting
+# 메시지를 로드하기 전에 올바른 언어 설정을 확보
+load_language_setting
+
+if [ -f "$PROJECT_ROOT/config/messages/load.sh" ]; then
     source "$PROJECT_ROOT/config/messages/load.sh"
     load_messages
 fi

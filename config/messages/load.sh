@@ -13,9 +13,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Function: Load messages
 # 함수: 메시지 로드
 load_messages() {
-    # Use default value 'ko' if LANGUAGE is not set
-    # LANGUAGE가 설정되어 있지 않으면 기본값 ko 사용
-    local lang="${LANGUAGE:-ko}"
+    # Use default value 'en' if LANGUAGE is not set
+    # LANGUAGE가 설정되어 있지 않으면 기본값 en 사용
+    local lang="${LANGUAGE:-en}"
     local message_file="$SCRIPT_DIR/${lang}.sh"
     
     # Output loading information in debug mode
@@ -31,8 +31,17 @@ load_messages() {
         export CURRENT_LANGUAGE="$lang"
         return 0
     else
-        printf "$MSG_SYSTEM_LANG_FILE_NOT_FOUND\n" "$lang"
-        return 1
+        # Try to load English messages if language file not found
+        # 언어 파일이 없으면 영어 메시지 로드 시도
+        local en_message_file="$SCRIPT_DIR/en.sh"
+        if [ -f "$en_message_file" ]; then
+            source "$en_message_file"
+            export CURRENT_LANGUAGE="en"
+            return 0
+        else
+            printf "Language file not found: %s\n" "$lang"
+            return 1
+        fi
     fi
 }
 
