@@ -335,6 +335,12 @@ install_completion() {
     # Zsh completion 디렉토리 확인 및 생성
     mkdir -p "$ZSH_COMPLETION_DIR"
     
+    # 공통 모듈 설치
+    cp "$PROJECT_DIR/completion/completion-common.sh" "$COMPLETION_DIR/"
+    cp "$PROJECT_DIR/completion/completion-common.sh" "$ZSH_COMPLETION_DIR/"
+    chmod +x "$COMPLETION_DIR/completion-common.sh"
+    chmod +x "$ZSH_COMPLETION_DIR/completion-common.sh"
+    
     # Bash completion 설치
     cp "$PROJECT_DIR/completion/bash.sh" "$COMPLETION_DIR/dockit"
     chmod +x "$COMPLETION_DIR/dockit"
@@ -345,6 +351,10 @@ install_completion() {
     
     # 시스템 전체 설치 시도 (sudo 권한 있는 경우)
     if [ -d "/etc/bash_completion.d" ] && [ -w "/etc/bash_completion.d" ]; then
+        # 공통 모듈도 시스템 경로에 설치
+        cp "$PROJECT_DIR/completion/completion-common.sh" "/etc/bash_completion.d/"
+        chmod +x "/etc/bash_completion.d/completion-common.sh"
+        
         cp "$PROJECT_DIR/completion/bash.sh" "/etc/bash_completion.d/dockit"
         chmod +x "/etc/bash_completion.d/dockit"
         log_info "$(get_message MSG_INSTALL_GLOBAL_COMPLETION)"
