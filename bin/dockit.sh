@@ -83,6 +83,10 @@ execute_command() {
             source "$MODULES_DIR/status.sh"
             status_main "$@"
             ;;
+        migrate)
+            source "$MODULES_DIR/migrate.sh"
+            migrate_main "$@"
+            ;;
         help)
             source "$MODULES_DIR/help.sh"
             show_help

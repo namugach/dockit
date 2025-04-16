@@ -162,6 +162,7 @@ MSG_HELP_STOP="  stop     - 컨테이너 중지"
 MSG_HELP_DOWN="  down     - 컨테이너 완전히 제거"
 MSG_HELP_CONNECT="  connect  - 컨테이너에 접속"
 MSG_HELP_STATUS="  status   - 컨테이너 상태 확인"
+MSG_HELP_MIGRATE="  migrate  - 새 버전으로 업그레이드"
 MSG_HELP_HELP="  help     - 도움말 표시"
 MSG_HELP_VERSION="  version  - 버전 정보 표시"
 

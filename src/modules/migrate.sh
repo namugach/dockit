@@ -3,6 +3,28 @@
 # Migration module for dockit
 # dockit 마이그레이션 모듈
 
+# 스크립트 디렉토리 설정
+# Set script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 공통 모듈 로드
+# Load common module
+source "$SCRIPT_DIR/common.sh" "migrate"
+
+# 로그 출력 함수들
+# Log output functions
+log_info() {
+    log "INFO" "$1"
+}
+
+log_warn() {
+    log "WARNING" "$1"
+}
+
+log_error() {
+    log "ERROR" "$1"
+}
+
 # 버전 비교 함수
 # Compare versions
 compare_versions() {
