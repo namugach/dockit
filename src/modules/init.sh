@@ -227,16 +227,10 @@ create_docker_compose() {
 
 # Main function
 # 메인 함수
-init_main() {
-    log "INFO" "$MSG_INIT_START"
-    
-    # 버전 정보 표시
-    # Display version information
-    echo -e "\n${BLUE}$(printf "$MSG_INIT_VERSION_HEADER" "$VERSION")${NC}"
-    echo -e "${BLUE}$MSG_INIT_VERSION_SEPARATOR${NC}\n"
-    
+# Initialize .dockit directory and move legacy files
+# .dockit 디렉토리 초기화 및 레거시 파일 이동
+init_dockit_dir() {
     # Create .dockit directory
-    # .dockit 디렉토리 생성
     if [ ! -d "$DOCKIT_DIR" ]; then
         log "INFO" "$MSG_CREATING_DOCKIT_DIR"
         mkdir -p "$DOCKIT_DIR"
@@ -244,15 +238,19 @@ init_main() {
     fi
     
     # Check and clean up old version files
-    # 이전 버전의 파일이 있는지 확인하고 정리
     if [ -f "$PROJECT_ROOT/docker-tools.log" ]; then
         log "INFO" "$MSG_OLD_LOG_FOUND"
         rm -f "$PROJECT_ROOT/docker-tools.log"
         log "SUCCESS" "$MSG_OLD_LOG_REMOVED"
     fi
     
-    # Move files from root to new location
-    # 이전에 루트에 있던 파일들을 새 위치로 이동
+    # Move legacy files to new location
+    move_legacy_files
+}
+
+# Move legacy files from root to new location
+# 레거시 파일들을 새 위치로 이동
+move_legacy_files() {
     if [ -f "$PROJECT_ROOT/.env" ]; then
         log "INFO" "$MSG_MOVING_ENV"
         mv "$PROJECT_ROOT/.env" "$CONFIG_FILE"
@@ -270,25 +268,11 @@ init_main() {
         mv "$PROJECT_ROOT/dockit.log" "$LOG_FILE"
         log "SUCCESS" "$MSG_LOG_MOVED"
     fi
-    
-    # Get user input
-    # 사용자 입력 받기
-    get_user_input
-    
-    # Create template files
-    # 템플릿 파일 생성
-    create_dockerfile
-    
-    # Build Docker image
-    # Docker 이미지 빌드
-    build_docker_image
-    
-    # Create Docker Compose file
-    # Docker Compose 파일 생성
-    create_docker_compose
-    
-    # Ask if container should be started
-    # 컨테이너 시작 여부 확인
+}
+
+# Start container and handle user interaction
+# 컨테이너 시작 및 사용자 상호작용 처리
+start_and_connect_container() {
     echo -e "\n${YELLOW}$MSG_START_CONTAINER_NOW?${NC}"
     read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
     start_container=${start_container:-y}
@@ -298,22 +282,46 @@ init_main() {
         
         if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
             log "SUCCESS" "$MSG_CONTAINER_STARTED"
-            
-            # Ask if user wants to connect to container
-            # 컨테이너 접속 여부 확인
-            echo -e "\n${YELLOW}$MSG_CONNECT_CONTAINER_NOW?${NC}"
-            read -p "$MSG_SELECT_CHOICE [Y/n]: " connect_container
-            connect_container=${connect_container:-y}
-            
-            if [[ $connect_container == "y" || $connect_container == "Y" ]]; then
-                log "INFO" "$MSG_CONNECTING_CONTAINER"
-                docker exec -it "$CONTAINER_NAME" bash
-            fi
+            handle_container_connection
         else
             log "ERROR" "$MSG_CONTAINER_START_FAILED"
             return 1
         fi
     fi
+}
+
+# Handle container connection prompt and execution
+# 컨테이너 연결 프롬프트 및 실행 처리
+handle_container_connection() {
+    echo -e "\n${YELLOW}$MSG_CONNECT_CONTAINER_NOW?${NC}"
+    read -p "$MSG_SELECT_CHOICE [Y/n]: " connect_container
+    connect_container=${connect_container:-y}
+    
+    if [[ $connect_container == "y" || $connect_container == "Y" ]]; then
+        log "INFO" "$MSG_CONNECTING_CONTAINER"
+        docker exec -it "$CONTAINER_NAME" bash
+    fi
+}
+
+# Display version information
+# 버전 정보 표시
+display_version_info() {
+    echo -e "\n${BLUE}$(printf "$MSG_INIT_VERSION_HEADER" "$VERSION")${NC}"
+    echo -e "${BLUE}$MSG_INIT_VERSION_SEPARATOR${NC}\n"
+}
+
+# Main initialization function
+# 메인 초기화 함수
+init_main() {
+    log "INFO" "$MSG_INIT_START"
+    
+    display_version_info
+    init_dockit_dir
+    get_user_input
+    create_dockerfile
+    build_docker_image
+    create_docker_compose
+    start_and_connect_container
     
     log "SUCCESS" "$MSG_INIT_COMPLETE"
 }
