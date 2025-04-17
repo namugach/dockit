@@ -31,7 +31,7 @@ _dockit_find_message_files() {
         script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     fi
     
-    local install_dir="$HOME/.local/share/dockit"
+    local install_dir="$HOME/.dockit"
     local dev_dir="$script_dir/.."
     
     # 설치된 경로와 개발 경로 모두 확인

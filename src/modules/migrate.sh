@@ -265,7 +265,7 @@ check_target_version() {
     
     if [ ! -f "$version_file" ]; then
         # 설치 경로에서 확인
-        version_file="/home/hgs/.local/share/dockit/bin/VERSION"
+        version_file="/home/$USER/.dockit/bin/VERSION"
         
         if [ ! -f "$version_file" ]; then
             log_error "$(printf "$(get_message MSG_MIGRATE_NO_VERSION_FILE)" "$version_file")"

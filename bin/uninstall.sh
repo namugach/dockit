@@ -13,16 +13,16 @@ NC='\033[0m' # No Color
 # 설치 디렉토리
 # Installation directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT_DIR="$HOME/.local/share/dockit"
-INSTALL_DIR="$HOME/.local/bin"
-COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
-ZSH_COMPLETION_DIR="$HOME/.local/share/zsh/site-functions"
+PROJECT_DIR="$HOME/.dockit"
+INSTALL_DIR="$HOME/.dockit/bin"
+COMPLETION_DIR="$HOME/.dockit/completion/bash"
+ZSH_COMPLETION_DIR="$HOME/.dockit/completion/zsh"
 
 # 언어 설정 불러오기
 # Load language settings
 load_language_setting() {
     # 설치된 환경의 설정 파일만 확인
-    local settings_file="$HOME/.local/share/dockit/config/settings.env"
+    local settings_file="$HOME/.dockit/config/settings.env"
     
     # 기본값은 영어
     export LANGUAGE="en"

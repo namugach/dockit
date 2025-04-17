@@ -10,11 +10,11 @@ NC='\033[0m' # No Color
 # 설치 디렉토리
 # Installation directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT_DIR="$HOME/.local/share/dockit"
-INSTALL_DIR="$HOME/.local/bin"
-COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
-ZSH_COMPLETION_DIR="$HOME/.local/share/zsh/site-functions"
-CONFIG_DIR="$HOME/.config/dockit"
+PROJECT_DIR="$HOME/.dockit"
+INSTALL_DIR="$HOME/.dockit/bin"
+COMPLETION_DIR="$HOME/.dockit/completion/bash"
+ZSH_COMPLETION_DIR="$HOME/.dockit/completion/zsh"
+CONFIG_DIR="$HOME/.dockit/config"
 GLOBAL_CONFIG_DIR="/etc/dockit"
 
 # 언어 설정 불러오기 함수
@@ -22,7 +22,7 @@ GLOBAL_CONFIG_DIR="/etc/dockit"
 load_language_setting() {
     # 설치된 환경의 설정 파일만 확인
     # Only check settings file in installed environment
-    local settings_file="$HOME/.local/share/dockit/config/settings.env"
+    local settings_file="$HOME/.dockit/config/settings.env"
     
     # 기본값은 영어
     # Default is English
@@ -154,14 +154,11 @@ check_permissions() {
 # 디렉토리 권한 체크
 # Check directory permissions
 check_directory_permissions() {
-    local dirs=("$INSTALL_DIR" "$PROJECT_DIR" "$COMPLETION_DIR" "$ZSH_COMPLETION_DIR" "$CONFIG_DIR")
-    for dir in "${dirs[@]}"; do
-        if [ ! -w "$(dirname "$dir")" ]; then
-            log_error "$(printf "$(get_message MSG_INSTALL_NO_PERMISSION)" "$(dirname "$dir")")"
-            log_info "$(get_message MSG_INSTALL_USE_SUDO)"
-            exit 1
-        fi
-    done
+    if [ ! -w "$HOME" ]; then
+        log_error "$(printf "$(get_message MSG_INSTALL_NO_PERMISSION)" "$HOME")"
+        log_info "$(get_message MSG_INSTALL_USE_SUDO)"
+        exit 1
+    fi
 }
 
 # 디렉토리 생성
@@ -643,7 +640,7 @@ check_minimal_requirements() {
         exit 1
     fi
     
-    if [ ! -w "$(dirname "$PROJECT_DIR")" ] || [ ! -w "$(dirname "$INSTALL_DIR")" ]; then
+    if [ ! -w "$HOME" ]; then
         log_error "Permission denied. Please check your permissions."
         log_info "You may need to run with sudo or check directory permissions."
         exit 1

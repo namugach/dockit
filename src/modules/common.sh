@@ -41,7 +41,7 @@ load_language_setting() {
     # 프로젝트 설정에서 언어 설정을 로드
     local settings_file="${EXEC_DIR}/.dockit/config/settings.env"
     local global_settings="${PROJECT_ROOT}/config/settings.env"
-    local installed_settings="/home/${USER}/.local/share/dockit/config/settings.env"
+    local installed_settings="/home/${USER}/.dockit/config/settings.env"
     
     # 1. 첫번째 시도: 현재 실행 디렉토리 설정 (dockit init 설정 후)
     if [ -f "$settings_file" ]; then
