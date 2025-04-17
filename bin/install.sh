@@ -149,8 +149,8 @@ restore_messages() {
     fi
 }
 
-# 언어 파일 복사
-# Copy language files
+# 언어 파일 복사 (실제 설치 단계에서만 호출)
+# Copy language files (call only during actual installation)
 copy_language_files() {
     create_dir_if_not_exists "$PROJECT_DIR/config/messages"
     
@@ -485,6 +485,66 @@ check_and_update_path() {
     # PATH settings have been updated."
 }
 
+# 자동완성 스크립트 설치
+# Install completion scripts
+install_completion() {
+    log_info "$(get_message MSG_INSTALL_INSTALLING_COMPLETION)"
+    
+    create_completion_directories
+    install_common_modules
+    install_shell_completions
+    install_system_completion
+    configure_shell_completion
+    load_current_session_completion
+    
+    log_info "$(get_message MSG_INSTALL_COMPLETION_HELP)"
+}
+
+# 최종 지침 표시
+# Show final instructions
+show_final_instructions() {
+    echo ""
+    log_info "$(get_message MSG_INSTALL_SHELL_RESTART)"
+    log_info "$(get_message MSG_INSTALL_COMPLETION_ENABLE)"
+    echo ""
+    log_info "$(get_message MSG_INSTALL_BASH_RELOAD)"
+    echo "        source ~/.bashrc"
+    log_info "$(get_message MSG_INSTALL_ZSH_RELOAD)"
+    echo "        source ~/.zshrc"
+    echo ""
+    log_info "또는 직접 경로를 지정하여 실행할 수 있습니다:
+    # Or you can run it directly by specifying the path:"
+    echo "        $INSTALL_DIR/dockit"
+}
+
+# 설치 모듈 (다른 스크립트에서 사용할 수 있게 내보내기 위한 함수)
+# Installation module (exported for use in other scripts)
+install() {
+    echo "$(get_message MSG_INSTALL_START)"
+    
+    check_docker_status
+    check_port_availability
+    check_image_existence
+    start_container
+}
+
+# ===== 스크립트 실행 시작 =====
+# ===== Script Execution Start =====
+# 언어 설정 로드
+# Load language settings
+load_language_setting
+
+# 메시지 시스템 로드
+# Load message system
+load_message_system
+
+# 메인 함수 정의는 여기 있고, 호출은 아래에서 할 것임
+# Main function is defined here, and will be called below
+
+# 함수 내보내기 (다른 스크립트에서 사용 가능하도록)
+# Export functions (for use in other scripts)
+export -f install
+
 # ===== 레벨 5: 중간 레벨 통합 함수 =====
 # ===== Level 5: Mid-level Integration Functions =====
 # 의존성 체크
@@ -548,21 +608,21 @@ setup_language() {
     local lang_dir="$PROJECT_ROOT/config/messages"
     local default_lang="en"
     
-    find_available_languages
+    find_available_languages_from_source
     display_language_options
     handle_language_selection
 }
 
-# 사용 가능한 언어 찾기
-# Find available languages
-find_available_languages() {
+# 원본 소스에서 사용 가능한 언어 찾기 (파일 시스템 변경 없음)
+# Find available languages from source (no filesystem changes)
+find_available_languages_from_source() {
     langs=()
     lang_names=()
     default_idx=0
     i=0
     
     log_info "Finding available languages..."
-    for lang_file in "$lang_dir"/*.sh; do
+    for lang_file in "$PROJECT_ROOT/config/messages"/*.sh; do
         if check_file_exists "$lang_file"; then
             process_language_file "$lang_file"
         fi
@@ -637,124 +697,118 @@ process_language_choice() {
         set_default_language
     fi
     
-    apply_language_settings
+    prepare_language_settings
 }
 
-# 선택된 언어 설정
-# Set selected language
+# 선택된 언어 설정 (메모리에만 저장)
+# Set selected language (in memory only)
 set_selected_language() {
     local idx=$((lang_choice-1))
-    local selected_lang="${langs[$idx]}"
-    local selected_name="${lang_names[$idx]}"
+    selected_lang="${langs[$idx]}"
+    selected_name="${lang_names[$idx]}"
     
-    save_language_setting "$selected_lang"
-    load_language_file "$selected_lang"
+    LANGUAGE="$selected_lang"
+    load_source_language_file "$selected_lang"
     printf "$(get_message MSG_INSTALL_LANGUAGE_SELECTED)\n" "$selected_name" "$selected_lang"
 }
 
-# 기본 언어 설정
-# Set default language
+# 기본 언어 설정 (메모리에만 저장)
+# Set default language (in memory only)
 set_default_language() {
     local default_lang="${langs[$default_idx]}"
     local default_name="${lang_names[$default_idx]}"
     
-    save_language_setting "$default_lang"
-    load_language_file "$default_lang"
+    selected_lang="$default_lang"
+    selected_name="$default_name"
+    
+    LANGUAGE="$default_lang"
+    load_source_language_file "$default_lang"
     printf "$(get_message MSG_INSTALL_LANGUAGE_INVALID)\n" "$default_name" "$default_lang"
 }
 
-# 언어 설정 저장
-# Save language setting
-save_language_setting() {
-    local lang="$1"
-    echo "LANGUAGE=\"$lang\"" > "$PROJECT_DIR/config/settings.env"
-    export LANGUAGE="$lang"
-}
-
-# 언어 파일 로드
-# Load language file
-load_language_file() {
+# 원본 소스에서 언어 파일 로드 (파일 시스템 변경 없음)
+# Load language file from source (no filesystem changes)
+load_source_language_file() {
     local lang="$1"
     if check_file_exists "$PROJECT_ROOT/config/messages/$lang.sh"; then
         source "$PROJECT_ROOT/config/messages/$lang.sh"
     fi
 }
 
-# 언어 설정에 따른 추가 설정 적용
-# Apply additional settings based on language
-apply_language_settings() {
+# 언어 설정을 위한 준비 (메모리에만 저장)
+# Prepare language settings (in memory only)
+prepare_language_settings() {
     local selected_lang="$LANGUAGE"
     local lang_file="$PROJECT_ROOT/config/messages/$selected_lang.sh"
     
     if check_file_exists "$lang_file"; then
-        apply_locale_setting "$lang_file"
-        apply_timezone_setting "$lang_file"
+        prepare_locale_setting "$lang_file"
+        prepare_timezone_setting "$lang_file"
     fi
 }
 
-# 로케일 설정 적용
-# Apply locale setting
-apply_locale_setting() {
+# 로케일 설정 준비 (메모리에만 저장)
+# Prepare locale setting (in memory only)
+prepare_locale_setting() {
     local lang_file="$1"
-    local locale=$(grep "^LANG_LOCALE=" "$lang_file" | cut -d'"' -f2)
+    locale=$(grep "^LANG_LOCALE=" "$lang_file" | cut -d'"' -f2)
     
     if [ -n "$locale" ]; then
-        echo "LOCALE=\"$locale\"" >> "$PROJECT_DIR/config/settings.env"
         export LOCALE="$locale"
-        log_info "Locale set to: $locale"
+        log_info "Locale will be set to: $locale"
     fi
 }
 
-# 타임존 설정 적용
-# Apply timezone setting
-apply_timezone_setting() {
+# 타임존 설정 준비 (메모리에만 저장)
+# Prepare timezone setting (in memory only)
+prepare_timezone_setting() {
     local lang_file="$1"
-    local timezone=$(grep "^LANG_TIMEZONE=" "$lang_file" | cut -d'"' -f2)
+    timezone=$(grep "^LANG_TIMEZONE=" "$lang_file" | cut -d'"' -f2)
     
     if [ -n "$timezone" ]; then
-        echo "TIMEZONE=\"$timezone\"" >> "$PROJECT_DIR/config/settings.env"
         export TIMEZONE="$timezone" 
-        log_info "Timezone set to: $timezone"
+        log_info "Timezone will be set to: $timezone"
     fi
 }
 
-# 자동완성 스크립트 설치
-# Install completion scripts
-install_completion() {
-    log_info "$(get_message MSG_INSTALL_INSTALLING_COMPLETION)"
-    
-    create_completion_directories
-    install_common_modules
-    install_shell_completions
-    install_system_completion
-    configure_shell_completion
-    load_current_session_completion
-    
-    log_info "$(get_message MSG_INSTALL_COMPLETION_HELP)"
+# 언어 설정 적용 (실제 설치 단계에서만 호출)
+# Apply language settings (call only during actual installation)
+apply_language_settings() {
+    if [ -n "$selected_lang" ]; then
+        echo "LANGUAGE=\"$selected_lang\"" > "$PROJECT_DIR/config/settings.env"
+        
+        if [ -n "$locale" ]; then
+            echo "LOCALE=\"$locale\"" >> "$PROJECT_DIR/config/settings.env"
+        fi
+        
+        if [ -n "$timezone" ]; then
+            echo "TIMEZONE=\"$timezone\"" >> "$PROJECT_DIR/config/settings.env"
+        fi
+    fi
 }
 
-# 초기 체크 수행
-# Perform initial checks
+# 초기 체크 수행 (파일 시스템 변경 없음)
+# Perform initial checks (no filesystem changes)
 perform_initial_checks() {
     check_existing_installation
-    copy_language_files
 }
 
-# 최종 지침 표시
-# Show final instructions
-show_final_instructions() {
+# 최종 설치 확인 요청
+# Ask for final installation confirmation
+confirm_installation() {
     echo ""
-    log_info "$(get_message MSG_INSTALL_SHELL_RESTART)"
-    log_info "$(get_message MSG_INSTALL_COMPLETION_ENABLE)"
-    echo ""
-    log_info "$(get_message MSG_INSTALL_BASH_RELOAD)"
-    echo "        source ~/.bashrc"
-    log_info "$(get_message MSG_INSTALL_ZSH_RELOAD)"
-    echo "        source ~/.zshrc"
-    echo ""
-    log_info "또는 직접 경로를 지정하여 실행할 수 있습니다:
-    # Or you can run it directly by specifying the path:"
-    echo "        $INSTALL_DIR/dockit"
+    log_info "모든 준비가 완료되었습니다. 설치를 진행하시겠습니까? (Y/n)
+    # All preparations are complete. Proceed with installation? (Y/n)"
+    read -r confirmation
+    
+    # 빈 입력이거나 'Y' 또는 'y'면 계속 진행
+    # Continue if input is empty or 'Y' or 'y'
+    if [[ ! $confirmation =~ ^[Nn]$ ]]; then
+        return 0
+    else
+        log_info "$(get_message MSG_INSTALL_CANCELLED)"
+        exit 0
+    fi
 }
 
 # ===== 레벨 6: 프로젝트 설치 함수 =====
@@ -774,6 +828,10 @@ install_project_preserving_lang() {
         # Failed to remove old installation"
         return 1
     }
+    
+    # 언어 파일을 먼저 복사하여 메시지가 제대로 표시되도록 함
+    # Copy language files first so messages display correctly
+    copy_language_files
     
     copy_project_files || {
         log_error "프로젝트 파일 복사 실패
@@ -801,30 +859,6 @@ initialize_installation() {
     check_minimal_requirements
 }
 
-# 메인 설치 수행
-# Perform main installation
-perform_main_installation() {
-    log_info "$(get_message MSG_INSTALL_START)"
-    
-    check_dependencies || return 1
-    check_permissions || return 1
-    install_project_preserving_lang || return 1
-    install_completion || return 1
-    check_path || return 1
-    verify_installation
-}
-
-# 설치 모듈
-# Installation module
-install() {
-    echo "$(get_message MSG_INSTALL_START)"
-    
-    check_docker_status
-    check_port_availability
-    check_image_existence
-    start_container
-}
-
 # ===== 레벨 7: 메인 설치 프로세스 =====
 # ===== Level 7: Main Installation Process =====
 # 메인 설치 프로세스
@@ -832,25 +866,24 @@ install() {
 main() {
     initialize_installation
     perform_initial_checks
+    check_dependencies
+    check_permissions
     setup_language
-    perform_main_installation
+    
+    # 최종 확인 후에만 파일 시스템 변경
+    # Only change filesystem after final confirmation
+    confirm_installation
+    
+    # 여기서부터 실제 파일 시스템 변경 시작
+    # Actual filesystem changes start here
+    install_project_preserving_lang || return 1
+    apply_language_settings
+    install_completion || return 1
+    check_path || return 1
+    verify_installation
     show_final_instructions
 }
 
-# ===== 스크립트 실행 시작 =====
-# ===== Script Execution Start =====
-# 언어 설정 로드
-# Load language settings
-load_language_setting
-
-# 메시지 시스템 로드
-# Load message system
-load_message_system
-
-# 메인 함수 실행
-# Execute main function
+# 이제 모든 함수가 정의된 후에 메인 함수 실행
+# Now execute the main function after all functions are defined
 main
-
-# 함수 내보내기 (다른 스크립트에서 사용 가능하도록)
-# Export functions (for use in other scripts)
-export -f install
