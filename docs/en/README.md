@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../../docs/logo.png" alt="Dockit Logo" width="400">
+</p>
+
 # Dockit - Docker Development Environment Tool
 
 [English](../../docs/en/README.md) | [한국어](../../docs/ko/README.md)
