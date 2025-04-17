@@ -72,7 +72,7 @@ dockit init
 ```
 
 이 명령어는 다음 작업을 수행합니다:
-- `.dockit` 디렉토리 생성
+- `.dockit_project` 디렉토리 생성
 - 사용자 설정 정보 수집
 - Docker 이미지 빌드
 - docker-compose.yml 파일 생성
@@ -170,7 +170,7 @@ dockit help
 
 ## 설정 파일
 
-Dockit은 `.dockit/.env` 파일에 모든 설정을 저장합니다. 이 파일은 초기화 과정에서 생성되며, 다음과 같은 정보를 포함합니다:
+Dockit은 `.dockit_project/.env` 파일에 모든 설정을 저장합니다. 이 파일은 초기화 과정에서 생성되며, 다음과 같은 정보를 포함합니다:
 
 ```
 # Docker Tools Configuration File
@@ -202,7 +202,7 @@ WORKDIR="[작업 디렉토리]"
 **해결책**: 
 - Docker가 실행 중인지 확인하세요.
 - 필요한 권한이 있는지 확인하세요.
-- `.dockit` 디렉토리를 삭제하고 다시 시도하세요.
+- `.dockit_project` 디렉토리를 삭제하고 다시 시도하세요.
 
 ### 컨테이너 시작 문제
 

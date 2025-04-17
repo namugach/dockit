@@ -12,20 +12,22 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
 MODULES_DIR="${CURRENT_DIR}"
 TEMPLATE_DIR="${PROJECT_ROOT}/src/templates"
-CONFIG_DIR="${CURRENT_DIR}/.dockit"
 
-# 현재 실행 위치를 기준으로 .dockit 디렉토리 경로 설정 (절대 경로)
-# Set .dockit directory path based on current execution location (absolute path)
+# 실행 디렉토리 설정 (절대 경로)
+# Set execution directory (absolute path)
 EXEC_DIR="$(pwd)"
-CONFIG_DIR="${EXEC_DIR}/.dockit"
+
+# .dockit_project 디렉토리 및 파일 경로 설정
+# Set .dockit_project directory and file paths
+CONFIG_DIR="${EXEC_DIR}/.dockit_project"
 CONFIG_ENV="${CONFIG_DIR}/.env"
 DOCKER_COMPOSE_FILE="${CONFIG_DIR}/docker-compose.yml"
 DOCKER_COMPOSE_TEMPLATE="${TEMPLATE_DIR}/docker-compose.yml"
 DOCKERFILE_TEMPLATE="${TEMPLATE_DIR}/Dockerfile"
 CONTAINER_WORKDIR="/workspace"
 
-# Configuration file paths
-# 설정 파일 경로
+# 로그 파일 경로 설정
+# Set log file path
 LOG_FILE="$CONFIG_DIR/dockit.log"
 
 # Load message system
@@ -39,7 +41,7 @@ load_language_setting() {
     
     # Try to load language setting from project config
     # 프로젝트 설정에서 언어 설정을 로드
-    local settings_file="${EXEC_DIR}/.dockit/config/settings.env"
+    local settings_file="${EXEC_DIR}/.dockit_project/config/settings.env"
     local global_settings="${PROJECT_ROOT}/config/settings.env"
     local installed_settings="/home/${USER}/.dockit/config/settings.env"
     
@@ -125,9 +127,9 @@ log() {
     local message="$2"
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     
-    # Only write to log file if .dockit directory exists
-    # .dockit 디렉토리가 있을 때만 로그 파일에 기록
-    if [ -d "$CONFIG_DIR" ]; then
+    # Only write to log file if .dockit_project directory exists
+    # .dockit_project 디렉토리가 있을 때만 로그 파일에 기록
+    if [ -d "${CONFIG_DIR}" ]; then
         # Create log file if it doesn't exist
         # 로그 파일이 없으면 생성
         if [ ! -f "$LOG_FILE" ]; then
@@ -329,10 +331,10 @@ check_dockit_validity() {
         return 0
     fi
 
-    local dockit_dir=".dockit"
+    local dockit_dir=".dockit_project"
     
-    # Check if .dockit directory exists first
-    # 먼저 .dockit 디렉토리가 있는지 확인
+    # Check if .dockit_project directory exists first
+    # 먼저 .dockit_project 디렉토리가 있는지 확인
     if [ ! -d "$dockit_dir" ]; then
         log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
         log "INFO" "$MSG_COMMON_NOT_INITIALIZED"
@@ -398,7 +400,7 @@ compare_versions() {
 check_version_compatibility() {
     # Skip if no .env file
     # .env 파일이 없으면 건너뛰기
-    if [ ! -f ".dockit/.env" ]; then
+    if [ ! -f ".dockit_project/.env" ]; then
         return 0
     fi
     
@@ -417,7 +419,7 @@ check_version_compatibility() {
     # Get project version from .env file
     # .env 파일에서 프로젝트 버전 가져오기
     local project_version
-    project_version=$(grep "^DOCKIT_VERSION=" ".dockit/.env" | cut -d'"' -f2)
+    project_version=$(grep "^DOCKIT_VERSION=" ".dockit_project/.env" | cut -d'"' -f2)
     
     if [ -z "$project_version" ] || [ "$project_version" == "unknown" ]; then
         return 0

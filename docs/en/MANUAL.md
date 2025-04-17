@@ -72,7 +72,7 @@ dockit init
 ```
 
 This command performs the following tasks:
-- Creates the `.dockit` directory
+- Creates the `.dockit_project` directory
 - Collects user configuration information
 - Builds a Docker image
 - Creates a docker-compose.yml file
@@ -170,7 +170,7 @@ dockit help
 
 ## Configuration File
 
-Dockit stores all settings in the `.dockit/.env` file. This file is created during the initialization process and includes the following information:
+Dockit stores all settings in the `.dockit_project/.env` file. This file is created during the initialization process and includes the following information:
 
 ```
 # Docker Tools Configuration File
@@ -198,7 +198,7 @@ This file can be manually edited as needed.
 **Solution**: 
 - Check if Docker is running
 - Check if you have the necessary permissions
-- Delete the `.dockit` directory and try again
+- Delete the `.dockit_project` directory and try again
 
 ### Container Start Issues
 
