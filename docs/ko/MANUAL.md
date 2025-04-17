@@ -41,7 +41,7 @@ Dockit을 설치하려면 다음 명령어를 실행하세요:
 
 ```bash
 # 저장소 복제
-git clone https://github.com/yourusername/dockit.git
+git clone https://github.com/namugach/dockit.git
 cd dockit
 
 # 설치 스크립트 실행

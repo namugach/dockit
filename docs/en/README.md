@@ -12,7 +12,7 @@ Dockit is a modular shell script tool for quickly setting up and managing develo
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/dockit.git
+git clone https://github.com/namugach/dockit.git
 cd dockit
 
 # Install Dockit to your system

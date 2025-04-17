@@ -41,7 +41,7 @@ To install Dockit, run the following commands:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/dockit.git
+git clone https://github.com/namugach/dockit.git
 cd dockit
 
 # Run the installation script

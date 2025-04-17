@@ -12,7 +12,7 @@ Dockit은 Docker를 사용하여 개발 환경을 빠르게 설정하고 관리�
 
 ```bash
 # 저장소 복제
-git clone https://github.com/yourusername/dockit.git
+git clone https://github.com/namugach/dockit.git
 cd dockit
 
 # Dockit을 시스템에 설치
