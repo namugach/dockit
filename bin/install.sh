@@ -156,21 +156,17 @@ copy_language_files() {
     
     if check_file_exists "$PROJECT_ROOT/config/settings.env"; then
         cp "$PROJECT_ROOT/config/settings.env" "$PROJECT_DIR/config/"
-        log_info "설정 파일 복사됨: settings.env
-        # Settings file copied: settings.env"
+        log_info "$(get_message MSG_INSTALL_SETTINGS_COPIED)"
     else
         echo "LANGUAGE=\"en\"" > "$PROJECT_DIR/config/settings.env"
-        log_info "기본 설정 파일 생성됨: settings.env
-        # Default settings file created: settings.env"
+        log_info "$(get_message MSG_INSTALL_DEFAULT_SETTINGS_CREATED)"
     fi
     
     if check_dir_exists "$PROJECT_ROOT/config/messages"; then
         cp -r "$PROJECT_ROOT/config/messages/"* "$PROJECT_DIR/config/messages/"
-        log_info "메시지 파일 복사됨
-        # Message files copied"
+        log_info "$(get_message MSG_INSTALL_MESSAGES_COPIED)"
     else
-        log_warn "메시지 디렉토리를 찾을 수 없음: $PROJECT_ROOT/config/messages
-        # Message directory not found: $PROJECT_ROOT/config/messages"
+        log_warn "$(printf "$(get_message MSG_INSTALL_MESSAGES_DIR_NOT_FOUND)" "$PROJECT_ROOT/config/messages")"
     fi
 }
 
@@ -246,13 +242,13 @@ check_directory_permissions() {
 # Check minimal requirements
 check_minimal_requirements() {
     if ! check_command_exists "docker"; then
-        log_error "Docker not installed. Please install Docker first."
+        log_error "$(get_message MSG_INSTALL_DOCKER_NOT_INSTALLED)"
         exit 1
     fi
     
     if ! check_write_permission "$HOME"; then
-        log_error "Permission denied. Please check your permissions."
-        log_info "You may need to run with sudo or check directory permissions."
+        log_error "$(get_message MSG_INSTALL_PERMISSION_DENIED)"
+        log_info "$(get_message MSG_INSTALL_RUN_WITH_SUDO)"
         exit 1
     fi
 }
@@ -305,11 +301,9 @@ install_dockit_script() {
     update_script_paths
     
     if check_file_exists "$INSTALL_DIR/dockit" && [ -x "$INSTALL_DIR/dockit" ]; then
-        log_info "dockit 스크립트가 성공적으로 설치되었습니다: $INSTALL_DIR/dockit
-        # dockit script successfully installed: $INSTALL_DIR/dockit"
+        log_info "$(printf "$(get_message MSG_INSTALL_SCRIPT_SUCCESS)" "$INSTALL_DIR/dockit")"
     else
-        log_error "dockit 스크립트 설치에 실패했습니다!
-        # Failed to install dockit script!"
+        log_error "$(get_message MSG_INSTALL_SCRIPT_FAILED)"
         return 1
     fi
 }
@@ -481,8 +475,7 @@ check_and_update_path() {
         echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$HOME/.zshrc"
     fi
     
-    log_info "PATH 설정이 업데이트되었습니다.
-    # PATH settings have been updated."
+    log_info "$(get_message MSG_INSTALL_PATH_UPDATED)"
 }
 
 # 자동완성 스크립트 설치
@@ -512,8 +505,7 @@ show_final_instructions() {
     log_info "$(get_message MSG_INSTALL_ZSH_RELOAD)"
     echo "        source ~/.zshrc"
     echo ""
-    log_info "또는 직접 경로를 지정하여 실행할 수 있습니다:
-    # Or you can run it directly by specifying the path:"
+    log_info "$(get_message MSG_INSTALL_DIRECT_PATH)"
     echo "        $INSTALL_DIR/dockit"
 }
 
@@ -596,8 +588,7 @@ verify_installation() {
         show_success_message
     else
         log_error "$(get_message MSG_INSTALL_FAILED)"
-        log_error "dockit 스크립트를 찾을 수 없거나 실행 권한이 없습니다: $INSTALL_DIR/dockit
-        # dockit script not found or not executable: $INSTALL_DIR/dockit"
+        log_error "$(printf "$(get_message MSG_INSTALL_SCRIPT_NOT_FOUND)" "$INSTALL_DIR/dockit")"
         exit 1
     fi
 }
@@ -613,6 +604,13 @@ setup_language() {
     handle_language_selection
 }
 
+# 설치 초기화
+# Initialize installation
+initialize_installation() {
+    log_info "$(get_message MSG_INSTALL_INITIALIZING)"
+    check_minimal_requirements
+}
+
 # 원본 소스에서 사용 가능한 언어 찾기 (파일 시스템 변경 없음)
 # Find available languages from source (no filesystem changes)
 find_available_languages_from_source() {
@@ -621,7 +619,7 @@ find_available_languages_from_source() {
     default_idx=0
     i=0
     
-    log_info "Finding available languages..."
+    log_info "$(get_message MSG_INSTALL_FINDING_LANGUAGES)"
     for lang_file in "$PROJECT_ROOT/config/messages"/*.sh; do
         if check_file_exists "$lang_file"; then
             process_language_file "$lang_file"
@@ -755,7 +753,7 @@ prepare_locale_setting() {
     
     if [ -n "$locale" ]; then
         export LOCALE="$locale"
-        log_info "Locale will be set to: $locale"
+        log_info "$(printf "$(get_message MSG_INSTALL_LOCALE_SET)" "$locale")"
     fi
 }
 
@@ -767,7 +765,7 @@ prepare_timezone_setting() {
     
     if [ -n "$timezone" ]; then
         export TIMEZONE="$timezone" 
-        log_info "Timezone will be set to: $timezone"
+        log_info "$(printf "$(get_message MSG_INSTALL_TIMEZONE_SET)" "$timezone")"
     fi
 }
 
@@ -797,8 +795,7 @@ perform_initial_checks() {
 # Ask for final installation confirmation
 confirm_installation() {
     echo ""
-    log_info "모든 준비가 완료되었습니다. 설치를 진행하시겠습니까? (Y/n)
-    # All preparations are complete. Proceed with installation? (Y/n)"
+    log_info "$(get_message MSG_INSTALL_CONFIRM_PROCEED)"
     read -r confirmation
     
     # 빈 입력이거나 'Y' 또는 'y'면 계속 진행
@@ -824,8 +821,7 @@ install_project_preserving_lang() {
     fi
     
     remove_old_installation || {
-        log_error "기존 설치 제거 실패
-        # Failed to remove old installation"
+        log_error "$(get_message MSG_INSTALL_REMOVE_FAILED)"
         return 1
     }
     
@@ -834,8 +830,7 @@ install_project_preserving_lang() {
     copy_language_files
     
     copy_project_files || {
-        log_error "프로젝트 파일 복사 실패
-        # Failed to copy project files"
+        log_error "$(get_message MSG_INSTALL_COPY_FAILED)"
         return 1
     }
     
@@ -852,11 +847,43 @@ install_project_preserving_lang() {
     return 0
 }
 
-# 설치 초기화
-# Initialize installation
-initialize_installation() {
-    log_info "Starting dockit installation..."
-    check_minimal_requirements
+# 언어 설정 적용 (실제 설치 단계에서만 호출)
+# Apply language settings (call only during actual installation)
+apply_language_settings() {
+    if [ -n "$selected_lang" ]; then
+        echo "LANGUAGE=\"$selected_lang\"" > "$PROJECT_DIR/config/settings.env"
+        
+        if [ -n "$locale" ]; then
+            echo "LOCALE=\"$locale\"" >> "$PROJECT_DIR/config/settings.env"
+        fi
+        
+        if [ -n "$timezone" ]; then
+            echo "TIMEZONE=\"$timezone\"" >> "$PROJECT_DIR/config/settings.env"
+        fi
+    fi
+}
+
+# 초기 체크 수행 (파일 시스템 변경 없음)
+# Perform initial checks (no filesystem changes)
+perform_initial_checks() {
+    check_existing_installation
+}
+
+# 최종 설치 확인 요청
+# Ask for final installation confirmation
+confirm_installation() {
+    echo ""
+    log_info "$(get_message MSG_INSTALL_CONFIRM_PROCEED)"
+    read -r confirmation
+    
+    # 빈 입력이거나 'Y' 또는 'y'면 계속 진행
+    # Continue if input is empty or 'Y' or 'y'
+    if [[ ! $confirmation =~ ^[Nn]$ ]]; then
+        return 0
+    else
+        log_info "$(get_message MSG_INSTALL_CANCELLED)"
+        exit 0
+    fi
 }
 
 # ===== 레벨 7: 메인 설치 프로세스 =====
