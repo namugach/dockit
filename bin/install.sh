@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# ===== 기본 설정 변수 =====
+# ===== Basic Configuration Variables =====
 # 색상 정의
 # Color definitions
 RED='\033[0;31m'
@@ -8,7 +10,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # 설치 디렉토리
-# Installation directory
+# Installation directories
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT_DIR="$HOME/.dockit"
 INSTALL_DIR="$HOME/.dockit/bin"
@@ -17,42 +19,13 @@ ZSH_COMPLETION_DIR="$HOME/.dockit/completion/zsh"
 CONFIG_DIR="$HOME/.dockit/config"
 GLOBAL_CONFIG_DIR="/etc/dockit"
 
-# 언어 설정 불러오기 함수
-# Function to load language settings
-load_language_setting() {
-    # 설치된 환경의 설정 파일만 확인
-    # Only check settings file in installed environment
-    local settings_file="$HOME/.dockit/config/settings.env"
-    
-    # 기본값은 영어
-    # Default is English
-    export LANGUAGE="en"
-    
-    # 설치된 환경의 설정 파일이 있으면 로드
-    # Load if settings file exists in installed environment
-    if [ -f "$settings_file" ]; then
-        source "$settings_file"
-    fi
-}
+# 언어 관련 변수 초기화
+# Initialize language-related variables
+LANGUAGE="en"
 
-# 언어 설정 로드
-# Load language settings
-load_language_setting
-
-# 메시지 시스템 로드
-# Load message system
-if [ -f "$PROJECT_ROOT/config/messages/load.sh" ]; then
-    source "$PROJECT_ROOT/config/messages/load.sh"
-    load_messages
-fi
-
-# 언어 설정 로드
-# Load language settings
-if [ -f "$PROJECT_ROOT/config/system.sh" ]; then
-    source "$PROJECT_ROOT/config/system.sh"
-fi
-
-# 로그 출력 함수들
+# ===== 레벨 1: 기본 유틸리티 함수 =====
+# ===== Level 1: Basic Utility Functions =====
+# 로그 출력 함수
 # Log output functions
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
@@ -66,22 +39,147 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# 의존성 체크 함수들
-# Dependency check functions
-check_dependencies() {
-    log_info "$(get_message MSG_INSTALL_CHECKING_DEPENDENCIES)"
-    
-    check_docker_dependency
-    check_compose_dependency
-    check_basic_tools
-    
-    log_info "$(get_message MSG_INSTALL_DEPENDENCIES_OK)"
+# 메시지 출력 함수
+# Message output function
+get_message() {
+    local message_key="$1"
+    if [ -n "${!message_key}" ]; then
+        echo "${!message_key}"
+    else
+        echo "$message_key"
+    fi
 }
 
+# 파일 존재 확인 함수
+# Check if file exists
+check_file_exists() {
+    [ -f "$1" ]
+}
+
+# 디렉토리 존재 확인 함수
+# Check if directory exists
+check_dir_exists() {
+    [ -d "$1" ]
+}
+
+# 명령어 존재 확인 함수
+# Check if command exists
+check_command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# 디렉토리 생성 함수
+# Create directory if it doesn't exist
+create_dir_if_not_exists() {
+    [ -d "$1" ] || mkdir -p "$1"
+}
+
+# 권한 확인 함수
+# Check write permission
+check_write_permission() {
+    [ -w "$1" ]
+}
+
+# ===== 레벨 2: 설정 및 환경 관련 함수 =====
+# ===== Level 2: Configuration and Environment Functions =====
+# 언어 설정 불러오기
+# Load language settings
+load_language_setting() {
+    local settings_file="$HOME/.dockit/config/settings.env"
+    
+    export LANGUAGE="en"
+    
+    if check_file_exists "$settings_file"; then
+        source "$settings_file"
+    fi
+}
+
+# 메시지 시스템 로드
+# Load message system
+load_message_system() {
+    if check_file_exists "$PROJECT_ROOT/config/messages/load.sh"; then
+        source "$PROJECT_ROOT/config/messages/load.sh"
+        load_messages
+    fi
+    
+    if check_file_exists "$PROJECT_ROOT/config/system.sh"; then
+        source "$PROJECT_ROOT/config/system.sh"
+    fi
+}
+
+# 언어 설정 백업
+# Backup language settings
+backup_language_settings() {
+    if check_file_exists "$PROJECT_DIR/config/settings.env"; then
+        lang_settings=$(grep "LANGUAGE=" "$PROJECT_DIR/config/settings.env")
+    fi
+}
+
+# 메시지 백업
+# Backup messages
+backup_messages() {
+    local temp_dir="/tmp/dockit_messages_backup"
+    if check_dir_exists "$PROJECT_DIR/config/messages"; then
+        create_dir_if_not_exists "$temp_dir"
+        cp -r "$PROJECT_DIR/config/messages/"* "$temp_dir/"
+    fi
+}
+
+# 언어 설정 복원
+# Restore language settings
+restore_language_settings() {
+    if [ -n "$lang_settings" ]; then
+        create_dir_if_not_exists "$PROJECT_DIR/config"
+        
+        if ! check_file_exists "$PROJECT_DIR/config/settings.env"; then
+            echo "LANGUAGE=\"en\"" > "$PROJECT_DIR/config/settings.env"
+        fi
+        
+        sed -i "s/LANGUAGE=.*/$lang_settings/" "$PROJECT_DIR/config/settings.env"
+    fi
+}
+
+# 메시지 복원
+# Restore messages
+restore_messages() {
+    local temp_dir="/tmp/dockit_messages_backup"
+    if check_dir_exists "$temp_dir" && [ "$(ls -A "$temp_dir")" ]; then
+        cp -r "$temp_dir/"* "$PROJECT_DIR/config/messages/"
+        rm -rf "$temp_dir"
+    fi
+}
+
+# 언어 파일 복사
+# Copy language files
+copy_language_files() {
+    create_dir_if_not_exists "$PROJECT_DIR/config/messages"
+    
+    if check_file_exists "$PROJECT_ROOT/config/settings.env"; then
+        cp "$PROJECT_ROOT/config/settings.env" "$PROJECT_DIR/config/"
+        log_info "설정 파일 복사됨: settings.env
+        # Settings file copied: settings.env"
+    else
+        echo "LANGUAGE=\"en\"" > "$PROJECT_DIR/config/settings.env"
+        log_info "기본 설정 파일 생성됨: settings.env
+        # Default settings file created: settings.env"
+    fi
+    
+    if check_dir_exists "$PROJECT_ROOT/config/messages"; then
+        cp -r "$PROJECT_ROOT/config/messages/"* "$PROJECT_DIR/config/messages/"
+        log_info "메시지 파일 복사됨
+        # Message files copied"
+    else
+        log_warn "메시지 디렉토리를 찾을 수 없음: $PROJECT_ROOT/config/messages
+        # Message directory not found: $PROJECT_ROOT/config/messages"
+    fi
+}
+
+# ===== 레벨 3: 의존성 및 환경 검사 함수 =====
+# ===== Level 3: Dependency and Environment Check Functions =====
 # Docker 의존성 체크
 # Check Docker dependency
 check_docker_dependency() {
-    if ! command -v docker >/dev/null 2>&1; then
+    if ! check_command_exists "docker"; then
         log_error "$(get_message MSG_INSTALL_DOCKER_MISSING)"
         exit 1
     fi
@@ -90,7 +188,7 @@ check_docker_dependency() {
 # Docker Compose 의존성 체크
 # Check Docker Compose dependency
 check_compose_dependency() {
-    if ! command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev/null 2>&1; then
+    if ! check_command_exists "docker-compose" && ! docker compose version >/dev/null 2>&1; then
         log_error "$(get_message MSG_INSTALL_COMPOSE_MISSING)"
         exit 1
     fi
@@ -101,26 +199,17 @@ check_compose_dependency() {
 check_basic_tools() {
     local required_tools=("git" "curl" "sed" "grep")
     for tool in "${required_tools[@]}"; do
-        if ! command -v "$tool" >/dev/null 2>&1; then
+        if ! check_command_exists "$tool"; then
             log_error "$(printf "$(get_message MSG_INSTALL_TOOL_MISSING)" "$tool" "$tool")"
             exit 1
         fi
     done
 }
 
-# 기존 설치 확인 함수들
-# Functions to check existing installation
-check_existing_installation() {
-    log_info "$(get_message MSG_INSTALL_CHECKING_EXISTING)"
-    
-    check_existing_command
-    check_existing_directory
-}
-
 # 기존 명령어 확인
 # Check existing command
 check_existing_command() {
-    if command -v dockit >/dev/null 2>&1; then
+    if check_command_exists "dockit"; then
         log_warn "$(get_message MSG_INSTALL_ALREADY_INSTALLED)"
         read -p "$(get_message MSG_INSTALL_REINSTALL) " reinstall
         if [[ ! $reinstall =~ ^[Yy]$ ]]; then
@@ -133,7 +222,7 @@ check_existing_command() {
 # 기존 디렉토리 확인
 # Check existing directory
 check_existing_directory() {
-    if [ -d "$PROJECT_DIR" ]; then
+    if check_dir_exists "$PROJECT_DIR"; then
         log_warn "$(printf "$(get_message MSG_INSTALL_DIR_EXISTS)" "$PROJECT_DIR")"
         read -p "$(get_message MSG_INSTALL_OVERWRITE) " overwrite
         if [[ ! $overwrite =~ ^[Yy]$ ]]; then
@@ -143,136 +232,60 @@ check_existing_directory() {
     fi
 }
 
-# 권한 체크 함수들
-# Permission check functions
-check_permissions() {
-    log_info "$(get_message MSG_INSTALL_CHECKING_PERMISSIONS)"
-    
-    check_directory_permissions
-}
-
 # 디렉토리 권한 체크
 # Check directory permissions
 check_directory_permissions() {
-    if [ ! -w "$HOME" ]; then
+    if ! check_write_permission "$HOME"; then
         log_error "$(printf "$(get_message MSG_INSTALL_NO_PERMISSION)" "$HOME")"
         log_info "$(get_message MSG_INSTALL_USE_SUDO)"
         exit 1
     fi
 }
 
-# 프로젝트 파일 설치 (언어 설정 보존)
-# Install project files while preserving language settings
-install_project_preserving_lang() {
-    log_info "$(get_message MSG_INSTALL_INSTALLING_FILES)"
-    
-    # 기존 설치가 있는 경우에만 백업
-    if [ -d "$PROJECT_DIR" ]; then
-        # 언어 설정 백업
-        backup_language_settings
-        
-        # 메시지 백업
-        backup_messages
+# 최소 요구사항 체크
+# Check minimal requirements
+check_minimal_requirements() {
+    if ! check_command_exists "docker"; then
+        log_error "Docker not installed. Please install Docker first."
+        exit 1
     fi
     
-    # 기존 설치 제거
-    remove_old_installation || {
-        log_error "기존 설치 제거 실패"
-        return 1
-    }
-    
-    # 프로젝트 파일 복사
-    copy_project_files || {
-        log_error "프로젝트 파일 복사 실패"
-        return 1
-    }
-    
-    # 백업된 설정 있는 경우에만 복원
-    if [ -n "$lang_settings" ]; then
-        # 언어 설정 복원
-        restore_language_settings
-    fi
-    
-    # 메시지 백업 디렉토리가 있는 경우에만 복원
-    local temp_dir="/tmp/dockit_messages_backup"
-    if [ -d "$temp_dir" ] && [ "$(ls -A "$temp_dir")" ]; then
-        # 메시지 복원
-        restore_messages
-    fi
-    
-    log_info "$(printf "$(get_message MSG_INSTALL_PATH)" "$PROJECT_DIR")"
-    return 0
-}
-
-# 언어 설정 백업
-# Backup language settings
-backup_language_settings() {
-    if [ -f "$PROJECT_DIR/config/settings.env" ]; then
-        lang_settings=$(grep "LANGUAGE=" "$PROJECT_DIR/config/settings.env")
+    if ! check_write_permission "$HOME"; then
+        log_error "Permission denied. Please check your permissions."
+        log_info "You may need to run with sudo or check directory permissions."
+        exit 1
     fi
 }
 
-# 메시지 백업
-# Backup messages
-backup_messages() {
-    local temp_dir="/tmp/dockit_messages_backup"
-    if [ -d "$PROJECT_DIR/config/messages" ]; then
-        mkdir -p "$temp_dir"
-        cp -r "$PROJECT_DIR/config/messages/"* "$temp_dir/"
-    fi
-}
-
-# 기존 설치 제거
-# Remove old installation
-remove_old_installation() {
-    # 기존 디렉토리가 있으면 전체 삭제
-    if [ -d "$PROJECT_DIR" ]; then
-        rm -rf "$PROJECT_DIR"
-    fi
-    # 새 디렉토리 생성
-    mkdir -p "$PROJECT_DIR"
-}
-
-# 프로젝트 파일 복사
-# Copy project files
-copy_project_files() {
-    # 필요한 디렉토리 모두 생성
-    mkdir -p "$PROJECT_DIR/src/completion" "$PROJECT_DIR/bin" "$PROJECT_DIR/config/messages"
-    
-    # 소스 파일 복사
-    cp -r "$PROJECT_ROOT/src/"* "$PROJECT_DIR/src/"
-    
-    # 버전 파일 복사
-    cp "$PROJECT_ROOT/bin/VERSION" "$PROJECT_DIR/bin/"
-    
-    # dockit 스크립트 설치
-    install_dockit_script
-}
-
-# Dockit 스크립트 설치
-# Install dockit script
-install_dockit_script() {
-    # 설치 디렉토리 확인
-    mkdir -p "$INSTALL_DIR"
-    
-    # 스크립트 복사
-    cp "$PROJECT_ROOT/bin/dockit.sh" "$INSTALL_DIR/dockit"
-    
-    # 실행 권한 설정
-    chmod +x "$INSTALL_DIR/dockit"
-    
-    # 경로 업데이트
-    update_script_paths
-    
-    # 설치 확인
-    if [ -f "$INSTALL_DIR/dockit" ] && [ -x "$INSTALL_DIR/dockit" ]; then
-        log_info "dockit 스크립트가 성공적으로 설치되었습니다: $INSTALL_DIR/dockit"
-    else
-        log_error "dockit 스크립트 설치에 실패했습니다!"
+# Docker 상태 체크
+# Check Docker status
+check_docker_status() {
+    if ! docker info > /dev/null 2>&1; then
+        echo "$(get_message MSG_INSTALL_CHECK_DOCKER)"
         return 1
     fi
 }
 
+# 포트 사용 가능 여부 체크
+# Check port availability
+check_port_availability() {
+    if lsof -i :80 > /dev/null 2>&1 || lsof -i :443 > /dev/null 2>&1; then
+        echo "$(get_message MSG_INSTALL_CHECK_PORTS)"
+        return 1
+    fi
+}
+
+# 이미지 존재 여부 체크
+# Check if image exists
+check_image_existence() {
+    if ! docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
+        echo "$(get_message MSG_INSTALL_CHECK_IMAGE)"
+        return 1
+    fi
+}
+
+# ===== 레벨 4: 설치 단계별 작업 함수 =====
+# ===== Level 4: Installation Step Functions =====
 # 스크립트 경로 업데이트
 # Update script paths
 update_script_paths() {
@@ -281,36 +294,256 @@ update_script_paths() {
     sed -i "s|CONFIG_DIR=.*|CONFIG_DIR=\"$PROJECT_DIR/config\"|" "$INSTALL_DIR/dockit"
 }
 
-# 언어 설정 복원
-# Restore language settings
-restore_language_settings() {
-    # 백업된 언어 설정이 있고, 환경 설정 파일이 없으면 생성
-    if [ -n "$lang_settings" ]; then
-        # 설정 디렉토리 확인
-        mkdir -p "$PROJECT_DIR/config"
+# Dockit 스크립트 설치
+# Install Dockit script
+install_dockit_script() {
+    create_dir_if_not_exists "$INSTALL_DIR"
+    
+    cp "$PROJECT_ROOT/bin/dockit.sh" "$INSTALL_DIR/dockit"
+    chmod +x "$INSTALL_DIR/dockit"
+    
+    update_script_paths
+    
+    if check_file_exists "$INSTALL_DIR/dockit" && [ -x "$INSTALL_DIR/dockit" ]; then
+        log_info "dockit 스크립트가 성공적으로 설치되었습니다: $INSTALL_DIR/dockit
+        # dockit script successfully installed: $INSTALL_DIR/dockit"
+    else
+        log_error "dockit 스크립트 설치에 실패했습니다!
+        # Failed to install dockit script!"
+        return 1
+    fi
+}
+
+# 기존 설치 제거
+# Remove old installation
+remove_old_installation() {
+    if check_dir_exists "$PROJECT_DIR"; then
+        rm -rf "$PROJECT_DIR"
+    fi
+    create_dir_if_not_exists "$PROJECT_DIR"
+}
+
+# 프로젝트 파일 복사
+# Copy project files
+copy_project_files() {
+    create_dir_if_not_exists "$PROJECT_DIR/src/completion"
+    create_dir_if_not_exists "$PROJECT_DIR/bin"
+    create_dir_if_not_exists "$PROJECT_DIR/config/messages"
+    
+    cp -r "$PROJECT_ROOT/src/"* "$PROJECT_DIR/src/"
+    
+    cp "$PROJECT_ROOT/bin/VERSION" "$PROJECT_DIR/bin/"
+    
+    install_dockit_script
+}
+
+# 성공 메시지 표시
+# Show success message
+show_success_message() {
+    log_info "$(get_message MSG_INSTALL_COMPLETED)"
+    log_info "$(get_message MSG_INSTALL_CMD_AVAILABLE)"
+    log_info "$(get_message MSG_INSTALL_HELP_TIP)"
+}
+
+# 컨테이너 시작
+# Start container
+start_container() {
+    if docker-compose up -d; then
+        echo "$(get_message MSG_INSTALL_COMPLETE)"
+        return 0
+    else
+        echo "$(get_message MSG_INSTALL_FAILED)"
+        return 1
+    fi
+}
+
+# 자동완성 디렉토리 생성
+# Create completion directories
+create_completion_directories() {
+    create_dir_if_not_exists "$COMPLETION_DIR"
+    create_dir_if_not_exists "$ZSH_COMPLETION_DIR"
+}
+
+# 공통 모듈 설치
+# Install common modules
+install_common_modules() {
+    cp "$PROJECT_DIR/src/completion/completion-common.sh" "$COMPLETION_DIR/"
+    cp "$PROJECT_DIR/src/completion/completion-common.sh" "$ZSH_COMPLETION_DIR/"
+    chmod +x "$COMPLETION_DIR/completion-common.sh"
+    chmod +x "$ZSH_COMPLETION_DIR/completion-common.sh"
+}
+
+# 쉘별 자동완성 설치
+# Install shell-specific completions
+install_shell_completions() {
+    cp "$PROJECT_DIR/src/completion/bash.sh" "$COMPLETION_DIR/dockit"
+    chmod +x "$COMPLETION_DIR/dockit"
+    
+    cp "$PROJECT_DIR/src/completion/zsh.sh" "$ZSH_COMPLETION_DIR/_dockit"
+    chmod +x "$ZSH_COMPLETION_DIR/_dockit"
+}
+
+# 시스템 자동완성 설치
+# Install system completion
+install_system_completion() {
+    if check_dir_exists "/etc/bash_completion.d" && check_write_permission "/etc/bash_completion.d"; then
+        cp "$PROJECT_DIR/src/completion/completion-common.sh" "/etc/bash_completion.d/"
+        chmod +x "/etc/bash_completion.d/completion-common.sh"
         
-        # 파일이 없으면 기본 설정 파일 생성
-        if [ ! -f "$PROJECT_DIR/config/settings.env" ]; then
-            echo "LANGUAGE=\"en\"" > "$PROJECT_DIR/config/settings.env"
+        cp "$PROJECT_DIR/src/completion/bash.sh" "/etc/bash_completion.d/dockit"
+        chmod +x "/etc/bash_completion.d/dockit"
+        log_info "$(get_message MSG_INSTALL_GLOBAL_COMPLETION)"
+    fi
+}
+
+# Bash 자동완성 설정
+# Configure Bash completion
+configure_bash_completion() {
+    if check_file_exists "$HOME/.bashrc"; then
+        if ! grep -q "source $COMPLETION_DIR/dockit" "$HOME/.bashrc"; then
+            echo "" >> "$HOME/.bashrc"
+            echo "# Dockit completion" >> "$HOME/.bashrc"
+            echo "[ -f $COMPLETION_DIR/dockit ] && source $COMPLETION_DIR/dockit" >> "$HOME/.bashrc"
         fi
+    fi
+}
+
+# Zsh 자동완성 시스템 설정
+# Configure Zsh completion system
+configure_zsh_completion_system() {
+    if ! grep -q "autoload -Uz compinit" "$HOME/.zshrc"; then
+        echo "" >> "$HOME/.zshrc"
+        echo "# $(get_message MSG_INSTALL_ZSH_COMPLETION_ACTIVATE)" >> "$HOME/.zshrc"
+        echo "autoload -Uz compinit" >> "$HOME/.zshrc"
+        echo "compinit" >> "$HOME/.zshrc"
+    fi
+}
+
+# Zsh 자동완성 경로 설정
+# Configure Zsh completion path
+configure_zsh_completion_path() {
+    if ! grep -q "fpath=.*$ZSH_COMPLETION_DIR" "$HOME/.zshrc"; then
+        echo "" >> "$HOME/.zshrc"
+        echo "# $(get_message MSG_INSTALL_ZSH_COMPLETION_ADD_PATH)" >> "$HOME/.zshrc"
+        echo "fpath=($ZSH_COMPLETION_DIR \$fpath)" >> "$HOME/.zshrc"
+    fi
+}
+
+# Zsh 자동완성 소스 설정
+# Configure Zsh completion source
+configure_zsh_completion_source() {
+    if ! grep -q "source $ZSH_COMPLETION_DIR/_dockit" "$HOME/.zshrc"; then
+        echo "" >> "$HOME/.zshrc"
+        echo "# $(get_message MSG_INSTALL_ZSH_COMPLETION_LOAD)" >> "$HOME/.zshrc"
+        echo "[ -f $ZSH_COMPLETION_DIR/_dockit ] && source $ZSH_COMPLETION_DIR/_dockit" >> "$HOME/.zshrc"
+    fi
+}
+
+# Zsh 자동완성 설정
+# Configure Zsh completion
+configure_zsh_completion() {
+    if check_file_exists "$HOME/.zshrc"; then
+        configure_zsh_completion_system
+        configure_zsh_completion_path
+        configure_zsh_completion_source
         
-        # 언어 설정 업데이트
-        sed -i "s/LANGUAGE=.*/$lang_settings/" "$PROJECT_DIR/config/settings.env"
+        log_info "$(get_message MSG_INSTALL_ZSH_COMPLETION_ADDED)"
     fi
 }
 
-# 메시지 복원
-# Restore messages
-restore_messages() {
-    local temp_dir="/tmp/dockit_messages_backup"
-    if [ -d "$temp_dir" ] && [ "$(ls -A "$temp_dir")" ]; then
-        cp -r "$temp_dir/"* "$PROJECT_DIR/config/messages/"
-        rm -rf "$temp_dir"
+# 현재 세션 자동완성 로드
+# Load current session completion
+load_current_session_completion() {
+    if [ -n "$BASH_VERSION" ]; then
+        source "$COMPLETION_DIR/dockit"
+    elif [ -n "$ZSH_VERSION" ]; then
+        autoload -U compinit
+        compinit
     fi
 }
 
-# 언어 설정 함수
-# Language setup function
+# PATH 확인 및 업데이트
+# Check and update PATH
+check_and_update_path() {
+    if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
+        log_warn "$(get_message MSG_INSTALL_ADDING_PATH)"
+    fi
+    
+    if check_file_exists "$HOME/.bashrc"; then
+        sed -i '/export PATH=".*\.local\/bin/d' "$HOME/.bashrc"
+        sed -i '/export PATH=".*\.dockit\/bin/d' "$HOME/.bashrc"
+        echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$HOME/.bashrc"
+    fi
+    
+    if check_file_exists "$HOME/.zshrc"; then
+        sed -i '/export PATH=".*\.local\/bin/d' "$HOME/.zshrc"
+        sed -i '/export PATH=".*\.dockit\/bin/d' "$HOME/.zshrc"
+        echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$HOME/.zshrc"
+    fi
+    
+    log_info "PATH 설정이 업데이트되었습니다.
+    # PATH settings have been updated."
+}
+
+# ===== 레벨 5: 중간 레벨 통합 함수 =====
+# ===== Level 5: Mid-level Integration Functions =====
+# 의존성 체크
+# Check dependencies
+check_dependencies() {
+    log_info "$(get_message MSG_INSTALL_CHECKING_DEPENDENCIES)"
+    
+    check_docker_dependency
+    check_compose_dependency
+    check_basic_tools
+    
+    log_info "$(get_message MSG_INSTALL_DEPENDENCIES_OK)"
+}
+
+# 기존 설치 확인
+# Check existing installation
+check_existing_installation() {
+    log_info "$(get_message MSG_INSTALL_CHECKING_EXISTING)"
+    
+    check_existing_command
+    check_existing_directory
+}
+
+# 권한 체크
+# Check permissions
+check_permissions() {
+    log_info "$(get_message MSG_INSTALL_CHECKING_PERMISSIONS)"
+    
+    check_directory_permissions
+}
+
+# 쉘 자동완성 설정
+# Configure shell completion
+configure_shell_completion() {
+    configure_bash_completion
+    configure_zsh_completion
+}
+
+# PATH 설정 확인
+# Check PATH setting
+check_path() {
+    check_and_update_path
+}
+
+# 설치 확인
+# Verify installation
+verify_installation() {
+    if check_file_exists "$INSTALL_DIR/dockit" && [ -x "$INSTALL_DIR/dockit" ]; then
+        show_success_message
+    else
+        log_error "$(get_message MSG_INSTALL_FAILED)"
+        log_error "dockit 스크립트를 찾을 수 없거나 실행 권한이 없습니다: $INSTALL_DIR/dockit
+        # dockit script not found or not executable: $INSTALL_DIR/dockit"
+        exit 1
+    fi
+}
+
+# 언어 설정
+# Setup language
 setup_language() {
     local lang_dir="$PROJECT_ROOT/config/messages"
     local default_lang="en"
@@ -330,13 +563,11 @@ find_available_languages() {
     
     log_info "Finding available languages..."
     for lang_file in "$lang_dir"/*.sh; do
-        if [ -f "$lang_file" ]; then
+        if check_file_exists "$lang_file"; then
             process_language_file "$lang_file"
         fi
     done
     
-    # 언어가 없으면 영어를 기본값으로 설정
-    # Set English as default if no languages found
     if [ ${#langs[@]} -eq 0 ]; then
         langs=("en")
         lang_names=("English")
@@ -444,18 +675,18 @@ save_language_setting() {
 # Load language file
 load_language_file() {
     local lang="$1"
-    if [ -f "$PROJECT_ROOT/config/messages/$lang.sh" ]; then
+    if check_file_exists "$PROJECT_ROOT/config/messages/$lang.sh"; then
         source "$PROJECT_ROOT/config/messages/$lang.sh"
     fi
 }
 
 # 언어 설정에 따른 추가 설정 적용
-# Apply additional settings based on language selection
+# Apply additional settings based on language
 apply_language_settings() {
     local selected_lang="$LANGUAGE"
     local lang_file="$PROJECT_ROOT/config/messages/$selected_lang.sh"
     
-    if [ -f "$lang_file" ]; then
+    if check_file_exists "$lang_file"; then
         apply_locale_setting "$lang_file"
         apply_timezone_setting "$lang_file"
     fi
@@ -502,267 +733,11 @@ install_completion() {
     log_info "$(get_message MSG_INSTALL_COMPLETION_HELP)"
 }
 
-# 자동완성 디렉토리 생성
-# Create completion directories
-create_completion_directories() {
-    mkdir -p "$COMPLETION_DIR"
-    mkdir -p "$ZSH_COMPLETION_DIR"
-}
-
-# 공통 모듈 설치
-# Install common modules
-install_common_modules() {
-    cp "$PROJECT_DIR/src/completion/completion-common.sh" "$COMPLETION_DIR/"
-    cp "$PROJECT_DIR/src/completion/completion-common.sh" "$ZSH_COMPLETION_DIR/"
-    chmod +x "$COMPLETION_DIR/completion-common.sh"
-    chmod +x "$ZSH_COMPLETION_DIR/completion-common.sh"
-}
-
-# 쉘별 자동완성 설치
-# Install shell-specific completions
-install_shell_completions() {
-    # Bash completion
-    cp "$PROJECT_DIR/src/completion/bash.sh" "$COMPLETION_DIR/dockit"
-    chmod +x "$COMPLETION_DIR/dockit"
-    
-    # Zsh completion
-    cp "$PROJECT_DIR/src/completion/zsh.sh" "$ZSH_COMPLETION_DIR/_dockit"
-    chmod +x "$ZSH_COMPLETION_DIR/_dockit"
-}
-
-# 시스템 자동완성 설치
-# Install system completion
-install_system_completion() {
-    if [ -d "/etc/bash_completion.d" ] && [ -w "/etc/bash_completion.d" ]; then
-        cp "$PROJECT_DIR/src/completion/completion-common.sh" "/etc/bash_completion.d/"
-        chmod +x "/etc/bash_completion.d/completion-common.sh"
-        
-        cp "$PROJECT_DIR/src/completion/bash.sh" "/etc/bash_completion.d/dockit"
-        chmod +x "/etc/bash_completion.d/dockit"
-        log_info "$(get_message MSG_INSTALL_GLOBAL_COMPLETION)"
-    fi
-}
-
-# 쉘 자동완성 설정
-# Configure shell completion
-configure_shell_completion() {
-    configure_bash_completion
-    configure_zsh_completion
-}
-
-# Bash 자동완성 설정
-# Configure Bash completion
-configure_bash_completion() {
-    if [ -f "$HOME/.bashrc" ]; then
-        if ! grep -q "source $COMPLETION_DIR/dockit" "$HOME/.bashrc"; then
-            echo "" >> "$HOME/.bashrc"
-            echo "# Dockit completion" >> "$HOME/.bashrc"
-            echo "[ -f $COMPLETION_DIR/dockit ] && source $COMPLETION_DIR/dockit" >> "$HOME/.bashrc"
-        fi
-    fi
-}
-
-# Zsh 자동완성 설정
-# Configure Zsh completion
-configure_zsh_completion() {
-    if [ -f "$HOME/.zshrc" ]; then
-        configure_zsh_completion_system
-        configure_zsh_completion_path
-        configure_zsh_completion_source
-        
-        log_info "$(get_message MSG_INSTALL_ZSH_COMPLETION_ADDED)"
-    fi
-}
-
-# Zsh 자동완성 시스템 설정
-# Configure Zsh completion system
-configure_zsh_completion_system() {
-    if ! grep -q "autoload -Uz compinit" "$HOME/.zshrc"; then
-        echo "" >> "$HOME/.zshrc"
-        echo "# $(get_message MSG_INSTALL_ZSH_COMPLETION_ACTIVATE)" >> "$HOME/.zshrc"
-        echo "autoload -Uz compinit" >> "$HOME/.zshrc"
-        echo "compinit" >> "$HOME/.zshrc"
-    fi
-}
-
-# Zsh 자동완성 경로 설정
-# Configure Zsh completion path
-configure_zsh_completion_path() {
-    if ! grep -q "fpath=.*$ZSH_COMPLETION_DIR" "$HOME/.zshrc"; then
-        echo "" >> "$HOME/.zshrc"
-        echo "# $(get_message MSG_INSTALL_ZSH_COMPLETION_ADD_PATH)" >> "$HOME/.zshrc"
-        echo "fpath=($ZSH_COMPLETION_DIR \$fpath)" >> "$HOME/.zshrc"
-    fi
-}
-
-# Zsh 자동완성 소스 설정
-# Configure Zsh completion source
-configure_zsh_completion_source() {
-    if ! grep -q "source $ZSH_COMPLETION_DIR/_dockit" "$HOME/.zshrc"; then
-        echo "" >> "$HOME/.zshrc"
-        echo "# $(get_message MSG_INSTALL_ZSH_COMPLETION_LOAD)" >> "$HOME/.zshrc"
-        echo "[ -f $ZSH_COMPLETION_DIR/_dockit ] && source $ZSH_COMPLETION_DIR/_dockit" >> "$HOME/.zshrc"
-    fi
-}
-
-# 현재 세션 자동완성 로드
-# Load current session completion
-load_current_session_completion() {
-    if [ -n "$BASH_VERSION" ]; then
-        source "$COMPLETION_DIR/dockit"
-    elif [ -n "$ZSH_VERSION" ]; then
-        autoload -U compinit
-        compinit
-    fi
-}
-
-# PATH 설정 확인
-# Check PATH setting
-check_path() {
-    check_and_update_path
-}
-
-# PATH 확인 및 업데이트
-# Check and update PATH
-check_and_update_path() {
-    if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-        log_warn "$(get_message MSG_INSTALL_ADDING_PATH)"
-        echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$HOME/.bashrc"
-        echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$HOME/.zshrc"
-    fi
-    
-    # 이전 경로가 있으면 제거 (업그레이드 시 유용)
-    if [ -f "$HOME/.bashrc" ]; then
-        # 이전 ~/.local/bin 경로 설정 제거
-        sed -i '/export PATH=".*\.local\/bin/d' "$HOME/.bashrc"
-        # 이전 ~/.dockit/bin 중복 경로 제거 (설치를 여러 번 실행했을 경우)
-        sed -i '/export PATH=".*\.dockit\/bin/d' "$HOME/.bashrc"
-        # 새 경로 추가
-        echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$HOME/.bashrc"
-    fi
-    
-    if [ -f "$HOME/.zshrc" ]; then
-        # 이전 ~/.local/bin 경로 설정 제거
-        sed -i '/export PATH=".*\.local\/bin/d' "$HOME/.zshrc"
-        # 이전 ~/.dockit/bin 중복 경로 제거 (설치를 여러 번 실행했을 경우)
-        sed -i '/export PATH=".*\.dockit\/bin/d' "$HOME/.zshrc"
-        # 새 경로 추가
-        echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$HOME/.zshrc"
-    fi
-    
-    log_info "PATH 설정이 업데이트되었습니다."
-}
-
-# 설치 확인
-# Verify installation
-verify_installation() {
-    # 기존 방식: PATH에 의존해서 명령어 확인
-    # if command -v dockit >/dev/null 2>&1; then
-    
-    # 새로운 방식: 실제 파일이 존재하고 실행 권한이 있는지 확인
-    if [ -f "$INSTALL_DIR/dockit" ] && [ -x "$INSTALL_DIR/dockit" ]; then
-        show_success_message
-    else
-        log_error "$(get_message MSG_INSTALL_FAILED)"
-        log_error "dockit 스크립트를 찾을 수 없거나 실행 권한이 없습니다: $INSTALL_DIR/dockit"
-        exit 1
-    fi
-}
-
-# 성공 메시지 표시
-# Show success message
-show_success_message() {
-    log_info "$(get_message MSG_INSTALL_COMPLETED)"
-    log_info "$(get_message MSG_INSTALL_CMD_AVAILABLE)"
-    log_info "$(get_message MSG_INSTALL_HELP_TIP)"
-}
-
-# 메인 설치 프로세스
-# Main installation process
-main() {
-    initialize_installation
-    perform_initial_checks
-    setup_language
-    perform_main_installation
-    show_final_instructions
-}
-
-# 설치 초기화
-# Initialize installation
-initialize_installation() {
-    log_info "Starting dockit installation..."
-    check_minimal_requirements
-}
-
-# 최소 요구사항 체크
-# Check minimal requirements
-check_minimal_requirements() {
-    if ! command -v docker >/dev/null 2>&1; then
-        log_error "Docker not installed. Please install Docker first."
-        exit 1
-    fi
-    
-    if [ ! -w "$HOME" ]; then
-        log_error "Permission denied. Please check your permissions."
-        log_info "You may need to run with sudo or check directory permissions."
-        exit 1
-    fi
-}
-
 # 초기 체크 수행
 # Perform initial checks
 perform_initial_checks() {
     check_existing_installation
     copy_language_files
-}
-
-# 언어 파일 복사
-# Copy language files
-copy_language_files() {
-    # 설정 디렉토리 생성
-    mkdir -p "$PROJECT_DIR/config/messages"
-    
-    # 설정 파일 복사
-    if [ -f "$PROJECT_ROOT/config/settings.env" ]; then
-        cp "$PROJECT_ROOT/config/settings.env" "$PROJECT_DIR/config/"
-        log_info "설정 파일 복사됨: settings.env"
-    else
-        # 설정 파일이 없으면 기본 생성
-        echo "LANGUAGE=\"en\"" > "$PROJECT_DIR/config/settings.env"
-        log_info "기본 설정 파일 생성됨: settings.env"
-    fi
-    
-    # 메시지 파일 복사
-    if [ -d "$PROJECT_ROOT/config/messages" ]; then
-        cp -r "$PROJECT_ROOT/config/messages/"* "$PROJECT_DIR/config/messages/"
-        log_info "메시지 파일 복사됨"
-    else
-        log_warn "메시지 디렉토리를 찾을 수 없음: $PROJECT_ROOT/config/messages"
-    fi
-}
-
-# 메인 설치 수행
-# Perform main installation
-perform_main_installation() {
-    log_info "$(get_message MSG_INSTALL_START)"
-    
-    # 의존성 확인
-    check_dependencies || return 1
-    
-    # 권한 확인
-    check_permissions || return 1
-    
-    # 프로젝트 파일 설치
-    install_project_preserving_lang || return 1
-    
-    # 자동완성 설치
-    install_completion || return 1
-    
-    # PATH 설정 확인
-    check_path || return 1
-    
-    # 설치 확인
-    verify_installation
 }
 
 # 최종 지침 표시
@@ -777,26 +752,67 @@ show_final_instructions() {
     log_info "$(get_message MSG_INSTALL_ZSH_RELOAD)"
     echo "        source ~/.zshrc"
     echo ""
-    log_info "또는 직접 경로를 지정하여 실행할 수 있습니다:"
+    log_info "또는 직접 경로를 지정하여 실행할 수 있습니다:
+    # Or you can run it directly by specifying the path:"
     echo "        $INSTALL_DIR/dockit"
 }
 
-# 메시지 출력 함수 (시스템에 없는 경우를 위한 예비)
-# Message output function (fallback if system doesn't have it)
-if ! type get_message &>/dev/null; then
-    get_message() {
-        local message_key="$1"
-        if [ -n "${!message_key}" ]; then
-            echo "${!message_key}"
-        else
-            echo "$message_key"
-        fi
+# ===== 레벨 6: 프로젝트 설치 함수 =====
+# ===== Level 6: Project Installation Functions =====
+# 프로젝트 파일 설치 (언어 설정 보존)
+# Install project files (preserving language settings)
+install_project_preserving_lang() {
+    log_info "$(get_message MSG_INSTALL_INSTALLING_FILES)"
+    
+    if check_dir_exists "$PROJECT_DIR"; then
+        backup_language_settings
+        backup_messages
+    fi
+    
+    remove_old_installation || {
+        log_error "기존 설치 제거 실패
+        # Failed to remove old installation"
+        return 1
     }
-fi
+    
+    copy_project_files || {
+        log_error "프로젝트 파일 복사 실패
+        # Failed to copy project files"
+        return 1
+    }
+    
+    if [ -n "$lang_settings" ]; then
+        restore_language_settings
+    fi
+    
+    local temp_dir="/tmp/dockit_messages_backup"
+    if check_dir_exists "$temp_dir" && [ "$(ls -A "$temp_dir")" ]; then
+        restore_messages
+    fi
+    
+    log_info "$(printf "$(get_message MSG_INSTALL_PATH)" "$PROJECT_DIR")"
+    return 0
+}
 
-# 스크립트 실행
-# Execute script
-main
+# 설치 초기화
+# Initialize installation
+initialize_installation() {
+    log_info "Starting dockit installation..."
+    check_minimal_requirements
+}
+
+# 메인 설치 수행
+# Perform main installation
+perform_main_installation() {
+    log_info "$(get_message MSG_INSTALL_START)"
+    
+    check_dependencies || return 1
+    check_permissions || return 1
+    install_project_preserving_lang || return 1
+    install_completion || return 1
+    check_path || return 1
+    verify_installation
+}
 
 # 설치 모듈
 # Installation module
@@ -809,45 +825,32 @@ install() {
     start_container
 }
 
-# Docker 상태 체크
-# Check Docker status
-check_docker_status() {
-    if ! docker info > /dev/null 2>&1; then
-        echo "$(get_message MSG_INSTALL_CHECK_DOCKER)"
-        return 1
-    fi
+# ===== 레벨 7: 메인 설치 프로세스 =====
+# ===== Level 7: Main Installation Process =====
+# 메인 설치 프로세스
+# Main installation process
+main() {
+    initialize_installation
+    perform_initial_checks
+    setup_language
+    perform_main_installation
+    show_final_instructions
 }
 
-# 포트 사용 가능 여부 체크
-# Check port availability
-check_port_availability() {
-    if lsof -i :80 > /dev/null 2>&1 || lsof -i :443 > /dev/null 2>&1; then
-        echo "$(get_message MSG_INSTALL_CHECK_PORTS)"
-        return 1
-    fi
-}
+# ===== 스크립트 실행 시작 =====
+# ===== Script Execution Start =====
+# 언어 설정 로드
+# Load language settings
+load_language_setting
 
-# 이미지 존재 여부 체크
-# Check image existence
-check_image_existence() {
-    if ! docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
-        echo "$(get_message MSG_INSTALL_CHECK_IMAGE)"
-        return 1
-    fi
-}
+# 메시지 시스템 로드
+# Load message system
+load_message_system
 
-# 컨테이너 시작
-# Start container
-start_container() {
-    if docker-compose up -d; then
-        echo "$(get_message MSG_INSTALL_COMPLETE)"
-        return 0
-    else
-        echo "$(get_message MSG_INSTALL_FAILED)"
-        return 1
-    fi
-}
+# 메인 함수 실행
+# Execute main function
+main
 
-# install 함수 내보내기
-# Export the install function
+# 함수 내보내기 (다른 스크립트에서 사용 가능하도록)
+# Export functions (for use in other scripts)
 export -f install
