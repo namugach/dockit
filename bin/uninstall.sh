@@ -93,15 +93,8 @@ remove_dockit() {
 remove_project() {
     log_info "$(get_message MSG_UNINSTALL_REMOVING_FILES)"
     if [ -d "$PROJECT_DIR" ]; then
-        # 강제로 모든 하위 디렉토리와 파일 제거 (config 디렉토리 포함)
-        find "$PROJECT_DIR" -mindepth 1 -delete 2>/dev/null
-        rmdir "$PROJECT_DIR" 2>/dev/null
-        
-        # 디렉토리가 여전히 존재하는지 확인
-        if [ -d "$PROJECT_DIR" ]; then
-            # 더 강력한 방법으로 제거 시도
-            rm -rf "$PROJECT_DIR"
-        fi
+        # 강제로 모든 하위 디렉토리와 파일 제거
+        rm -rf "$PROJECT_DIR"
         
         # 제거 확인
         if [ ! -d "$PROJECT_DIR" ]; then
@@ -114,24 +107,6 @@ remove_project() {
     fi
 }
 
-# 자동완성 스크립트 제거
-# Remove completion scripts
-remove_completion() {
-    log_info "$(get_message MSG_UNINSTALL_REMOVING_COMPLETION)"
-    
-    # Bash completion
-    if [ -f "$COMPLETION_DIR/dockit" ]; then
-        rm "$COMPLETION_DIR/dockit"
-        log_info "$(get_message MSG_UNINSTALL_BASH_REMOVED)"
-    fi
-    
-    # Zsh completion
-    if [ -f "$ZSH_COMPLETION_DIR/_dockit" ]; then
-        rm "$ZSH_COMPLETION_DIR/_dockit"
-        log_info "$(get_message MSG_UNINSTALL_ZSH_REMOVED)"
-    fi
-}
-
 # PATH에서 제거
 # Remove from PATH
 remove_from_path() {
@@ -139,37 +114,14 @@ remove_from_path() {
     
     # Bash
     if [ -f "$HOME/.bashrc" ]; then
-        sed -i '/export PATH=".*\/.local\/bin:/d' "$HOME/.bashrc"
+        sed -i '/export PATH=".*\/.dockit\/bin:/d' "$HOME/.bashrc"
         log_info "$(get_message MSG_UNINSTALL_REMOVED_BASHRC)"
     fi
     
     # Zsh
     if [ -f "$HOME/.zshrc" ]; then
-        sed -i '/export PATH=".*\/.local\/bin:/d' "$HOME/.zshrc"
+        sed -i '/export PATH=".*\/.dockit\/bin:/d' "$HOME/.zshrc"
         log_info "$(get_message MSG_UNINSTALL_REMOVED_ZSHRC)"
-    fi
-}
-
-# 설치 디렉토리 정리
-# Clean up installation directories
-cleanup_directories() {
-    log_info "$(get_message MSG_UNINSTALL_CLEANING_DIRS)"
-    
-    # 빈 디렉토리 제거
-    # Remove empty directories
-    if [ -d "$INSTALL_DIR" ] && [ -z "$(ls -A $INSTALL_DIR)" ]; then
-        rmdir "$INSTALL_DIR"
-        log_info "$(get_message MSG_UNINSTALL_REMOVED_EMPTY_DIR) $INSTALL_DIR"
-    fi
-    
-    if [ -d "$COMPLETION_DIR" ] && [ -z "$(ls -A $COMPLETION_DIR)" ]; then
-        rmdir "$COMPLETION_DIR"
-        log_info "$(get_message MSG_UNINSTALL_REMOVED_EMPTY_DIR) $COMPLETION_DIR"
-    fi
-    
-    if [ -d "$ZSH_COMPLETION_DIR" ] && [ -z "$(ls -A $ZSH_COMPLETION_DIR)" ]; then
-        rmdir "$ZSH_COMPLETION_DIR"
-        log_info "$(get_message MSG_UNINSTALL_REMOVED_EMPTY_DIR) $ZSH_COMPLETION_DIR"
     fi
 }
 
@@ -214,18 +166,6 @@ remove_completion_settings() {
     fi
 }
 
-# 사용자 설정 디렉토리 제거
-# Remove user config directory
-remove_config_dir() {
-    log_info "$(get_message MSG_UNINSTALL_REMOVING_CONFIG)"
-    local config_dir="$HOME/.config/dockit"
-    
-    if [ -d "$config_dir" ]; then
-        rm -rf "$config_dir"
-        log_info "$(get_message MSG_UNINSTALL_CONFIG_REMOVED)"
-    fi
-}
-
 # 메인 제거 프로세스
 # Main uninstallation process
 main() {
@@ -246,14 +186,10 @@ main() {
     fi
     
     # 제거 프로세스 시작
-    remove_dockit
-    remove_project
-    remove_completion
-    remove_completion_settings
-    remove_config_dir
-    remove_from_path
-    cleanup_directories
-    verify_uninstallation
+    remove_project          # ~/.dockit 전체 삭제 (dockit 스크립트 포함)
+    remove_completion_settings  # 자동완성 설정 제거
+    remove_from_path        # PATH 설정 제거
+    verify_uninstallation   # 제거 확인
     
     log_info "$(get_message MSG_UNINSTALL_RESTART_SHELL)"
 }
