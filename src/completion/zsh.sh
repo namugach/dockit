@@ -29,6 +29,12 @@ dockit_get_message() {
 _dockit() {
     local -a commands
     
+    # 첫 번째 인자만 자동완성 처리 (두 번째 단어 입력 중일 때만)
+    # Only handle completion for the first argument (only when entering the second word)
+    if (( CURRENT > 2 )); then
+        return 0
+    fi
+    
     # 사용 가능한 명령어와 설명 정의
     # Define available commands and descriptions
     commands=(

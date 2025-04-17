@@ -211,15 +211,15 @@ backup_messages() {
 # 기존 설치 제거
 # Remove old installation
 remove_old_installation() {
-    rm -rf "$PROJECT_DIR/src" "$PROJECT_DIR/completion" "$PROJECT_DIR/bin"
+    rm -rf "$PROJECT_DIR/src" "$PROJECT_DIR/src/completion" "$PROJECT_DIR/bin"
 }
 
 # 프로젝트 파일 복사
 # Copy project files
 copy_project_files() {
-    mkdir -p "$PROJECT_DIR/src" "$PROJECT_DIR/completion" "$PROJECT_DIR/bin"
+    mkdir -p "$PROJECT_DIR/src" "$PROJECT_DIR/src/completion" "$PROJECT_DIR/bin"
     cp -r "$PROJECT_ROOT/src/"* "$PROJECT_DIR/src/"
-    cp -r "$PROJECT_ROOT/completion/"* "$PROJECT_DIR/completion/"
+    cp -r "$PROJECT_ROOT/src/completion/"* "$PROJECT_DIR/src/completion/"
     cp "$PROJECT_ROOT/bin/VERSION" "$PROJECT_DIR/bin/"
     install_dockit_script
 }
@@ -461,8 +461,8 @@ create_completion_directories() {
 # 공통 모듈 설치
 # Install common modules
 install_common_modules() {
-    cp "$PROJECT_DIR/completion/completion-common.sh" "$COMPLETION_DIR/"
-    cp "$PROJECT_DIR/completion/completion-common.sh" "$ZSH_COMPLETION_DIR/"
+    cp "$PROJECT_DIR/src/completion/completion-common.sh" "$COMPLETION_DIR/"
+    cp "$PROJECT_DIR/src/completion/completion-common.sh" "$ZSH_COMPLETION_DIR/"
     chmod +x "$COMPLETION_DIR/completion-common.sh"
     chmod +x "$ZSH_COMPLETION_DIR/completion-common.sh"
 }
@@ -471,11 +471,11 @@ install_common_modules() {
 # Install shell-specific completions
 install_shell_completions() {
     # Bash completion
-    cp "$PROJECT_DIR/completion/bash.sh" "$COMPLETION_DIR/dockit"
+    cp "$PROJECT_DIR/src/completion/bash.sh" "$COMPLETION_DIR/dockit"
     chmod +x "$COMPLETION_DIR/dockit"
     
     # Zsh completion
-    cp "$PROJECT_DIR/completion/zsh.sh" "$ZSH_COMPLETION_DIR/_dockit"
+    cp "$PROJECT_DIR/src/completion/zsh.sh" "$ZSH_COMPLETION_DIR/_dockit"
     chmod +x "$ZSH_COMPLETION_DIR/_dockit"
 }
 
@@ -483,10 +483,10 @@ install_shell_completions() {
 # Install system completion
 install_system_completion() {
     if [ -d "/etc/bash_completion.d" ] && [ -w "/etc/bash_completion.d" ]; then
-        cp "$PROJECT_DIR/completion/completion-common.sh" "/etc/bash_completion.d/"
+        cp "$PROJECT_DIR/src/completion/completion-common.sh" "/etc/bash_completion.d/"
         chmod +x "/etc/bash_completion.d/completion-common.sh"
         
-        cp "$PROJECT_DIR/completion/bash.sh" "/etc/bash_completion.d/dockit"
+        cp "$PROJECT_DIR/src/completion/bash.sh" "/etc/bash_completion.d/dockit"
         chmod +x "/etc/bash_completion.d/dockit"
         log_info "$(get_message MSG_INSTALL_GLOBAL_COMPLETION)"
     fi
