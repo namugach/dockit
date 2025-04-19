@@ -122,9 +122,11 @@ get_user_input() {
     
     case "$choice" in
         y|Y)
+            init_dockit_dir
             set_default_values
             ;;
         n|N)
+            init_dockit_dir
             get_custom_values
             ;;
         c|C)
@@ -294,12 +296,8 @@ init_project() {
     # Check if help should be displayed
     if [[ "$1" == "--help" || "$1" == "-h" ]]; then
         show_init_help
-        return 0
+        exit 0
     fi
-    
-    # 프로젝트 디렉토리 확인
-    # Check project directory
-    check_project_directory
     
     # 기존 설정 백업
     # Backup existing settings
@@ -311,7 +309,7 @@ init_project() {
         if [[ ! $answer =~ ^[Yy]$ ]]; then
             echo "초기화가 취소되었습니다."
             echo "Initialization has been cancelled."
-            return 1
+            exit 0
         fi
         
         # 백업 디렉토리 이름 생성 (현재 날짜시간 사용)
@@ -327,31 +325,53 @@ init_project() {
         # Add backup information to new .env file
         backup_info="PREVIOUS_CONFIG=\"$backup_dir\""
     fi
-    
-    # Dockit 디렉토리 생성
-    # Create Dockit directory
-    log_info "$(get_message MSG_CREATING_DOCKIT_DIR)"
-    mkdir -p "$DOCKIT_DIR"
-    
-    if [ -d "$DOCKIT_DIR" ]; then
-        log_info "$(get_message MSG_DOCKIT_DIR_CREATED)"
-    else
-        log_error "$(get_message MSG_ERROR_CREATING_DOCKIT_DIR)"
-        return 1
+}
+
+# Main function
+# 메인 함수
+# Initialize .dockit directory and move legacy files
+# .dockit 디렉토리 초기화 및 레거시 파일 이동
+init_dockit_dir() {
+    # Create .dockit directory
+    if [ ! -d "$DOCKIT_DIR" ]; then
+        log "INFO" "$MSG_CREATING_DOCKIT_DIR"
+        mkdir -p "$DOCKIT_DIR"
+        log "SUCCESS" "$MSG_DOCKIT_DIR_CREATED"
     fi
     
-    # 파일 생성 작업
-    # File creation tasks
-    create_env_file "$@"
-    create_docker_compose_file
-    copy_dockerfile
+    # Check and clean up old version files
+    if [ -f "$PROJECT_ROOT/docker-tools.log" ]; then
+        log "INFO" "$MSG_OLD_LOG_FOUND"
+        rm -f "$PROJECT_ROOT/docker-tools.log"
+        log "SUCCESS" "$MSG_OLD_LOG_REMOVED"
+    fi
     
-    # 추가적인 작업
-    # Additional tasks
-    
-
-    return 0
+    # Move legacy files to new location
+    move_legacy_files
 }
+
+# Move legacy files from root to new location
+# 레거시 파일들을 새 위치로 이동
+move_legacy_files() {
+    if [ -f "$PROJECT_ROOT/.env" ]; then
+        log "INFO" "$MSG_MOVING_ENV"
+        mv "$PROJECT_ROOT/.env" "$CONFIG_FILE"
+        log "SUCCESS" "$MSG_ENV_MOVED"
+    fi
+    
+    if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
+        log "INFO" "$MSG_MOVING_COMPOSE"
+        mv "$PROJECT_ROOT/docker-compose.yml" "$DOCKER_COMPOSE_FILE"
+        log "SUCCESS" "$MSG_COMPOSE_MOVED"
+    fi
+    
+    if [ -f "$PROJECT_ROOT/dockit.log" ]; then
+        log "INFO" "$MSG_MOVING_LOG"
+        mv "$PROJECT_ROOT/dockit.log" "$LOG_FILE"
+        log "SUCCESS" "$MSG_LOG_MOVED"
+    fi
+}
+
 
 # Docker Compose 파일 생성
 # Create Docker Compose file
@@ -409,77 +429,6 @@ copy_dockerfile() {
     return 0
 }
 
-# .env 파일 생성
-# Create .env file
-create_env_file() {
-    # 프로젝트 이름 설정 (현재 디렉토리 이름 기본값)
-    # Set project name (current directory name as default)
-    local project_name
-    project_name=$(basename "$(pwd)")
-    
-    # 기본 환경 변수 설정
-    # Set default environment variables
-    local env_content="# Dockit 환경 설정 파일
-# Dockit Environment Configuration File
-# 생성일: $(date "+%Y-%m-%d %H:%M:%S")
-# Created on: $(date "+%Y-%m-%d %H:%M:%S")
-
-# 버전 정보 (수정하지 마세요)
-# Version info (do not modify)
-DOCKIT_VERSION=\"${DOCKIT_VERSION}\"
-
-# 프로젝트 설정
-# Project settings
-PROJECT_NAME=\"${project_name}\"
-CONTAINER_NAME=\"${project_name}\"
-DOCKER_IMAGE=\"ubuntu:latest\"
-WORKSPACE_DIR=\"/workspace\"
-
-# Docker 설정
-# Docker settings
-PORT_MAPPING=\"8080:80\"
-VOLUME_MAPPING=\".:/workspace\"
-
-# 사용자 정의 설정
-# User-defined settings
-"
-
-    # backup 정보 추가
-    # Add backup info
-    if [ -n "$backup_info" ]; then
-        env_content+="
-# 백업 정보
-# Backup info
-$backup_info"
-    fi
-    
-    # 명령줄 인수 처리
-    # Process command line arguments
-    while (( "$#" )); do
-        case "$1" in
-            --name=*)
-                env_content=$(echo "$env_content" | sed "s/CONTAINER_NAME=\"${project_name}\"/CONTAINER_NAME=\"${1#*=}\"/")
-                ;;
-            --image=*)
-                env_content=$(echo "$env_content" | sed "s/DOCKER_IMAGE=\"ubuntu:latest\"/DOCKER_IMAGE=\"${1#*=}\"/")
-                ;;
-            --port=*)
-                env_content=$(echo "$env_content" | sed "s/PORT_MAPPING=\"8080:80\"/PORT_MAPPING=\"${1#*=}\"/")
-                ;;
-            --volumes=*)
-                env_content=$(echo "$env_content" | sed "s/VOLUME_MAPPING=\".:\\/workspace\"/VOLUME_MAPPING=\"${1#*=}\"/")
-                ;;
-        esac
-        shift
-    done
-    
-    # .env 파일에 저장
-    # Save to .env file
-    echo "$env_content" > "${DOCKIT_DIR}/${DOTENV_FILE}"
-    
-    log_info "$(get_message MSG_ENV_FILE_CREATED)"
-    return 0
-}
 
 # 도움말 표시
 # Show help
@@ -513,29 +462,6 @@ initialize_dockit_directory() {
     return 0
 }
 
-# Check project directory
-# 프로젝트 디렉토리 확인
-check_project_directory() {
-    # 현재 디렉토리가 git 저장소인지 확인
-    # Check if current directory is a git repository
-    if [ -d ".git" ]; then
-        echo "$(get_message MSG_GIT_REPO_DETECTED)"
-        
-        # .gitignore 파일에 .dockit_project 추가 확인
-        # Check if .dockit_project is added to .gitignore
-        if [ -f ".gitignore" ]; then
-            if ! grep -q "^\.dockit_project" ".gitignore"; then
-                echo "$(get_message MSG_ADDING_TO_GITIGNORE)"
-                echo ".dockit_project/" >> ".gitignore"
-            fi
-        else
-            echo "$(get_message MSG_CREATING_GITIGNORE)"
-            echo ".dockit_project/" > ".gitignore"
-        fi
-    fi
-    
-    return 0
-}
 
 # Start container and handle user interaction
 # 컨테이너 시작 및 사용자 상호작용 처리
@@ -585,7 +511,6 @@ display_version_info() {
 # 메인 초기화 함수
 init_main() {
     log "INFO" "$MSG_INIT_START"
-    
     display_version_info
     init_project
     get_user_input
