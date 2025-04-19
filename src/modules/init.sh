@@ -26,6 +26,57 @@ CONFIG_FILE="$DOCKIT_DIR/.env"
 LOG_FILE="$DOCKIT_DIR/dockit.log"
 
 
+# Display version information
+# 버전 정보 표시
+display_version_info() {
+    echo -e "\n${BLUE}$(printf "$MSG_INIT_VERSION_HEADER" "$VERSION")${NC}"
+    echo -e "${BLUE}$MSG_INIT_VERSION_SEPARATOR${NC}\n"
+}
+
+
+# Main function
+# 메인 함수
+# Initialize .dockit_project directory and move legacy files
+# .dockit_project 디렉토리 초기화 및 레거시 파일 이동
+init_project() {
+    # 초기화 작업
+    # Initialization tasks
+    
+    # 도움말 표시 체크
+    # Check if help should be displayed
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "$(get_message MSG_INIT_HELP)"
+        exit 0
+    fi
+    
+    # 기존 설정 백업
+    # Backup existing settings
+    if [ -d ".dockit_project" ]; then
+        echo "이미 초기화된 프로젝트입니다. 다시 초기화하시겠습니까? (y/N)"
+        echo "Project is already initialized. Do you want to re-initialize? (y/N)"
+        read -r answer
+        
+        if [[ ! $answer =~ ^[Yy]$ ]]; then
+            echo "초기화가 취소되었습니다."
+            echo "Initialization has been cancelled."
+            exit 0
+        fi
+        
+        # 백업 디렉토리 이름 생성 (현재 날짜시간 사용)
+        # Create backup directory name (using current date and time)
+        backup_dir=".dockit_backup_$(date +%Y%m%d_%H%M%S)"
+        
+        echo "기존 설정을 ${backup_dir}로 백업합니다."
+        echo "Backing up existing settings to ${backup_dir}."
+        
+        mv ".dockit_project" "$backup_dir"
+        
+        # 새 .env 파일에 백업 정보 추가
+        # Add backup information to new .env file
+        backup_info="PREVIOUS_CONFIG=\"$backup_dir\""
+    fi
+}
+
 ####################################################################
 #                         get_user_input                           #
 ####################################################################
@@ -103,6 +154,55 @@ display_final_settings() {
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}$CONTAINER_NAME${NC}"
 }
 
+
+# Main function
+# 메인 함수
+
+
+# Move legacy files from root to new location
+# 레거시 파일들을 새 위치로 이동
+move_legacy_files() {
+    if [ -f "$PROJECT_ROOT/.env" ]; then
+        log "INFO" "$MSG_MOVING_ENV"
+        mv "$PROJECT_ROOT/.env" "$CONFIG_FILE"
+        log "SUCCESS" "$MSG_ENV_MOVED"
+    fi
+    
+    if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
+        log "INFO" "$MSG_MOVING_COMPOSE"
+        mv "$PROJECT_ROOT/docker-compose.yml" "$DOCKER_COMPOSE_FILE"
+        log "SUCCESS" "$MSG_COMPOSE_MOVED"
+    fi
+    
+    if [ -f "$PROJECT_ROOT/dockit.log" ]; then
+        log "INFO" "$MSG_MOVING_LOG"
+        mv "$PROJECT_ROOT/dockit.log" "$LOG_FILE"
+        log "SUCCESS" "$MSG_LOG_MOVED"
+    fi
+}
+
+
+# Initialize .dockit directory and move legacy files
+# .dockit 디렉토리 초기화 및 레거시 파일 이동
+init_dockit_dir() {
+    # Create .dockit directory
+    if [ ! -d "$DOCKIT_DIR" ]; then
+        log "INFO" "$MSG_CREATING_DOCKIT_DIR"
+        mkdir -p "$DOCKIT_DIR"
+        log "SUCCESS" "$MSG_DOCKIT_DIR_CREATED"
+    fi
+    
+    # Check and clean up old version files
+    if [ -f "$PROJECT_ROOT/docker-tools.log" ]; then
+        log "INFO" "$MSG_OLD_LOG_FOUND"
+        rm -f "$PROJECT_ROOT/docker-tools.log"
+        log "SUCCESS" "$MSG_OLD_LOG_REMOVED"
+    fi
+    
+    # Move legacy files to new location
+    move_legacy_files
+}
+
 # Main user input function
 # 메인 사용자 입력 함수
 get_user_input() {
@@ -169,6 +269,65 @@ create_dockerfile() {
     fi
 }
 
+
+
+# Create Docker Compose file
+# Docker Compose 파일 생성
+create_docker_compose() {
+    log "INFO" "$MSG_CREATING_COMPOSE"
+    
+    # Create necessary directories
+    # 필요한 디렉토리 생성
+    mkdir -p "$(dirname "$DOCKER_COMPOSE_FILE")"
+    
+    # Generate Docker Compose file
+    # Docker Compose 파일 생성
+    process_template "$DOCKER_COMPOSE_TEMPLATE" "$DOCKER_COMPOSE_FILE"
+    
+    if [ $? -eq 0 ]; then
+        log "SUCCESS" "$MSG_COMPOSE_CREATED"
+    else
+        log "ERROR" "$MSG_COMPOSE_FAILED"
+        return 1
+    fi
+}
+
+
+
+# Handle container connection prompt and execution
+# 컨테이너 연결 프롬프트 및 실행 처리
+handle_container_connection() {
+    echo -e "\n${YELLOW}$MSG_CONNECT_CONTAINER_NOW?${NC}"
+    read -p "$MSG_SELECT_CHOICE [Y/n]: " connect_container
+    connect_container=${connect_container:-y}
+    
+    if [[ $connect_container == "y" || $connect_container == "Y" ]]; then
+        log "INFO" "$MSG_CONNECTING_CONTAINER"
+        docker exec -it "$CONTAINER_NAME" bash
+    fi
+}
+
+
+
+# Start container and handle user interaction
+# 컨테이너 시작 및 사용자 상호작용 처리
+start_and_connect_container() {
+    echo -e "\n${YELLOW}$MSG_START_CONTAINER_NOW?${NC}"
+    read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
+    start_container=${start_container:-y}
+    
+    if [[ $start_container == "y" || $start_container == "Y" ]]; then
+        log "INFO" "$MSG_STARTING_CONTAINER"
+        
+        if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
+            log "SUCCESS" "$MSG_CONTAINER_STARTED"
+            handle_container_connection
+        else
+            log "ERROR" "$MSG_CONTAINER_START_FAILED"
+            return 1
+        fi
+    fi
+}
 
 # Check and set BASE_IMAGE if not already set
 # BASE_IMAGE가 설정되지 않은 경우 확인 및 설정
@@ -260,248 +419,8 @@ build_docker_image() {
     build_image_from_temp "$temp_dockerfile"
 }
 
-####################################################################
 
 
-# Create Docker Compose file
-# Docker Compose 파일 생성
-create_docker_compose() {
-    log "INFO" "$MSG_CREATING_COMPOSE"
-    
-    # Create necessary directories
-    # 필요한 디렉토리 생성
-    mkdir -p "$(dirname "$DOCKER_COMPOSE_FILE")"
-    
-    # Generate Docker Compose file
-    # Docker Compose 파일 생성
-    process_template "$DOCKER_COMPOSE_TEMPLATE" "$DOCKER_COMPOSE_FILE"
-    
-    if [ $? -eq 0 ]; then
-        log "SUCCESS" "$MSG_COMPOSE_CREATED"
-    else
-        log "ERROR" "$MSG_COMPOSE_FAILED"
-        return 1
-    fi
-}
-
-# Main function
-# 메인 함수
-# Initialize .dockit_project directory and move legacy files
-# .dockit_project 디렉토리 초기화 및 레거시 파일 이동
-init_project() {
-    # 초기화 작업
-    # Initialization tasks
-    
-    # 도움말 표시 체크
-    # Check if help should be displayed
-    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-        show_init_help
-        exit 0
-    fi
-    
-    # 기존 설정 백업
-    # Backup existing settings
-    if [ -d ".dockit_project" ]; then
-        echo "이미 초기화된 프로젝트입니다. 다시 초기화하시겠습니까? (y/N)"
-        echo "Project is already initialized. Do you want to re-initialize? (y/N)"
-        read -r answer
-        
-        if [[ ! $answer =~ ^[Yy]$ ]]; then
-            echo "초기화가 취소되었습니다."
-            echo "Initialization has been cancelled."
-            exit 0
-        fi
-        
-        # 백업 디렉토리 이름 생성 (현재 날짜시간 사용)
-        # Create backup directory name (using current date and time)
-        backup_dir=".dockit_backup_$(date +%Y%m%d_%H%M%S)"
-        
-        echo "기존 설정을 ${backup_dir}로 백업합니다."
-        echo "Backing up existing settings to ${backup_dir}."
-        
-        mv ".dockit_project" "$backup_dir"
-        
-        # 새 .env 파일에 백업 정보 추가
-        # Add backup information to new .env file
-        backup_info="PREVIOUS_CONFIG=\"$backup_dir\""
-    fi
-}
-
-# Main function
-# 메인 함수
-# Initialize .dockit directory and move legacy files
-# .dockit 디렉토리 초기화 및 레거시 파일 이동
-init_dockit_dir() {
-    # Create .dockit directory
-    if [ ! -d "$DOCKIT_DIR" ]; then
-        log "INFO" "$MSG_CREATING_DOCKIT_DIR"
-        mkdir -p "$DOCKIT_DIR"
-        log "SUCCESS" "$MSG_DOCKIT_DIR_CREATED"
-    fi
-    
-    # Check and clean up old version files
-    if [ -f "$PROJECT_ROOT/docker-tools.log" ]; then
-        log "INFO" "$MSG_OLD_LOG_FOUND"
-        rm -f "$PROJECT_ROOT/docker-tools.log"
-        log "SUCCESS" "$MSG_OLD_LOG_REMOVED"
-    fi
-    
-    # Move legacy files to new location
-    move_legacy_files
-}
-
-# Move legacy files from root to new location
-# 레거시 파일들을 새 위치로 이동
-move_legacy_files() {
-    if [ -f "$PROJECT_ROOT/.env" ]; then
-        log "INFO" "$MSG_MOVING_ENV"
-        mv "$PROJECT_ROOT/.env" "$CONFIG_FILE"
-        log "SUCCESS" "$MSG_ENV_MOVED"
-    fi
-    
-    if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
-        log "INFO" "$MSG_MOVING_COMPOSE"
-        mv "$PROJECT_ROOT/docker-compose.yml" "$DOCKER_COMPOSE_FILE"
-        log "SUCCESS" "$MSG_COMPOSE_MOVED"
-    fi
-    
-    if [ -f "$PROJECT_ROOT/dockit.log" ]; then
-        log "INFO" "$MSG_MOVING_LOG"
-        mv "$PROJECT_ROOT/dockit.log" "$LOG_FILE"
-        log "SUCCESS" "$MSG_LOG_MOVED"
-    fi
-}
-
-
-# Docker Compose 파일 생성
-# Create Docker Compose file
-create_docker_compose_file() {
-    # 템플릿 파일 확인
-    # Check template file
-    local template="${TEMPLATE_DIR}/${DOCKER_COMPOSE_FILE}"
-    local target="${DOCKIT_DIR}/${DOCKER_COMPOSE_FILE}"
-    
-    if [ ! -f "$template" ]; then
-        log_error "$(get_message MSG_ERROR_TEMPLATE_NOT_FOUND)"
-        return 1
-    fi
-    
-    # Docker Compose 파일 생성
-    # Create Docker Compose file
-    cp "$template" "$target"
-    
-    # .env 파일에서 필요한 값 가져오기
-    # Get necessary values from .env file
-    local container_name
-    container_name=$(grep "^CONTAINER_NAME=" "${DOCKIT_DIR}/${DOTENV_FILE}" | cut -d'"' -f2)
-    
-    # Docker Compose 파일 내용 수정
-    # Modify Docker Compose file content
-    if [ -n "$container_name" ]; then
-        sed -i "s/\${CONTAINER_NAME}/$container_name/g" "$target"
-    else
-        local default_name
-        default_name=$(basename "$(pwd)")
-        sed -i "s/\${CONTAINER_NAME}/$default_name/g" "$target"
-    fi
-    
-    log_info "$(get_message MSG_DOCKER_COMPOSE_CREATED)"
-    return 0
-}
-
-# Dockerfile 복사
-# Copy Dockerfile
-copy_dockerfile() {
-    # 기본 경로 확인
-    # Check default path
-    local template="${TEMPLATE_DIR}/${DOCKERFILE}"
-    local target="${DOCKIT_DIR}/${DOCKERFILE}"
-    
-    # 복사
-    # Copy
-    if [ -f "$template" ]; then
-        cp "$template" "$target"
-        log_info "$(get_message MSG_DOCKERFILE_COPIED)"
-    else
-        log_warn "$(get_message MSG_DOCKERFILE_NOT_FOUND)"
-    fi
-    
-    return 0
-}
-
-
-# 도움말 표시
-# Show help
-show_init_help() {
-    echo "$(get_message MSG_INIT_HELP)"
-    return 0
-}
-
-# Initialize .dockit_project directory and move legacy files
-# .dockit_project 디렉토리 초기화 및 레거시 파일 이동
-initialize_dockit_directory() {
-    # Create .dockit_project directory
-    mkdir -p "${DOCKIT_DIR}"
-    mkdir -p "${DOCKIT_DIR}/config"
-    mkdir -p "${DOCKIT_DIR}/logs"
-    
-    # Move legacy files if they exist
-    # 기존 파일이 있으면 이동
-    if [ -f "./.env" ]; then
-        mv "./.env" "${DOCKIT_DIR}/"
-        log_info "$(get_message MSG_LEGACY_ENV_MOVED)"
-    fi
-    
-    if [ -f "./docker-compose.yml" ]; then
-        mv "./docker-compose.yml" "${DOCKIT_DIR}/"
-        log_info "$(get_message MSG_LEGACY_COMPOSE_MOVED)"
-    fi
-    
-    log_info "$(get_message MSG_DOCKIT_DIR_CREATED)"
-    
-    return 0
-}
-
-
-# Start container and handle user interaction
-# 컨테이너 시작 및 사용자 상호작용 처리
-start_and_connect_container() {
-    echo -e "\n${YELLOW}$MSG_START_CONTAINER_NOW?${NC}"
-    read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
-    start_container=${start_container:-y}
-    
-    if [[ $start_container == "y" || $start_container == "Y" ]]; then
-        log "INFO" "$MSG_STARTING_CONTAINER"
-        
-        if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
-            log "SUCCESS" "$MSG_CONTAINER_STARTED"
-            handle_container_connection
-        else
-            log "ERROR" "$MSG_CONTAINER_START_FAILED"
-            return 1
-        fi
-    fi
-}
-
-# Handle container connection prompt and execution
-# 컨테이너 연결 프롬프트 및 실행 처리
-handle_container_connection() {
-    echo -e "\n${YELLOW}$MSG_CONNECT_CONTAINER_NOW?${NC}"
-    read -p "$MSG_SELECT_CHOICE [Y/n]: " connect_container
-    connect_container=${connect_container:-y}
-    
-    if [[ $connect_container == "y" || $connect_container == "Y" ]]; then
-        log "INFO" "$MSG_CONNECTING_CONTAINER"
-        docker exec -it "$CONTAINER_NAME" bash
-    fi
-}
-
-# Display version information
-# 버전 정보 표시
-display_version_info() {
-    echo -e "\n${BLUE}$(printf "$MSG_INIT_VERSION_HEADER" "$VERSION")${NC}"
-    echo -e "${BLUE}$MSG_INIT_VERSION_SEPARATOR${NC}\n"
-}
 
 ####################################################################
 #                     init_main                                    #
