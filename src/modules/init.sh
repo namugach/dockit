@@ -349,10 +349,7 @@ init_project() {
     # 추가적인 작업
     # Additional tasks
     
-    # 초기화 완료 메시지
-    # Initialization complete message
-    show_initialization_message
-    
+
     return 0
 }
 
@@ -488,30 +485,6 @@ $backup_info"
 # Show help
 show_init_help() {
     echo "$(get_message MSG_INIT_HELP)"
-    return 0
-}
-
-# 초기화 완료 메시지 표시
-# Show initialization complete message
-show_initialization_message() {
-    # 설정한 환경 변수들 표시
-    # Display configured environment variables
-    local container_name
-    local image_name
-    container_name=$(grep "^CONTAINER_NAME=" "${DOCKIT_DIR}/${DOTENV_FILE}" | cut -d'"' -f2)
-    image_name=$(grep "^DOCKER_IMAGE=" "${DOCKIT_DIR}/${DOTENV_FILE}" | cut -d'"' -f2)
-    
-    echo "$(get_message MSG_INIT_COMPLETE)"
-    echo ""
-    echo "- $(get_message MSG_INIT_CONTAINER_NAME): $container_name"
-    echo "- $(get_message MSG_INIT_IMAGE_NAME): $image_name"
-    echo ""
-    echo "$(get_message MSG_INIT_NEXT_STEPS)"
-    echo "  dockit info     - $(get_message MSG_INIT_SHOW_INFO)"
-    echo "  dockit up       - $(get_message MSG_INIT_START_CONTAINER)"
-    echo "  dockit config   - $(get_message MSG_INIT_EDIT_CONFIG)"
-    echo ""
-    
     return 0
 }
 
