@@ -11,19 +11,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Load common module
 source "$SCRIPT_DIR/common.sh" "migrate"
 
-# 로그 출력 함수들
-# Log output functions
-log_info() {
-    log "INFO" "$1"
-}
-
-log_warn() {
-    log "WARNING" "$1"
-}
-
-log_error() {
-    log "ERROR" "$1"
-}
+# 로그 출력 함수들은 이제 utils/log.sh에서 제공됨
+# These logging functions are now provided by utils/log.sh
+# log_info, log_warn, log_error, log_success, log_debug
 
 # 버전 비교 함수
 # Compare versions

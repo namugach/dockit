@@ -18,26 +18,19 @@ COMPLETION_DIR="$HOME/.dockit/completion/bash"
 ZSH_COMPLETION_DIR="$HOME/.dockit/completion/zsh"
 CONFIG_DIR="$HOME/.dockit/config"
 GLOBAL_CONFIG_DIR="/etc/dockit"
+UTILS_DIR="${PROJECT_ROOT}/src/utils"
 
 # 언어 관련 변수 초기화
 # Initialize language-related variables
 LANGUAGE="en"
 
+# 유틸리티 모듈 로드 (가능한 경우)
+# Load utility modules if available
+source "${UTILS_DIR}/utils.sh"
+
+
 # ===== 레벨 1: 기본 유틸리티 함수 =====
 # ===== Level 1: Basic Utility Functions =====
-# 로그 출력 함수
-# Log output functions
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
 
 # 메시지 출력 함수
 # Message output function

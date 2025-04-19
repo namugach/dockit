@@ -3,13 +3,6 @@
 # dockit 제거 스크립트
 # dockit uninstallation script
 
-# 색상 정의
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
 # 설치 디렉토리
 # Installation directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -17,6 +10,11 @@ PROJECT_DIR="$HOME/.dockit"
 INSTALL_DIR="$HOME/.dockit/bin"
 COMPLETION_DIR="$HOME/.dockit/completion/bash"
 ZSH_COMPLETION_DIR="$HOME/.dockit/completion/zsh"
+UTILS_DIR="${PROJECT_ROOT}/src/utils"
+
+# 유틸리티 모듈 로드 (가능한 경우)
+# Load utility modules if available
+source "${UTILS_DIR}/utils.sh"
 
 # 언어 설정 불러오기
 # Load language settings
@@ -49,19 +47,7 @@ if [ -f "$PROJECT_ROOT/config/system.sh" ]; then
     source "$PROJECT_ROOT/config/system.sh"
 fi
 
-# 로그 함수
-# Log functions
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
 
 # 메시지 출력 함수 (시스템에 없는 경우를 위한 예비)
 # Function to print messages (fallback if system doesn't have it)

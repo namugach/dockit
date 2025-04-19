@@ -12,6 +12,7 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
 MODULES_DIR="${CURRENT_DIR}"
 TEMPLATE_DIR="${PROJECT_ROOT}/src/templates"
+UTILS_DIR="${PROJECT_ROOT}/src/utils"
 
 # 실행 디렉토리 설정 (절대 경로)
 # Set execution directory (absolute path)
@@ -29,6 +30,14 @@ CONTAINER_WORKDIR="/workspace"
 # 로그 파일 경로 설정
 # Set log file path
 LOG_FILE="$CONFIG_DIR/dockit.log"
+
+# 유틸리티 모듈 로드
+# Load utility modules
+source "${UTILS_DIR}/utils.sh"
+
+
+# 로그 파일 설정
+[ -n "$LOG_FILE" ] && set_log_file "$LOG_FILE"
 
 # Load message system
 # 메시지 시스템 로드
@@ -111,46 +120,12 @@ DEFAULT_GID="$(id -g)"
 DEFAULT_PASSWORD="1234"
 DEFAULT_WORKDIR="work/project"
 
-# Color definitions
-# 색상 정의
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-NC='\033[0m' # No Color
+# 이 변수들은 utils/log.sh에서 제공
+# These variables are provided by utils/log.sh
+# RED, GREEN, YELLOW, BLUE, PURPLE, NC
 
-# Logging function
-# 로그 기록 함수
-log() {
-    local level="$1"
-    local message="$2"
-    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
-    
-    # Only write to log file if .dockit_project directory exists
-    # .dockit_project 디렉토리가 있을 때만 로그 파일에 기록
-    if [ -d "${CONFIG_DIR}" ]; then
-        # Create log file if it doesn't exist
-        # 로그 파일이 없으면 생성
-        if [ ! -f "$LOG_FILE" ]; then
-            touch "$LOG_FILE"
-        fi
-        
-        # Write all logs to file
-        # 모든 로그는 파일에 기록
-        echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
-    fi
-    
-    # Display only ERROR, WARNING, SUCCESS on screen
-    # 화면에는 ERROR, WARNING, SUCCESS만 표시
-    if [[ "$level" == "ERROR" ]]; then
-        echo -e "${RED}[$level] $message${NC}" >&2
-    elif [[ "$level" == "WARNING" ]]; then
-        echo -e "${YELLOW}[$level] $message${NC}"
-    elif [[ "$level" == "SUCCESS" ]]; then
-        echo -e "${GREEN}[$level] $message${NC}"
-    fi
-}
+# log 함수는 utils/log.sh에서 제공
+# log function is provided by utils/log.sh
 
 # Container name generation function
 # 컨테이너 이름 생성 함수

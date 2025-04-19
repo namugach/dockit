@@ -10,10 +10,15 @@ export PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export MODULES_DIR="${PROJECT_ROOT}/src/modules"
 export CONFIG_DIR="${PROJECT_ROOT}/.dockit"
 export TEST_DIR="${PROJECT_ROOT}/test"
+export UTILS_DIR="${PROJECT_ROOT}/src/utils"
 
 # 테스트용 임시 디렉토리 설정
 export TEST_TMP_DIR="/tmp/dockit_test_$RANDOM"
 mkdir -p "$TEST_TMP_DIR"
+
+# 유틸리티 모듈 로드 (가능한 경우)
+# Load utility modules if available
+source "$UTILS_DIR/utils.sh"
 
 # 종료 시 임시 디렉토리 정리
 cleanup() {
@@ -24,14 +29,9 @@ cleanup() {
 
     # 임시 디렉토리 정리
     rm -rf "$TEST_TMP_DIR"
-    echo "테스트 환경 정리 완료"
+    log_info "테스트 환경 정리 완료"
 }
 trap cleanup EXIT
-
-# 공통 로깅 함수
-log_info() { echo -e "\033[0;32m[INFO]\033[0m $1"; }
-log_error() { echo -e "\033[0;31m[ERROR]\033[0m $1"; }
-log_warn() { echo -e "\033[0;33m[WARN]\033[0m $1"; }
 
 # 메시지 함수 오버라이드
 get_message() {
