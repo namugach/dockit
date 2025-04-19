@@ -8,19 +8,25 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# 다른 디렉토리 경로 설정 (재정의 하지 않고 추가만 함)
-# Set other directory paths (only add, don't override)
-CONFIG_DIR="$SCRIPT_DIR"
-if [ -z "$MODULES_DIR" ]; then
-    MODULES_DIR="$ROOT_DIR/src/modules"
-fi
-if [ -z "$TEMPLATES_DIR" ]; then
-    TEMPLATES_DIR="$ROOT_DIR/src/templates"
-fi
-
 # Load common functions
 # 공통 함수 로드
 source "$SCRIPT_DIR/../src/modules/common.sh"
+
+# 다른 디렉토리 경로 설정 (재정의 하지 않고 추가만 함)
+# Set other directory paths (only add, don't override)
+CONFIG_DIR="$SCRIPT_DIR"
+
+# 디렉토리 경로 설정 함수
+# Function to set directory paths
+set_directory_paths() {
+    if [ -z "$MODULES_DIR" ]; then
+        MODULES_DIR="$ROOT_DIR/src/modules"
+    fi
+    if [ -z "$TEMPLATES_DIR" ]; then
+        TEMPLATES_DIR="$ROOT_DIR/src/templates"
+    fi
+}
+
 
 # 언어 설정 - 우선순위:
 # Language settings - Priority:
@@ -37,19 +43,23 @@ source "$SCRIPT_DIR/../src/modules/common.sh"
 # 4. 기본값 (local)
 # 4. Default value (local)
 
-# 디버그 모드에서 초기 상태 출력
-# Output initial state in debug mode
-if [ "$DEBUG" = "true" ]; then
-    echo "$MSG_SYSTEM_DEBUG_INITIAL_LANG"
-    printf "$MSG_SYSTEM_DEBUG_LANG_VAR\n" "${LANGUAGE:-없음}"
-    printf "$MSG_SYSTEM_DEBUG_SYS_LANG\n" "${LANG:-없음}"
-    if [ -f "$SCRIPT_DIR/settings.env" ]; then
-        printf "$MSG_SYSTEM_DEBUG_CONFIG_LANG\n" "$(grep LANGUAGE= $SCRIPT_DIR/settings.env | cut -d= -f2)"
-    else
-        echo "$MSG_SYSTEM_DEBUG_NO_CONFIG"
+# 디버그 모드에서 초기 상태 출력 함수
+# Function to output initial state in debug mode
+print_debug_info() {
+    if [ "$DEBUG" = "true" ]; then
+        echo "$MSG_SYSTEM_DEBUG_INITIAL_LANG"
+        printf "$MSG_SYSTEM_DEBUG_LANG_VAR\n" "${LANGUAGE:-없음}"
+        printf "$MSG_SYSTEM_DEBUG_SYS_LANG\n" "${LANG:-없음}"
+        if [ -f "$SCRIPT_DIR/settings.env" ]; then
+            printf "$MSG_SYSTEM_DEBUG_CONFIG_LANG\n" "$(grep LANGUAGE= $SCRIPT_DIR/settings.env | cut -d= -f2)"
+        else
+            echo "$MSG_SYSTEM_DEBUG_NO_CONFIG"
+        fi
+        echo "$MSG_SYSTEM_DEBUG_END"
     fi
-    echo "$MSG_SYSTEM_DEBUG_END"
-fi
+}
+
+
 
 # System locale detection function
 # 시스템 로케일 감지 함수
@@ -89,63 +99,79 @@ detect_system_locale() {
     echo "en"
 }
 
-# 1. First check environment variables
-# 1. 먼저 환경 변수 확인
-if [ -n "$LANGUAGE" ]; then
-    if [ "$LANGUAGE" = "local" ]; then
-        # Use system locale if LANGUAGE=local
-        # LANGUAGE=local인 경우 시스템 로케일 사용
-        DETECTED_LANGUAGE=$(detect_system_locale)
-        LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
-    else
-        # Use explicitly specified language
-        # 명시적으로 지정된 언어 사용
-        DETECTED_LANGUAGE="$LANGUAGE"
-        LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_ENV"
-    fi
-# 2. Detect from LANG environment variable
-# 2. LANG 환경 변수에서 감지
-else
-    DETECTED_LANGUAGE=$(detect_system_locale)
-    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
-fi
-
-# 3. Check settings in settings.env file
-# 3. settings.env 파일에서 설정 확인
-if [ -z "$DETECTED_LANGUAGE" ] && [ -f "$SCRIPT_DIR/settings.env" ]; then
-    CONFIG_LANGUAGE=$(grep LANGUAGE= "$SCRIPT_DIR/settings.env" | cut -d= -f2)
-    if [ -n "$CONFIG_LANGUAGE" ]; then
-        if [ "$CONFIG_LANGUAGE" = "local" ]; then
+# Check environment variables for language settings
+# 환경 변수에서 언어 설정 확인
+check_env_variables() {
+    if [ -n "$LANGUAGE" ]; then
+        if [ "$LANGUAGE" = "local" ]; then
             # Use system locale if LANGUAGE=local
             # LANGUAGE=local인 경우 시스템 로케일 사용
             DETECTED_LANGUAGE=$(detect_system_locale)
             LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
         else
-            DETECTED_LANGUAGE="$CONFIG_LANGUAGE"
-            LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_CONFIG"
+            # Use explicitly specified language
+            # 명시적으로 지정된 언어 사용
+            DETECTED_LANGUAGE="$LANGUAGE"
+            LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_ENV"
+        fi
+    else
+        # Detect from LANG environment variable
+        # LANG 환경 변수에서 감지
+        DETECTED_LANGUAGE=$(detect_system_locale)
+        LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
+    fi
+}
+
+
+
+# 3. Check settings in settings.env file
+# 3. settings.env 파일에서 설정 확인
+check_settings_env() {
+    if [ -z "$DETECTED_LANGUAGE" ] && [ -f "$SCRIPT_DIR/settings.env" ]; then
+        CONFIG_LANGUAGE=$(grep LANGUAGE= "$SCRIPT_DIR/settings.env" | cut -d= -f2)
+        if [ -n "$CONFIG_LANGUAGE" ]; then
+            if [ "$CONFIG_LANGUAGE" = "local" ]; then
+                # Use system locale if LANGUAGE=local
+                # LANGUAGE=local인 경우 시스템 로케일 사용
+                DETECTED_LANGUAGE=$(detect_system_locale)
+                LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_SYS"
+            else
+                DETECTED_LANGUAGE="$CONFIG_LANGUAGE"
+                LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_FROM_CONFIG"
+            fi
         fi
     fi
-fi
+}
+
+
 
 # 4. Set default value (local)
 # 4. 기본값 설정 (local)
-if [ -z "$DETECTED_LANGUAGE" ]; then
-    DETECTED_LANGUAGE=$(detect_system_locale)
-    LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_DEFAULT"
-fi
+set_default_language() {
+    if [ -z "$DETECTED_LANGUAGE" ]; then
+        DETECTED_LANGUAGE=$(detect_system_locale)
+        LANGUAGE_SOURCE="$MSG_SYSTEM_LANG_DEFAULT"
+    fi
+}
+
+
 
 # Set final language
 # 최종 언어 설정
 LANGUAGE="$DETECTED_LANGUAGE"
 
-# Output final language settings in debug mode
-# 디버그 모드에서 최종 언어 설정 출력
-if [ "$DEBUG" = "true" ]; then
-    echo "$MSG_SYSTEM_DEBUG_FINAL_LANG"
-    printf "$MSG_SYSTEM_DEBUG_SELECTED_LANG\n" "$LANGUAGE"
-    printf "$MSG_SYSTEM_DEBUG_LANG_SOURCE\n" "$LANGUAGE_SOURCE"
-    echo "$MSG_SYSTEM_DEBUG_END"
-fi
+# Function to print debug language settings
+# 디버그 모드에서 언어 설정 출력 함수
+print_debug_language_settings() {
+    if [ "$DEBUG" = "true" ]; then
+        echo "$MSG_SYSTEM_DEBUG_FINAL_LANG"
+        printf "$MSG_SYSTEM_DEBUG_SELECTED_LANG\n" "$LANGUAGE" 
+        printf "$MSG_SYSTEM_DEBUG_LANG_SOURCE\n" "$LANGUAGE_SOURCE"
+        echo "$MSG_SYSTEM_DEBUG_END"
+    fi
+}
+
+
 
 # Set default values
 # 기본값 설정
@@ -154,20 +180,26 @@ DEFAULT_PASSWORD=${DEFAULT_PASSWORD:-1234}
 DEFAULT_WORKDIR=${DEFAULT_WORKDIR:-work/project}
 DEBUG=${DEBUG:-false}
 
-# Load message file
-# 메시지 파일 로드
-if [ -f "$SCRIPT_DIR/load.sh" ]; then
-    if [ "$DEBUG" = "true" ]; then
-        printf "$MSG_SYSTEM_DEBUG_INTEGRATED_MSG\n" "$SCRIPT_DIR/load.sh"
+# 메시지 파일 로드 함수
+# Function to load message file
+load_message_file() {
+    # 통합 메시지 시스템 사용
+    # Use integrated message system
+    if [ -f "$SCRIPT_DIR/load.sh" ]; then
+        if [ "$DEBUG" = "true" ]; then
+            printf "$MSG_SYSTEM_DEBUG_INTEGRATED_MSG\n" "$SCRIPT_DIR/load.sh"
+        fi
+        source "$SCRIPT_DIR/load.sh"
+        load_messages "$LANGUAGE"
+        return
     fi
-    source "$SCRIPT_DIR/load.sh"
-    load_messages "$LANGUAGE"
-else
+
+    # 기존 방식 사용
+    # Use legacy way
     if [ "$DEBUG" = "true" ]; then
         echo "$MSG_SYSTEM_DEBUG_LEGACY_MSG"
     fi
-    # 기존 방식으로 메시지 파일 로드
-    # Load message file in legacy way
+
     if [ -f "$SCRIPT_DIR/${LANGUAGE}.sh" ]; then
         if [ "$DEBUG" = "true" ]; then
             printf "$MSG_SYSTEM_DEBUG_LOAD_MSG_FILE\n" "$SCRIPT_DIR/${LANGUAGE}.sh"
@@ -177,7 +209,8 @@ else
         printf "$MSG_SYSTEM_LANG_FILE_NOT_FOUND\n" "$LANGUAGE"
         source "$SCRIPT_DIR/en.sh"
     fi
-fi
+}
+
 
 # 메시지 출력 함수
 # Function to print messages
@@ -214,43 +247,39 @@ get_language_settings() {
 
 # Set base image based on language
 # 언어에 따른 베이스 이미지 설정
-if [ "$LANGUAGE" = "ko" ]; then
-    BASE_IMAGE=${CUSTOM_BASE_IMAGE:-namugach/ubuntu-basic:24.04-kor-deno}
-    LOCALE_SETTING="ko_KR.UTF-8"
-    TIMEZONE="Asia/Seoul"
-else
-    BASE_IMAGE=${CUSTOM_BASE_IMAGE:-ubuntu:24.04}
-    LOCALE_SETTING="en_US.UTF-8"
-    TIMEZONE="UTC"
-fi
+set_base_image() {
+    if [ "$LANGUAGE" = "ko" ]; then
+        BASE_IMAGE=${CUSTOM_BASE_IMAGE:-namugach/ubuntu-basic:24.04-kor-deno}
+        LOCALE_SETTING="ko_KR.UTF-8" 
+        TIMEZONE="Asia/Seoul"
+    else
+        BASE_IMAGE=${CUSTOM_BASE_IMAGE:-ubuntu:24.04}
+        LOCALE_SETTING="en_US.UTF-8"
+        TIMEZONE="UTC"
+    fi
+}
+
 
 # 기존 템플릿 경로 재정의 (Dockerfile 사용)
 # Override existing template path (use Dockerfile)
 DOCKERFILE_TEMPLATE="$TEMPLATES_DIR/Dockerfile"
 
-# Export variables
-# 변수 내보내기
-export LANGUAGE
-export BASE_IMAGE
-export LOCALE_SETTING
-export TIMEZONE
-export DEFAULT_PASSWORD
-export DEFAULT_WORKDIR
-export DEBUG
-
 # Output system configuration in debug mode
 # 디버그 모드에서 시스템 설정 출력
-if [ "$DEBUG" = "true" ]; then
-    echo "$MSG_SYSTEM_DEBUG_SYS_INFO"
-    printf "$MSG_SYSTEM_DEBUG_LANG\n" "$LANGUAGE"
-    printf "$MSG_SYSTEM_DEBUG_BASE_IMAGE\n" "$BASE_IMAGE"
-    printf "$MSG_SYSTEM_DEBUG_LOCALE\n" "$LOCALE_SETTING"
-    printf "$MSG_SYSTEM_DEBUG_TIMEZONE\n" "$TIMEZONE"
-    printf "$MSG_SYSTEM_DEBUG_WORKDIR\n" "$DEFAULT_WORKDIR"
-    printf "$MSG_SYSTEM_DEBUG_TEMPLATE_DIR\n" "$TEMPLATES_DIR"
-    printf "$MSG_SYSTEM_DEBUG_DOCKERFILE\n" "$DOCKERFILE_TEMPLATE"
-    echo "$MSG_SYSTEM_DEBUG_END"
-fi
+print_debug_info() {
+    if [ "$DEBUG" = "true" ]; then
+        echo "$MSG_SYSTEM_DEBUG_SYS_INFO"
+        printf "$MSG_SYSTEM_DEBUG_LANG\n" "$LANGUAGE"
+        printf "$MSG_SYSTEM_DEBUG_BASE_IMAGE\n" "$BASE_IMAGE"
+        printf "$MSG_SYSTEM_DEBUG_LOCALE\n" "$LOCALE_SETTING" 
+        printf "$MSG_SYSTEM_DEBUG_TIMEZONE\n" "$TIMEZONE"
+        printf "$MSG_SYSTEM_DEBUG_WORKDIR\n" "$DEFAULT_WORKDIR"
+        printf "$MSG_SYSTEM_DEBUG_TEMPLATE_DIR\n" "$TEMPLATES_DIR"
+        printf "$MSG_SYSTEM_DEBUG_DOCKERFILE\n" "$DOCKERFILE_TEMPLATE"
+        echo "$MSG_SYSTEM_DEBUG_END"
+    fi
+}
+
 
 # 템플릿 처리 함수 (기존 템플릿 처리 함수를 오버라이드)
 # Template processing function (override existing template processing function)
@@ -282,3 +311,30 @@ process_template_with_base_image() {
         return 1
     fi
 } 
+
+main() {
+    set_directory_paths
+    print_debug_info
+    check_env_variables
+    check_settings_env
+    set_default_language
+    print_debug_language_settings
+    load_message_file
+    set_base_image
+    print_debug_info
+}
+
+# 직접 실행 시 main 함수 호출
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
+
+# Export variables
+# 변수 내보내기
+export LANGUAGE
+export BASE_IMAGE
+export LOCALE_SETTING
+export TIMEZONE
+export DEFAULT_PASSWORD
+export DEFAULT_WORKDIR
+export DEBUG
