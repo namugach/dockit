@@ -80,6 +80,7 @@ MSG_CHECK_IMAGE="3. 이미지가 존재하는지 확인하세요 (없다면 초�
 MSG_CONNECT_CONTAINER_NOW="컨테이너에 접속할까요?"
 MSG_CONNECTING_CONTAINER="컨테이너에 접속 중..."
 MSG_SKIPPING_CONNECT="컨테이너 접속을 건너뜁니다."
+MSG_SKIP_CONTAINER_CONNECTION="컨테이너 접속을 건너뜁니다."
 MSG_CONNECT_LATER="나중에 컨테이너에 접속하려면:"
 MSG_START_LATER="나중에 컨테이너를 시작하려면:"
 MSG_PROJECT_ALREADY_INITIALIZED="이미 초기화된 프로젝트입니다."

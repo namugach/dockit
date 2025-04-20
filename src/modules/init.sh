@@ -420,6 +420,8 @@ handle_container_connection() {
     if [[ $connect_container == "y" || $connect_container == "Y" ]]; then
         log "INFO" "$MSG_CONNECTING_CONTAINER"
         docker exec -it "$CONTAINER_NAME" bash
+    else
+        log "INFO" "$MSG_SKIP_CONTAINER_CONNECTION"
     fi
 }
 
@@ -437,10 +439,9 @@ start_and_connect_container() {
         
         if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
             log "SUCCESS" "$MSG_CONTAINER_STARTED"
-            handle_container_connection
         else
             log "ERROR" "$MSG_CONTAINER_START_FAILED"
-            return 1
+            exit 0
         fi
     fi
 }
@@ -554,6 +555,7 @@ init_main() {
     create_docker_compose
     build_image_if_confirmed
     start_and_connect_container
+    handle_container_connection
     
     log "SUCCESS" "$MSG_INIT_COMPLETE"
 }
