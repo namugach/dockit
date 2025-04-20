@@ -92,6 +92,9 @@ MSG_CONNECTING_CONTAINER="Connecting to container..."
 MSG_SKIPPING_CONNECT="Skipping container connection."
 MSG_CONNECT_LATER="To connect to the container later:"
 MSG_START_LATER="To start the container later:"
+MSG_PROJECT_ALREADY_INITIALIZED="Project is already initialized."
+MSG_WANT_REINITIALIZE="Do you want to re-initialize? (y/N)"
+MSG_BACKING_UP_TO="Backing up existing settings to %s."
 
 # down 모듈 메시지
 # down module messages
@@ -163,6 +166,8 @@ MSG_CHECKING_STATUS="Checking status"
 MSG_INITIALIZING="Performing initialization"
 MSG_CMD_SUCCESS="Command executed successfully"
 MSG_CMD_FAILED="Command execution failed"
+MSG_BUILD_IMAGE_PROMPT="Do you want to build the Docker image?"
+MSG_SKIP_IMAGE_BUILD="Skipping image build."
 
 # 질문 메시지
 # Question messages

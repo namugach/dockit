@@ -82,6 +82,9 @@ MSG_CONNECTING_CONTAINER="컨테이너에 접속 중..."
 MSG_SKIPPING_CONNECT="컨테이너 접속을 건너뜁니다."
 MSG_CONNECT_LATER="나중에 컨테이너에 접속하려면:"
 MSG_START_LATER="나중에 컨테이너를 시작하려면:"
+MSG_PROJECT_ALREADY_INITIALIZED="이미 초기화된 프로젝트입니다."
+MSG_WANT_REINITIALIZE="다시 초기화하시겠습니까? (y/N)"
+MSG_BACKING_UP_TO="기존 설정을 %s로 백업합니다."
 
 # down 모듈 메시지
 MSG_DOWN_START="컨테이너 제거 모듈 실행 중..."
@@ -146,6 +149,8 @@ MSG_CHECKING_STATUS="상태를 확인합니다"
 MSG_INITIALIZING="초기화를 진행합니다"
 MSG_CMD_SUCCESS="명령이 성공적으로 실행되었습니다"
 MSG_CMD_FAILED="명령 실행에 실패했습니다"
+MSG_BUILD_IMAGE_PROMPT="Docker 이미지를 빌드하시겠습니까?"
+MSG_SKIP_IMAGE_BUILD="이미지 빌드를 건너뜁니다."
 
 # 질문 메시지
 MSG_CONFIRM_STOP="실행 중인 컨테이너를 중지하시겠습니까? (y/n): "

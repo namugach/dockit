@@ -60,13 +60,12 @@ init_project() {
     # 기존 설정 백업
     # Backup existing settings
     if [ -d ".dockit_project" ]; then
-        echo "이미 초기화된 프로젝트입니다. 다시 초기화하시겠습니까? (y/N)"
-        echo "Project is already initialized. Do you want to re-initialize? (y/N)"
+        echo -e "$MSG_PROJECT_ALREADY_INITIALIZED"
+        echo -e "$MSG_WANT_REINITIALIZE"
         read -r answer
         
         if [[ ! $answer =~ ^[Yy]$ ]]; then
-            echo "초기화가 취소되었습니다."
-            echo "Initialization has been cancelled."
+            echo -e "$MSG_INIT_CANCELLED"
             exit 0
         fi
         
@@ -74,8 +73,7 @@ init_project() {
         # Create backup directory name (using current date and time)
         backup_dir=".dockit_backup_$(date +%Y%m%d_%H%M%S)"
         
-        echo "기존 설정을 ${backup_dir}로 백업합니다."
-        echo "Backing up existing settings to ${backup_dir}."
+        echo -e "$(printf "$MSG_BACKING_UP_TO" "$backup_dir")"
         
         mv ".dockit_project" "$backup_dir"
         
@@ -372,6 +370,21 @@ create_dockerfile() {
     fi
 }
 
+# Build Docker image if user confirms
+# 사용자 확인 후 Docker 이미지 빌드
+build_image_if_confirmed() {
+    # 이미지 빌드 여부 확인
+    echo -e "\n${YELLOW}$MSG_BUILD_IMAGE_PROMPT${NC}"
+    read -p "$MSG_SELECT_CHOICE [Y/n]: " build_image
+    build_image=${build_image:-y}
+    
+    if [[ $build_image == "y" || $build_image == "Y" ]]; then
+        build_docker_image
+    else
+        log "INFO" "$MSG_SKIP_IMAGE_BUILD"
+        exit 0
+    fi
+}
 
 
 # Create Docker Compose file
@@ -538,9 +551,12 @@ init_main() {
     init_project
     get_user_input
     create_dockerfile
-    build_docker_image
-    create_docker_compose
-    start_and_connect_container
+    
+    # 이미지 빌드 여부 확인 및 실행
+    if build_image_if_confirmed; then
+        create_docker_compose
+        start_and_connect_container
+    fi
     
     log "SUCCESS" "$MSG_INIT_COMPLETE"
 }
