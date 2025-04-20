@@ -603,9 +603,11 @@ init_main() {
     
     build_image_if_confirmed
     start_and_connect_container
-    handle_container_connection
     
     log "SUCCESS" "$MSG_INIT_COMPLETE"
+
+    handle_container_connection
+    
 }
 
 # Execute main function if script is run directly
