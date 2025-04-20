@@ -1,0 +1,25 @@
+# Docker Tools Configuration File
+# Docker Tools 설정 파일
+# Auto-generated: ${DATE}
+# 자동 생성됨: ${DATE}
+
+# Dockit Version
+# Dockit 버전
+DOCKIT_VERSION="${DOCKIT_VERSION}"
+
+# Base Image
+# 베이스 이미지
+BASE_IMAGE="${BASE_IMAGE}"
+
+# Container Settings
+# 컨테이너 설정
+IMAGE_NAME="${IMAGE_NAME}"
+CONTAINER_NAME="${CONTAINER_NAME}"
+
+# User Settings
+# 사용자 설정
+USERNAME="${USERNAME}"
+USER_UID="${USER_UID}"
+USER_GID="${USER_GID}"
+USER_PASSWORD="${USER_PASSWORD}"
+WORKDIR="${WORKDIR}"

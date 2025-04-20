@@ -112,6 +112,7 @@ fi
 
 # Default settings
 # 기본 설정값
+DEFAULT_BASE_IMAGE="ubuntu:24.04"
 DEFAULT_IMAGE_NAME="my-ubuntu"
 DEFAULT_CONTAINER_NAME="my-container"
 DEFAULT_USERNAME="$(whoami)"
@@ -145,44 +146,6 @@ test_generate_container_name() {
     echo "$(get_message MSG_COMMON_TESTING_EXPLICIT): $(generate_container_name "/home/hgs/work/dockit/test/c")"
 }
 
-# Configuration loading function
-# 설정 파일 로드 함수
-load_config() {
-    # Check if configuration is already loaded
-    # 이미 설정이 로드되었는지 확인
-    if [ -n "$CONFIG_LOADED" ]; then
-        return 0
-    fi
-
-    # init 명령어가 아닐 경우에만 유효성 검사 실행
-    # Run validity check only if not init command
-    if [[ "$1" != "init" ]]; then
-        if ! check_dockit_validity "$1"; then
-            return 1
-        fi
-    fi
-
-    # Set default values
-    # 기본값 설정
-    export IMAGE_NAME="$DEFAULT_IMAGE_NAME"
-    export CONTAINER_NAME=$(generate_container_name "$(pwd)")
-    export USERNAME="$DEFAULT_USERNAME"
-    export USER_UID="$DEFAULT_UID"
-    export USER_GID="$DEFAULT_GID"
-    export USER_PASSWORD="$DEFAULT_PASSWORD"
-    export WORKDIR="$DEFAULT_WORKDIR"
-
-    # Load configuration file if it exists
-    # 설정 파일이 있으면 로드
-    if [[ -f "$CONFIG_ENV" ]]; then
-        log "INFO" "$(printf "$MSG_COMMON_LOADING_CONFIG" "$CONFIG_ENV")"
-        source "$CONFIG_ENV"
-    else
-        log "WARNING" "$MSG_COMMON_CONFIG_NOT_FOUND"
-    fi
-
-    export CONFIG_LOADED=1
-}
 
 # Configuration saving function
 # 설정 파일 저장 함수
@@ -190,184 +153,31 @@ save_config() {
     # 버전 정보 로드
     # Load version information
     local version_file="$PROJECT_ROOT/bin/VERSION"
-    local dockit_version
     
     if [ -f "$version_file" ]; then
-        dockit_version=$(cat "$version_file")
+        DOCKIT_VERSION=$(cat "$version_file")
     else
-        dockit_version="unknown"
+        DOCKIT_VERSION="unknown"
     fi
     
     log "INFO" "$(printf "$MSG_COMMON_LOADING_CONFIG" "$CONFIG_ENV")"
-    cat > "$CONFIG_ENV" << EOF
-# Docker Tools Configuration File
-# Docker Tools 설정 파일
-# Auto-generated: $(date)
-# 자동 생성됨: $(date)
-
-# Dockit Version
-# Dockit 버전
-DOCKIT_VERSION="$dockit_version"
-
-# Container Settings
-# 컨테이너 설정
-IMAGE_NAME="$IMAGE_NAME"
-CONTAINER_NAME="$CONTAINER_NAME"
-
-# User Settings
-# 사용자 설정
-USERNAME="$USERNAME"
-USER_UID="$USER_UID"
-USER_GID="$USER_GID"
-USER_PASSWORD="$USER_PASSWORD"
-WORKDIR="$WORKDIR"
-EOF
     
-    log "SUCCESS" "$MSG_CONFIG_SAVED"
-}
-
-# Template processing function
-# 템플릿 처리 함수
-process_template() {
-    local template_file=$1
-    local output_file=$2
+    # 템플릿 파일 경로
+    # Template file path
+    local template_env="${TEMPLATE_DIR}/env"
     
-    # Load configuration
-    # 설정 로드
-    load_config
+    # process_template 함수를 사용하여 설정 파일 생성
+    # Use process_template function to generate config file
+    process_template "$template_env" "$CONFIG_ENV"
+    local result=$?
     
-    # Create necessary directories
-    # 필요한 디렉토리 생성
-    mkdir -p "$(dirname "$output_file")"
-    
-    # Check if BASE_IMAGE is set
-    # BASE_IMAGE가 설정되어 있는지 확인
-    if [ -z "$BASE_IMAGE" ]; then
-        log "WARNING" "$MSG_COMMON_BASE_IMAGE_NOT_SET"
-        BASE_IMAGE="namugach/ubuntu-basic:24.04-kor-deno"
-    fi
-    
-    log "INFO" "$(printf "$MSG_COMMON_USING_BASE_IMAGE" "$BASE_IMAGE")"
-    
-    # Process template file
-    # 템플릿 파일 처리
-    sed -e "s|\${USERNAME}|${USERNAME}|g" \
-        -e "s|\${USER_UID}|${USER_UID}|g" \
-        -e "s|\${USER_GID}|${USER_GID}|g" \
-        -e "s|\${WORKDIR}|${WORKDIR}|g" \
-        -e "s|\${USER_PASSWORD}|${USER_PASSWORD}|g" \
-        -e "s|\${CONTAINER_NAME}|${CONTAINER_NAME}|g" \
-        -e "s|\${PROJECT_ROOT}|${PROJECT_ROOT}|g" \
-        -e "s|\${CONTAINER_WORKDIR}|${CONTAINER_WORKDIR}|g" \
-        -e "s|\${BASE_IMAGE}|${BASE_IMAGE}|g" \
-        "$template_file" > "$output_file"
-        
-    echo "$(printf "$MSG_TEMPLATE_GENERATED" "$output_file")"
-}
-
-# Container status check function
-# 컨테이너 상태 확인 함수
-check_container_status() {
-    local container_name="$1"
-    
-    if [ -z "$container_name" ]; then
-        container_name="$CONTAINER_NAME"
-    fi
-    
-    if docker ps -q --filter "name=$container_name" | grep -q .; then
-        log "INFO" "$(printf "$MSG_COMMON_CONTAINER_RUNNING" "$container_name")"
-        return 0
-    elif docker ps -aq --filter "name=$container_name" | grep -q .; then
-        log "INFO" "$(printf "$MSG_COMMON_CONTAINER_STOPPED" "$container_name")"
-        return 1
+    # 처리 결과 확인
+    # Check processing result
+    if [ $result -eq 0 ]; then
+        log "SUCCESS" "$MSG_CONFIG_SAVED"
     else
-        log "INFO" "$(printf "$MSG_COMMON_CONTAINER_NOT_FOUND" "$container_name")"
-        return 2
+        log "ERROR" "$MSG_CONFIG_SAVE_FAILED"
     fi
-}
-
-# Check Docker Compose file existence
-# Docker Compose 파일 존재 확인
-check_docker_compose_file() {
-    if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
-        log "ERROR" "$MSG_COMMON_COMPOSE_NOT_FOUND"
-        log "INFO" "$MSG_COMMON_NOT_INITIALIZED"
-        return 1
-    fi
-    return 0
-}
-
-# Check dockit directory validity
-# dockit 디렉토리 유효성 검사
-check_dockit_validity() {
-    # Skip check for init command
-    # init 명령어일 때는 체크 건너뛰기
-    if [[ "$1" == "init" ]]; then
-        return 0
-    fi
-
-    local dockit_dir=".dockit_project"
-    
-    # Check if .dockit_project directory exists first
-    # 먼저 .dockit_project 디렉토리가 있는지 확인
-    if [ ! -d "$dockit_dir" ]; then
-        log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
-        log "INFO" "$MSG_COMMON_NOT_INITIALIZED"
-        exit 1
-    fi
-    
-    # Only check files if directory exists
-    # 디렉토리가 있을 때만 파일 확인
-    local required_files=("docker-compose.yml" "Dockerfile" ".env")
-    for file in "${required_files[@]}"; do
-        if [ ! -f "$dockit_dir/$file" ]; then
-            log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
-            log "INFO" "$MSG_COMMON_RUN_INIT_FIRST"
-            exit 1
-        fi
-    done
-    
-    # Check version compatibility
-    # 버전 호환성 검사
-    check_version_compatibility
-    
-    return 0
-}
-
-# Compare version strings (semver)
-# 버전 문자열 비교 (시맨틱 버전)
-compare_versions() {
-    if [[ $1 == $2 ]]; then
-        echo 0
-        return
-    fi
-    
-    local IFS=.
-    local i ver1=($1) ver2=($2)
-    
-    # Fill empty fields with zeros
-    # 비어있는 필드는 0으로 채우기
-    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
-        ver1[i]=0
-    done
-    for ((i=${#ver2[@]}; i<${#ver1[@]}; i++)); do
-        ver2[i]=0
-    done
-    
-    # Compare version numbers
-    # 버전 번호 비교
-    for ((i=0; i<${#ver1[@]}; i++)); do
-        if [[ ${ver1[i]} -gt ${ver2[i]} ]]; then
-            echo 1  # ver1 > ver2
-            return
-        fi
-        if [[ ${ver1[i]} -lt ${ver2[i]} ]]; then
-            echo -1  # ver1 < ver2
-            return
-        fi
-    done
-    
-    echo 0  # ver1 == ver2
 }
 
 # Check version compatibility
@@ -422,6 +232,198 @@ check_version_compatibility() {
     
     return 0
 }
+
+
+# Check dockit directory validity
+# dockit 디렉토리 유효성 검사
+check_dockit_validity() {
+    # Skip check for init command
+    # init 명령어일 때는 체크 건너뛰기
+    if [[ "$1" == "init" ]]; then
+        return 0
+    fi
+
+    local dockit_dir=".dockit_project"
+    
+    # Check if .dockit_project directory exists first
+    # 먼저 .dockit_project 디렉토리가 있는지 확인
+    if [ ! -d "$dockit_dir" ]; then
+        log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
+        log "INFO" "$MSG_COMMON_NOT_INITIALIZED"
+        exit 1
+    fi
+    
+    # Only check files if directory exists
+    # 디렉토리가 있을 때만 파일 확인
+    local required_files=("docker-compose.yml" "Dockerfile" ".env")
+    for file in "${required_files[@]}"; do
+        if [ ! -f "$dockit_dir/$file" ]; then
+            log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
+            log "INFO" "$MSG_COMMON_RUN_INIT_FIRST"
+            exit 1
+        fi
+    done
+    
+    # Check version compatibility
+    # 버전 호환성 검사
+    check_version_compatibility
+    
+    return 0
+}
+
+
+# Configuration loading function
+# 설정 파일 로드 함수
+load_config() {
+    # Check if configuration is already loaded
+    # 이미 설정이 로드되었는지 확인
+    if [ -n "$CONFIG_LOADED" ]; then
+        return 0
+    fi
+
+    # init 명령어가 아닐 경우에만 유효성 검사 실행
+    # Run validity check only if not init command
+    if [[ "$1" != "init" ]]; then
+        if ! check_dockit_validity "$1"; then
+            return 1
+        fi
+    fi
+
+    # Set default values
+    # 기본값 설정
+    export IMAGE_NAME="$DEFAULT_IMAGE_NAME"
+    export CONTAINER_NAME=$(generate_container_name "$(pwd)")
+    export USERNAME="$DEFAULT_USERNAME"
+    export USER_UID="$DEFAULT_UID"
+    export USER_GID="$DEFAULT_GID"
+    export USER_PASSWORD="$DEFAULT_PASSWORD"
+    export WORKDIR="$DEFAULT_WORKDIR"
+
+    # Load configuration file if it exists
+    # 설정 파일이 있으면 로드
+    if [[ -f "$CONFIG_ENV" ]]; then
+        log "INFO" "$(printf "$MSG_COMMON_LOADING_CONFIG" "$CONFIG_ENV")"
+        source "$CONFIG_ENV"
+    else
+        log "WARNING" "$MSG_COMMON_CONFIG_NOT_FOUND"
+    fi
+
+    export CONFIG_LOADED=1
+}
+
+
+# Template processing function
+# 템플릿 처리 함수
+process_template() {
+    local template_file=$1
+    local output_file=$2
+    
+    # Load configuration
+    # 설정 로드
+    load_config
+    
+    # Create necessary directories
+    # 필요한 디렉토리 생성
+    mkdir -p "$(dirname "$output_file")"
+    
+    # Check if BASE_IMAGE is set
+    # BASE_IMAGE가 설정되어 있는지 확인
+    if [ -z "$BASE_IMAGE" ]; then
+        log "WARNING" "$MSG_COMMON_BASE_IMAGE_NOT_SET"
+        BASE_IMAGE="namugach/ubuntu-basic:24.04-kor-deno"
+    fi
+    
+    # 템플릿 파일 존재 확인
+    # Check if template file exists
+    if [ ! -f "$template_file" ]; then
+        log "ERROR" "$(get_message MSG_ERROR_TEMPLATE_NOT_FOUND)"
+        return 1
+    fi
+    
+    log "INFO" "$(printf "$MSG_COMMON_USING_BASE_IMAGE" "$BASE_IMAGE")"
+    
+    # 현재 날짜 변수 설정
+    # Set current date variable
+    local current_date="$(date)"
+    
+    # Process template file
+    # 템플릿 파일 처리
+    sed -e "s|\${USERNAME}|${USERNAME}|g" \
+        -e "s|\${USER_UID}|${USER_UID}|g" \
+        -e "s|\${USER_GID}|${USER_GID}|g" \
+        -e "s|\${WORKDIR}|${WORKDIR}|g" \
+        -e "s|\${USER_PASSWORD}|${USER_PASSWORD}|g" \
+        -e "s|\${CONTAINER_NAME}|${CONTAINER_NAME}|g" \
+        -e "s|\${PROJECT_ROOT}|${PROJECT_ROOT}|g" \
+        -e "s|\${CONTAINER_WORKDIR}|${CONTAINER_WORKDIR}|g" \
+        -e "s|\${BASE_IMAGE}|${BASE_IMAGE}|g" \
+        -e "s|\${IMAGE_NAME}|${IMAGE_NAME}|g" \
+        -e "s|\${DATE}|${current_date}|g" \
+        -e "s|\${DOCKIT_VERSION}|${DOCKIT_VERSION:-unknown}|g" \
+        "$template_file" > "$output_file"
+        
+    echo "$(printf "$MSG_TEMPLATE_GENERATED" "$output_file")"
+    return 0
+}
+
+# Container status check function
+# 컨테이너 상태 확인 함수
+check_container_status() {
+    local container_name="$1"
+    
+    if [ -z "$container_name" ]; then
+        container_name="$CONTAINER_NAME"
+    fi
+    
+    if docker ps -q --filter "name=$container_name" | grep -q .; then
+        log "INFO" "$(printf "$MSG_COMMON_CONTAINER_RUNNING" "$container_name")"
+        return 0
+    elif docker ps -aq --filter "name=$container_name" | grep -q .; then
+        log "INFO" "$(printf "$MSG_COMMON_CONTAINER_STOPPED" "$container_name")"
+        return 1
+    else
+        log "INFO" "$(printf "$MSG_COMMON_CONTAINER_NOT_FOUND" "$container_name")"
+        return 2
+    fi
+}
+
+
+# Compare version strings (semver)
+# 버전 문자열 비교 (시맨틱 버전)
+compare_versions() {
+    if [[ $1 == $2 ]]; then
+        echo 0
+        return
+    fi
+    
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    
+    # Fill empty fields with zeros
+    # 비어있는 필드는 0으로 채우기
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=${#ver2[@]}; i<${#ver1[@]}; i++)); do
+        ver2[i]=0
+    done
+    
+    # Compare version numbers
+    # 버전 번호 비교
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ ${ver1[i]} -gt ${ver2[i]} ]]; then
+            echo 1  # ver1 > ver2
+            return
+        fi
+        if [[ ${ver1[i]} -lt ${ver2[i]} ]]; then
+            echo -1  # ver1 < ver2
+            return
+        fi
+    done
+    
+    echo 0  # ver1 == ver2
+}
+
 
 # Check minimum version requirement
 # 최소 버전 요구사항 확인
