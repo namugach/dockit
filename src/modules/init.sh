@@ -99,7 +99,7 @@ display_current_settings() {
     echo -e "$MSG_USER_GID: ${GREEN}${USER_GID:-$DEFAULT_GID}${NC}"
     echo -e "$MSG_PASSWORD: ${GREEN}${USER_PASSWORD:-$DEFAULT_PASSWORD}${NC}"
     echo -e "$MSG_WORKDIR: ${GREEN}${WORKDIR:-$DEFAULT_WORKDIR}${NC}"
-    echo -e "$MSG_BASE_IMAGE: ${GREEN}${BASE_IMAGE:-$BASE_IMAGE}${NC}"
+    echo -e "$MSG_BASE_IMAGE: ${GREEN}${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}${NC}"
     echo -e "$MSG_IMAGE_NAME: ${GREEN}${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}${NC}"
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}${CONTAINER_NAME}${NC}"
 }
@@ -121,6 +121,7 @@ set_default_values() {
     USER_GID=${USER_GID:-$DEFAULT_GID}
     USER_PASSWORD=${USER_PASSWORD:-$DEFAULT_PASSWORD}
     WORKDIR=${WORKDIR:-$DEFAULT_WORKDIR}
+    BASE_IMAGE=${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}
     IMAGE_NAME=${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}
     CONTAINER_NAME=${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}
 }
@@ -143,6 +144,9 @@ get_custom_values() {
     read -p "$MSG_INPUT_WORKDIR [${WORKDIR:-$DEFAULT_WORKDIR}]: " input
     WORKDIR=${input:-${WORKDIR:-$DEFAULT_WORKDIR}}
     
+    read -p "$MSG_INPUT_BASE_IMAGE [${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}]: " input
+    BASE_IMAGE=${input:-${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}}
+    
     read -p "$MSG_INPUT_IMAGE_NAME [${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}]: " input
     IMAGE_NAME=${input:-${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}}
     
@@ -159,6 +163,7 @@ display_final_settings() {
     echo -e "$MSG_USER_GID: ${GREEN}$USER_GID${NC}"
     echo -e "$MSG_PASSWORD: ${GREEN}$USER_PASSWORD${NC}"
     echo -e "$MSG_WORKDIR: ${GREEN}$WORKDIR${NC}"
+    echo -e "$MSG_BASE_IMAGE: ${GREEN}$BASE_IMAGE${NC}"
     echo -e "$MSG_IMAGE_NAME: ${GREEN}$IMAGE_NAME${NC}"
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}$CONTAINER_NAME${NC}"
 }
@@ -263,8 +268,8 @@ process_template() {
     # BASE_IMAGE가 설정되어 있는지 확인
     if [ -z "$BASE_IMAGE" ]; then
         log "WARNING" "$MSG_COMMON_BASE_IMAGE_NOT_SET"
-        # 기본 한국어 이미지 사용
-        BASE_IMAGE="${DEFAULT_IMAGES["ko"]}"
+        # 현재 언어에 맞는 기본 이미지 사용
+        BASE_IMAGE="${DEFAULT_IMAGES["$LANGUAGE"]}"
     fi
     
     # 템플릿 파일 존재 확인
@@ -432,8 +437,8 @@ start_and_connect_container() {
 check_base_image() {
     if [ -z "$BASE_IMAGE" ]; then
         log "WARNING" "$MSG_BASE_IMAGE_NOT_SET"
-        # 기본 한국어 이미지 사용
-        BASE_IMAGE="${DEFAULT_IMAGES["ko"]}"
+        # 현재 언어에 맞는 기본 이미지 사용
+        BASE_IMAGE="${DEFAULT_IMAGES["$LANGUAGE"]}"
     fi
     log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
 }
