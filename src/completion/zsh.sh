@@ -40,6 +40,7 @@ _dockit() {
     commands=(
         "init:$(dockit_get_message MSG_COMPLETION_INIT)"
         "start:$(dockit_get_message MSG_COMPLETION_START)"
+        "up:$(dockit_get_message MSG_COMPLETION_UP)"
         "stop:$(dockit_get_message MSG_COMPLETION_STOP)"
         "down:$(dockit_get_message MSG_COMPLETION_DOWN)"
         "status:$(dockit_get_message MSG_COMPLETION_STATUS)"

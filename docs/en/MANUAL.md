@@ -9,6 +9,7 @@ This document explains the detailed usage of Dockit.
 3. [Commands](#commands)
     - [init](#init---initialization)
     - [start](#start---start-container)
+    - [up](#up---start-container-in-background)
     - [stop](#stop---stop-container)
     - [down](#down---remove-container)
     - [connect](#connect---connect-to-container)
@@ -96,6 +97,20 @@ dockit start
 This command performs the following tasks:
 - Starts the container using Docker Compose
 - Asks whether to connect to the container (optional)
+
+### up - Start Container in Background
+
+Start the container in background without connection prompt.
+
+```bash
+dockit up
+```
+
+This command performs the following tasks:
+- Starts the container using Docker Compose in detached mode
+- Does not ask for container connection
+- Shows the container status information
+- Useful for automated scripts or when you don't need to connect immediately
 
 ### stop - Stop Container
 

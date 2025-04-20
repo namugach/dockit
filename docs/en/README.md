@@ -53,6 +53,7 @@ Dockit provides the following main commands:
 
 - `init`: Initialize and configure the development environment
 - `start`: Start the container
+- `up`: Start the container in background (no connection prompt)
 - `stop`: Stop the container (preserving state)
 - `down`: Remove the container completely
 - `connect`: Connect to a running container

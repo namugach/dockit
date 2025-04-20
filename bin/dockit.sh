@@ -67,6 +67,10 @@ execute_command() {
             source "$MODULES_DIR/start.sh"
             start_main "$@"
             ;;
+        up)
+            source "$MODULES_DIR/up.sh"
+            up_main "$@"
+            ;;
         stop)
             source "$MODULES_DIR/stop.sh"
             stop_main "$@"
