@@ -464,6 +464,7 @@ MSG_INSTALL_PERMISSION_DENIED="Permission denied. Please check your permissions.
 MSG_INSTALL_RUN_WITH_SUDO="You may need to run with sudo or check directory permissions."
 MSG_INSTALL_SETTINGS_COPIED="Settings file copied: settings.env"
 MSG_INSTALL_DEFAULT_SETTINGS_CREATED="Default settings file created: settings.env"
+MSG_INSTALL_DEFAULTS_COPIED="Default constants file copied: defaults.sh"
 MSG_INSTALL_MESSAGES_COPIED="Message files copied"
 MSG_INSTALL_MESSAGES_DIR_NOT_FOUND="Message directory not found: %s"
 MSG_INSTALL_SCRIPT_NOT_FOUND="dockit script not found or not executable: %s" 

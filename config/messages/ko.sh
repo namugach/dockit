@@ -451,6 +451,7 @@ MSG_INSTALL_PERMISSION_DENIED="권한이 거부되었습니다. 권한을 확인
 MSG_INSTALL_RUN_WITH_SUDO="sudo로 실행하거나 디렉토리 권한을 확인해야 할 수 있습니다."
 MSG_INSTALL_SETTINGS_COPIED="설정 파일 복사됨: settings.env"
 MSG_INSTALL_DEFAULT_SETTINGS_CREATED="기본 설정 파일 생성됨: settings.env"
+MSG_INSTALL_DEFAULTS_COPIED="기본 상수 파일 복사됨: defaults.sh"
 MSG_INSTALL_MESSAGES_COPIED="메시지 파일 복사됨"
 MSG_INSTALL_MESSAGES_DIR_NOT_FOUND="메시지 디렉토리를 찾을 수 없음: %s"
 MSG_INSTALL_SCRIPT_NOT_FOUND="dockit 스크립트를 찾을 수 없거나 실행 권한이 없습니다: %s" 

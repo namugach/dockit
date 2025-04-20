@@ -8,6 +8,12 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Load defaults.sh first
+# 먼저 defaults.sh 로드
+if [ -f "$SCRIPT_DIR/defaults.sh" ]; then
+    source "$SCRIPT_DIR/defaults.sh"
+fi
+
 # Load common functions
 # 공통 함수 로드
 source "$SCRIPT_DIR/../src/modules/common.sh"
@@ -231,32 +237,31 @@ print_message() {
     fi
 }
 
-# 언어별 기본 설정
-# Default settings by language
+# 언어별 기본 설정 - 배열에서 직접 가져옴
+# Default settings by language - get directly from arrays
 get_language_settings() {
     local lang="$1"
-    case "$lang" in
-        "ko")
-            echo "namugach/ubuntu-basic:24.04-kor-deno|ko_KR.UTF-8|Asia/Seoul"
-            ;;
-        "en"|*)
-            echo "ubuntu:24.04|en_US.UTF-8|UTC"
-            ;;
-    esac
+    # 지원하지 않는 언어인 경우 en(영어)을 기본값으로 사용
+    # Use en(English) as default for unsupported languages
+    if [[ -z "${DEFAULT_IMAGES[$lang]}" ]]; then
+        lang="en"
+    fi
+    
+    echo "${DEFAULT_IMAGES[$lang]}|${DEFAULT_LOCALES[$lang]}|${DEFAULT_TIMEZONES[$lang]}"
 }
 
 # Set base image based on language
 # 언어에 따른 베이스 이미지 설정
 set_base_image() {
-    if [ "$LANGUAGE" = "ko" ]; then
-        BASE_IMAGE=${CUSTOM_BASE_IMAGE:-namugach/ubuntu-basic:24.04-kor-deno}
-        LOCALE_SETTING="ko_KR.UTF-8" 
-        TIMEZONE="Asia/Seoul"
-    else
-        BASE_IMAGE=${CUSTOM_BASE_IMAGE:-ubuntu:24.04}
-        LOCALE_SETTING="en_US.UTF-8"
-        TIMEZONE="UTC"
+    # 지원하지 않는 언어인 경우 en(영어)을 기본값으로 사용
+    # Use en(English) as default for unsupported languages
+    if [[ -z "${DEFAULT_IMAGES[$LANGUAGE]}" ]]; then
+        LANGUAGE="en"
     fi
+    
+    BASE_IMAGE=${CUSTOM_BASE_IMAGE:-${DEFAULT_IMAGES[$LANGUAGE]}}
+    LOCALE_SETTING=${DEFAULT_LOCALES[$LANGUAGE]}
+    TIMEZONE=${DEFAULT_TIMEZONES[$LANGUAGE]}
 }
 
 

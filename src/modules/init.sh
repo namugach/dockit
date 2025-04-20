@@ -8,6 +8,11 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh" "init"
 
+# Load defaults module
+# 기본값 모듈 로드
+CONFIG_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")/config"
+source "$CONFIG_DIR/defaults.sh"
+
 # 버전 정보 로드
 # Load version information
 VERSION_FILE="$PROJECT_ROOT/bin/VERSION"
@@ -25,6 +30,9 @@ DOCKER_COMPOSE_FILE="$DOCKIT_DIR/docker-compose.yml"
 CONFIG_FILE="$DOCKIT_DIR/.env"
 LOG_FILE="$DOCKIT_DIR/dockit.log"
 
+# common.sh와 변수 이름 통일 (CONFIG_ENV)
+# Unify variable name with common.sh (CONFIG_ENV)
+CONFIG_ENV="$CONFIG_FILE"
 
 # Display version information
 # 버전 정보 표시
@@ -335,7 +343,8 @@ start_and_connect_container() {
 check_base_image() {
     if [ -z "$BASE_IMAGE" ]; then
         log "WARNING" "$MSG_BASE_IMAGE_NOT_SET"
-        BASE_IMAGE="namugach/ubuntu-basic:24.04-kor-deno"
+        # 기본 한국어 이미지 사용
+        BASE_IMAGE="${DEFAULT_IMAGES["ko"]}"
     fi
     log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
 }

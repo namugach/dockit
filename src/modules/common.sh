@@ -6,10 +6,20 @@
 # Define common functions and variables used in all scripts
 # 모든 스크립트에서 공통으로 사용하는 함수와 변수를 정의합니다.
 
+# Get script directory
+# 스크립트 디렉토리 가져오기
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "$(dirname "$SCRIPT_DIR")")" && pwd)"
+CONFIG_DIR="$PROJECT_ROOT/config"
+
+# Load defaults.sh
+# defaults.sh 로드
+source "$CONFIG_DIR/defaults.sh"
+
+
 # Set paths
 # 경로 설정
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
 MODULES_DIR="${CURRENT_DIR}"
 TEMPLATE_DIR="${PROJECT_ROOT}/src/templates"
 UTILS_DIR="${PROJECT_ROOT}/src/utils"
@@ -20,7 +30,6 @@ EXEC_DIR="$(pwd)"
 
 # .dockit_project 디렉토리 및 파일 경로 설정
 # Set .dockit_project directory and file paths
-CONFIG_DIR="${EXEC_DIR}/.dockit_project"
 CONFIG_ENV="${CONFIG_DIR}/.env"
 DOCKER_COMPOSE_FILE="${CONFIG_DIR}/docker-compose.yml"
 DOCKER_COMPOSE_TEMPLATE="${TEMPLATE_DIR}/docker-compose.yml"
@@ -154,11 +163,7 @@ save_config() {
     # Load version information
     local version_file="$PROJECT_ROOT/bin/VERSION"
     
-    if [ -f "$version_file" ]; then
-        DOCKIT_VERSION=$(cat "$version_file")
-    else
-        DOCKIT_VERSION="unknown"
-    fi
+    DOCKIT_VERSION=$(cat "$version_file")
     
     log "INFO" "$(printf "$MSG_COMMON_LOADING_CONFIG" "$CONFIG_ENV")"
     
@@ -330,7 +335,8 @@ process_template() {
     # BASE_IMAGE가 설정되어 있는지 확인
     if [ -z "$BASE_IMAGE" ]; then
         log "WARNING" "$MSG_COMMON_BASE_IMAGE_NOT_SET"
-        BASE_IMAGE="namugach/ubuntu-basic:24.04-kor-deno"
+        # 기본 한국어 이미지 사용
+        BASE_IMAGE="${DEFAULT_IMAGES["ko"]}"
     fi
     
     # 템플릿 파일 존재 확인

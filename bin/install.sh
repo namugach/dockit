@@ -155,6 +155,12 @@ copy_language_files() {
         log_info "$(get_message MSG_INSTALL_DEFAULT_SETTINGS_CREATED)"
     fi
     
+    # Copy defaults.sh if it exists
+    if check_file_exists "$PROJECT_ROOT/config/defaults.sh"; then
+        cp "$PROJECT_ROOT/config/defaults.sh" "$PROJECT_DIR/config/"
+        log_info "$(get_message MSG_INSTALL_DEFAULTS_COPIED)"
+    fi
+    
     if check_dir_exists "$PROJECT_ROOT/config/messages"; then
         cp -r "$PROJECT_ROOT/config/messages/"* "$PROJECT_DIR/config/messages/"
         log_info "$(get_message MSG_INSTALL_MESSAGES_COPIED)"
