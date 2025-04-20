@@ -30,15 +30,17 @@ EXEC_DIR="$(pwd)"
 
 # .dockit_project 디렉토리 및 파일 경로 설정
 # Set .dockit_project directory and file paths
-CONFIG_ENV="${CONFIG_DIR}/.env"
-DOCKER_COMPOSE_FILE="${CONFIG_DIR}/docker-compose.yml"
+DOCKIT_PROJECT_DIR="${EXEC_DIR}/.dockit_project"
+CONFIG_ENV="${DOCKIT_PROJECT_DIR}/.env"
+DOCKER_COMPOSE_FILE="${DOCKIT_PROJECT_DIR}/docker-compose.yml"
+DOCKERFILE="${DOCKIT_PROJECT_DIR}/Dockerfile"
 DOCKER_COMPOSE_TEMPLATE="${TEMPLATE_DIR}/docker-compose.yml"
 DOCKERFILE_TEMPLATE="${TEMPLATE_DIR}/Dockerfile"
 CONTAINER_WORKDIR="/workspace"
 
 # 로그 파일 경로 설정
 # Set log file path
-LOG_FILE="$CONFIG_DIR/dockit.log"
+LOG_FILE="${DOCKIT_PROJECT_DIR}/dockit.log"
 
 # 유틸리티 모듈 로드
 # Load utility modules
