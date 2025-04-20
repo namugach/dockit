@@ -381,7 +381,7 @@ build_image_if_confirmed() {
     if [[ $build_image == "y" || $build_image == "Y" ]]; then
         build_docker_image
     else
-        log "INFO" "$MSG_SKIP_IMAGE_BUILD"
+        log "INFO" "$MSG_EXIT_IMAGE_BUILD"
         exit 0
     fi
 }
@@ -551,12 +551,9 @@ init_main() {
     init_project
     get_user_input
     create_dockerfile
-    
-    # 이미지 빌드 여부 확인 및 실행
-    if build_image_if_confirmed; then
-        create_docker_compose
-        start_and_connect_container
-    fi
+    create_docker_compose
+    build_image_if_confirmed
+    start_and_connect_container
     
     log "SUCCESS" "$MSG_INIT_COMPLETE"
 }

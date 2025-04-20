@@ -150,7 +150,7 @@ MSG_INITIALIZING="초기화를 진행합니다"
 MSG_CMD_SUCCESS="명령이 성공적으로 실행되었습니다"
 MSG_CMD_FAILED="명령 실행에 실패했습니다"
 MSG_BUILD_IMAGE_PROMPT="Docker 이미지를 빌드하시겠습니까?"
-MSG_SKIP_IMAGE_BUILD="이미지 빌드를 건너뜁니다."
+MSG_EXIT_IMAGE_BUILD="이미지 빌드를 종료합니다"
 
 # 질문 메시지
 MSG_CONFIRM_STOP="실행 중인 컨테이너를 중지하시겠습니까? (y/n): "

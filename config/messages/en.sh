@@ -167,7 +167,7 @@ MSG_INITIALIZING="Performing initialization"
 MSG_CMD_SUCCESS="Command executed successfully"
 MSG_CMD_FAILED="Command execution failed"
 MSG_BUILD_IMAGE_PROMPT="Do you want to build the Docker image?"
-MSG_SKIP_IMAGE_BUILD="Skipping image build."
+MSG_EXIT_IMAGE_BUILD="Exiting image build"
 
 # 질문 메시지
 # Question messages
