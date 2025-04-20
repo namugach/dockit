@@ -39,6 +39,9 @@ MSG_INPUT_IMAGE_NAME="Image Name"
 MSG_INPUT_CONTAINER_NAME="Container Name"
 MSG_FINAL_SETTINGS="Final Settings:"
 MSG_INIT_CANCELLED="Initialization has been cancelled."
+MSG_INIT_CANCELLED_BY_USER="Initialization cancelled by user."
+MSG_PROCESS_CANCELLED_BY_USER="Process cancelled by user."
+MSG_TEMP_DIR_REMOVED="Temporary directory has been removed."
 MSG_INVALID_CHOICE="Invalid choice. Initialization has been cancelled."
 
 # 공통 메시지
@@ -95,6 +98,9 @@ MSG_CONNECT_LATER="To connect to the container later:"
 MSG_START_LATER="To start the container later:"
 MSG_PROJECT_ALREADY_INITIALIZED="Project is already initialized."
 MSG_WANT_REINITIALIZE="Do you want to re-initialize? (y/N)"
+MSG_BACKING_UP_TO="Backing up existing settings to %s."
+MSG_INIT_CTRL_C_HINT="Press Ctrl+C during initialization to cancel and clean up temporary files."
+MSG_BUILD_CTRL_C_HINT="Press Ctrl+C during image building to abort. Created files will be preserved."
 
 # down 모듈 메시지
 # down module messages

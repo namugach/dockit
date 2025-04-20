@@ -291,17 +291,42 @@ process_template() {
     return 0
 }
 
+# .dockit_project 디렉토리 정리 함수
+# Function to clean up .dockit_project directory
+cleanup_project_dir() {
+    if [ -d ".dockit_project" ]; then
+        rm -rf ".dockit_project"
+        echo -e "${BLUE}$MSG_TEMP_DIR_REMOVED${NC}"
+    fi
+}
+
+# Ctrl+C(SIGINT) 처리를 위한 정리 함수
+# Cleanup function for Ctrl+C(SIGINT) handling
+cleanup_user_input() {
+    echo -e "\n${YELLOW}$MSG_INIT_CANCELLED_BY_USER${NC}"
+    cleanup_project_dir
+    exit 1
+}
 
 # Main user input function
 # 메인 사용자 입력 함수
 get_user_input() {
     log "INFO" "$MSG_INIT_GETTING_USER_INPUT"
     
+    # 기존 트랩 설정 저장
+    # Save existing trap
+    local old_trap=$(trap -p INT)
+    
+    # 새 트랩 설정
+    # Set new trap
+    trap 'cleanup_user_input' INT
+    
     # Load default values
     load_env "init"
     
     echo -e "\n${GREEN}$MSG_WELCOME${NC}"
     echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"
+    echo -e "${YELLOW}$MSG_INIT_CTRL_C_HINT${NC}"
     
     display_current_settings
     display_selection_options
@@ -320,16 +345,36 @@ get_user_input() {
             ;;
         c|C)
             log "INFO" "$MSG_INIT_CANCELLED"
+            cleanup_project_dir
+            
+            # 트랩 복원
+            # Restore trap
+            eval "$old_trap"
             exit 0
             ;;
         *)
             log "ERROR" "$MSG_INVALID_CHOICE"
+            cleanup_project_dir
+            
+            # 트랩 복원
+            # Restore trap
+            eval "$old_trap"
             exit 1
             ;;
     esac
     
     display_final_settings
     create_env
+    
+    # 이 단계부터는 .dockit_project를 삭제하지 않는 새로운 트랩 설정
+    # From this point, set a new trap that does not delete .dockit_project
+    trap 'echo -e "\n${YELLOW}$MSG_PROCESS_CANCELLED_BY_USER${NC}"; exit 1' INT
+    
+    echo -e "${YELLOW}$MSG_BUILD_CTRL_C_HINT${NC}"
+    
+    # 트랩 복원
+    # Restore trap
+    eval "$old_trap"
 }
 
 
@@ -539,12 +584,23 @@ build_docker_image() {
 # Main initialization function
 # 메인 초기화 함수
 init_main() {
+    # Ctrl+C 기본 동작 설정 (트랩 해제)
+    # Set default Ctrl+C behavior (no trap)
+    trap - INT
+    
     log "INFO" "$MSG_INIT_START"
     display_version_info
     init_project
     get_user_input
     create_dockerfile
     create_docker_compose
+    
+    # 이 단계부터는 .dockit_project를 삭제하지 않는 새로운 트랩 설정
+    # From this point, set a new trap that does not delete .dockit_project
+    trap 'echo -e "\n${YELLOW}$MSG_PROCESS_CANCELLED_BY_USER${NC}"; exit 1' INT
+    
+    echo -e "${YELLOW}$MSG_BUILD_CTRL_C_HINT${NC}"
+    
     build_image_if_confirmed
     start_and_connect_container
     handle_container_connection
