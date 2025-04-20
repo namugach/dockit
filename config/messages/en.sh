@@ -95,7 +95,6 @@ MSG_CONNECT_LATER="To connect to the container later:"
 MSG_START_LATER="To start the container later:"
 MSG_PROJECT_ALREADY_INITIALIZED="Project is already initialized."
 MSG_WANT_REINITIALIZE="Do you want to re-initialize? (y/N)"
-MSG_BACKING_UP_TO="Backing up existing settings to %s."
 
 # down 모듈 메시지
 # down module messages

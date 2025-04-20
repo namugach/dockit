@@ -85,7 +85,6 @@ MSG_CONNECT_LATER="나중에 컨테이너에 접속하려면:"
 MSG_START_LATER="나중에 컨테이너를 시작하려면:"
 MSG_PROJECT_ALREADY_INITIALIZED="이미 초기화된 프로젝트입니다."
 MSG_WANT_REINITIALIZE="다시 초기화하시겠습니까? (y/N)"
-MSG_BACKING_UP_TO="기존 설정을 %s로 백업합니다."
 
 # down 모듈 메시지
 MSG_DOWN_START="컨테이너 제거 모듈 실행 중..."

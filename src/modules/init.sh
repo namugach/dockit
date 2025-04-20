@@ -68,18 +68,6 @@ init_project() {
             echo -e "$MSG_INIT_CANCELLED"
             exit 0
         fi
-        
-        # 백업 디렉토리 이름 생성 (현재 날짜시간 사용)
-        # Create backup directory name (using current date and time)
-        backup_dir=".dockit_backup_$(date +%Y%m%d_%H%M%S)"
-        
-        echo -e "$(printf "$MSG_BACKING_UP_TO" "$backup_dir")"
-        
-        mv ".dockit_project" "$backup_dir"
-        
-        # 새 .env 파일에 백업 정보 추가
-        # Add backup information to new .env file
-        backup_info="PREVIOUS_CONFIG=\"$backup_dir\""
     fi
 }
 
@@ -443,6 +431,10 @@ start_and_connect_container() {
             log "ERROR" "$MSG_CONTAINER_START_FAILED"
             exit 0
         fi
+    else
+        log "INFO" "$MSG_START_LATER"
+        echo -e "\n${BLUE}$MSG_START_LATER${NC} ./dockit.sh start"
+        exit 0
     fi
 }
 
