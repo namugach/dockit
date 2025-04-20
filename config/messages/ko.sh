@@ -85,8 +85,8 @@ MSG_START_LATER="나중에 컨테이너를 시작하려면:"
 
 # down 모듈 메시지
 MSG_DOWN_START="컨테이너 제거 모듈 실행 중..."
-MSG_CONTAINER_STOPPED="컨테이너가 성공적으로 제거되었습니다."
-MSG_CONTAINER_STOP_FAILED="컨테이너 제거 중 오류가 발생했습니다."
+MSG_COMPOSE_NOT_FOUND="Docker Compose 파일을 찾을 수 없습니다."
+MSG_CONTAINER_DOWN="컨테이너가 성공적으로 제거되었습니다."
 
 # stop 모듈 메시지
 MSG_STOP_START="컨테이너 정지 모듈 실행 중..."

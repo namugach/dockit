@@ -97,8 +97,7 @@ MSG_START_LATER="To start the container later:"
 # down module messages
 MSG_DOWN_START="Starting container removal module..."
 MSG_COMPOSE_NOT_FOUND="Docker Compose file not found."
-MSG_CONTAINER_STOPPED="Container has been removed successfully."
-MSG_CONTAINER_STOP_FAILED="Failed to remove container."
+MSG_CONTAINER_DOWNMSG_CONTAINER_STOP_FAILED="Failed to remove container."
 
 # stop 모듈 메시지
 # stop module messages
