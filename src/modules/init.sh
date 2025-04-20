@@ -212,13 +212,102 @@ init_dockit_dir() {
     move_legacy_files
 }
 
+
+# Configuration saving function
+# 설정 파일 저장 함수
+create_env() {
+    # 버전 정보 로드
+    # Load version information
+    local version_file="$PROJECT_ROOT/bin/VERSION"
+    
+    DOCKIT_VERSION=$(cat "$version_file")
+    
+    log "INFO" "$(printf "$MSG_COMMON_LOADING_CONFIG" "$CONFIG_ENV")"
+    
+    # 템플릿 파일 경로
+    # Template file path
+    local template_env="${TEMPLATE_DIR}/env"
+    
+    # process_template 함수를 사용하여 설정 파일 생성
+    # Use process_template function to generate config file
+    process_template "$template_env" "$CONFIG_ENV"
+    local result=$?
+    
+    # 처리 결과 확인
+    # Check processing result
+    if [ $result -eq 0 ]; then
+        log "SUCCESS" "$MSG_CONFIG_SAVED"
+    else
+        log "ERROR" "$MSG_CONFIG_SAVE_FAILED"
+    fi
+}
+
+
+
+
+# Template processing function
+# 템플릿 처리 함수
+process_template() {
+    local template_file=$1
+    local output_file=$2
+    
+    # Load configuration
+    # 설정 로드
+    load_env
+    
+    # Create necessary directories
+    # 필요한 디렉토리 생성
+    mkdir -p "$(dirname "$output_file")"
+    
+    # Check if BASE_IMAGE is set
+    # BASE_IMAGE가 설정되어 있는지 확인
+    if [ -z "$BASE_IMAGE" ]; then
+        log "WARNING" "$MSG_COMMON_BASE_IMAGE_NOT_SET"
+        # 기본 한국어 이미지 사용
+        BASE_IMAGE="${DEFAULT_IMAGES["ko"]}"
+    fi
+    
+    # 템플릿 파일 존재 확인
+    # Check if template file exists
+    if [ ! -f "$template_file" ]; then
+        log "ERROR" "$(get_message MSG_ERROR_TEMPLATE_NOT_FOUND)"
+        return 1
+    fi
+    
+    log "INFO" "$(printf "$MSG_COMMON_USING_BASE_IMAGE" "$BASE_IMAGE")"
+    
+    # 현재 날짜 변수 설정
+    # Set current date variable
+    local current_date="$(date)"
+    
+    # Process template file
+    # 템플릿 파일 처리
+    sed -e "s|\${USERNAME}|${USERNAME}|g" \
+        -e "s|\${USER_UID}|${USER_UID}|g" \
+        -e "s|\${USER_GID}|${USER_GID}|g" \
+        -e "s|\${WORKDIR}|${WORKDIR}|g" \
+        -e "s|\${USER_PASSWORD}|${USER_PASSWORD}|g" \
+        -e "s|\${CONTAINER_NAME}|${CONTAINER_NAME}|g" \
+        -e "s|\${PROJECT_ROOT}|${PROJECT_ROOT}|g" \
+        -e "s|\${CONTAINER_WORKDIR}|${CONTAINER_WORKDIR}|g" \
+        -e "s|\${BASE_IMAGE}|${BASE_IMAGE}|g" \
+        -e "s|\${IMAGE_NAME}|${IMAGE_NAME}|g" \
+        -e "s|\${DATE}|${current_date}|g" \
+        -e "s|\${DOCKIT_VERSION}|${DOCKIT_VERSION:-unknown}|g" \
+        "$template_file" > "$output_file"
+        
+    echo "$(printf "$MSG_TEMPLATE_GENERATED" "$output_file")"
+    return 0
+}
+
+
 # Main user input function
 # 메인 사용자 입력 함수
 get_user_input() {
     log "INFO" "$MSG_INIT_GETTING_USER_INPUT"
     
     # Load default values
-    load_config "init"
+    load_env "init"
     
     echo -e "\n${GREEN}$MSG_WELCOME${NC}"
     echo -e "${BLUE}$MSG_INPUT_DEFAULT${NC}"
@@ -249,7 +338,7 @@ get_user_input() {
     esac
     
     display_final_settings
-    save_config
+    create_env
 }
 
 

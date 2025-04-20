@@ -15,7 +15,7 @@ stop_main() {
     
     # 설정 로드
     # Load configuration
-    load_config
+    load_env
     
     # Docker Compose 파일이 있는지 확인
     # Check if Docker Compose file exists
@@ -25,7 +25,7 @@ stop_main() {
     fi
     
     # 컨테이너 상태 확인 - CONTAINER_NAME 변수 사용 (load_config에서 로드됨)
-    # Check container status using CONTAINER_NAME variable (loaded from load_config)
+    # Check container status using CONTAINER_NAME variable (loaded from load_env)
     if ! docker container inspect "$CONTAINER_NAME" &>/dev/null; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
         exit 0

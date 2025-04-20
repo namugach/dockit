@@ -15,7 +15,7 @@ connect_main() {
     
     # 설정 로드
     # Load configuration
-    load_config
+    load_env
     
     # Docker Compose 파일이 있는지 확인
     # Check if Docker Compose file exists
