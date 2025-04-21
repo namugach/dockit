@@ -9,6 +9,7 @@ This document explains the detailed usage of Dockit.
 3. [Commands](#commands)
     - [init](#init---initialization)
     - [start](#start---start-container)
+    - [build](#build---build-docker-image)
     - [up](#up---start-container-in-background)
     - [stop](#stop---stop-container)
     - [down](#down---remove-container)
@@ -97,6 +98,20 @@ dockit start
 This command performs the following tasks:
 - Starts the container using Docker Compose
 - Asks whether to connect to the container (optional)
+
+### build - Build Docker Image
+
+Build a Docker image for the development environment.
+
+```bash
+dockit build
+```
+
+This command performs the following tasks:
+- Creates a temporary Dockerfile from a template
+- Configures base image and user settings
+- Builds a Docker image with appropriate configurations
+- Useful when you need to rebuild or update the development environment image
 
 ### up - Start Container in Background
 

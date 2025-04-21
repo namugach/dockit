@@ -32,7 +32,7 @@ _dockit_completion() {
     
     # 사용 가능한 명령어 목록
     # List of available commands
-    local commands="init start up stop down connect status help version migrate"
+    local commands="init start build up stop down connect status help version migrate"
     
     # 첫 번째 인자만 자동완성 처리
     # Only handle completion for the first argument
@@ -54,6 +54,7 @@ _dockit_completion() {
                 case $cmd in
                     init) desc="$(dockit_get_message MSG_COMPLETION_INIT)" ;;
                     start) desc="$(dockit_get_message MSG_COMPLETION_START)" ;;
+                    build) desc="$(dockit_get_message MSG_COMPLETION_BUILD)" ;;
                     up) desc="$(dockit_get_message MSG_COMPLETION_UP)" ;;
                     stop) desc="$(dockit_get_message MSG_COMPLETION_STOP)" ;;
                     down) desc="$(dockit_get_message MSG_COMPLETION_DOWN)" ;;

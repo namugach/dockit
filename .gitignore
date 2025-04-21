@@ -2,5 +2,6 @@
 .dockit_project/
 .dockit/
 *.log
-test
+test/temp
+todo.md
 create.md
