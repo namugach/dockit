@@ -92,7 +92,6 @@ MSG_CHECK_PORTS="2. Check for port conflicts"
 MSG_CHECK_IMAGE="3. Check if image exists (initialization required if not)"
 MSG_CONNECT_CONTAINER_NOW="Would you like to connect to the container now?"
 MSG_CONNECTING_CONTAINER="Connecting to container..."
-MSG_SKIPPING_CONNECT="Skipping container connection."
 MSG_SKIP_CONTAINER_CONNECTION="Skipping container connection."
 MSG_CONNECT_LATER="To connect to the container later:"
 MSG_START_LATER="To start the container later:"
@@ -125,6 +124,7 @@ MSG_WANT_START_CONTAINER="Do you want to start the container now?"
 MSG_START_CANCELLED="Container start cancelled."
 MSG_CONNECTED="Successfully connected to container."
 MSG_CONNECT_FAILED="Failed to connect to container."
+MSG_CONNECT_INFO="To connect to the container, use:"
 
 # status 모듈 메시지
 # status module messages
@@ -150,6 +150,9 @@ MSG_STATUS_WORKDIR="Working Directory"
 # start module messages
 MSG_START_START="Starting container start module..."
 MSG_CONTAINER_ALREADY_RUNNING="Container is already running."
+MSG_CONTAINER_NOT_FOUND_INFO="Container doesn't exist. To create and start a container, use:"
+MSG_STARTING_CONTAINER="Starting container..."
+MSG_CONTAINER_START_FAILED="Failed to start container."
 
 # 일반 메시지
 # General messages

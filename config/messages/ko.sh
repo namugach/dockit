@@ -82,7 +82,6 @@ MSG_CHECK_PORTS="2. 포트 충돌이 없는지 확인하세요"
 MSG_CHECK_IMAGE="3. 이미지가 존재하는지 확인하세요 (없다면 초기화 필요)"
 MSG_CONNECT_CONTAINER_NOW="컨테이너에 접속할까요?"
 MSG_CONNECTING_CONTAINER="컨테이너에 접속 중..."
-MSG_SKIPPING_CONNECT="컨테이너 접속을 건너뜁니다."
 MSG_SKIP_CONTAINER_CONNECTION="컨테이너 접속을 건너뜁니다."
 MSG_CONNECT_LATER="나중에 컨테이너에 접속하려면:"
 MSG_START_LATER="나중에 컨테이너를 시작하려면:"
@@ -112,6 +111,7 @@ MSG_WANT_START_CONTAINER="컨테이너를 지금 시작할까요?"
 MSG_START_CANCELLED="컨테이너 시작이 취소되었습니다."
 MSG_CONNECTED="컨테이너에 성공적으로 접속했습니다."
 MSG_CONNECT_FAILED="컨테이너 접속 중 오류가 발생했습니다."
+MSG_CONNECT_INFO="컨테이너에 접속하려면 다음 명령어를 사용하세요:"
 
 # status 모듈 메시지
 MSG_STATUS_START="상태 확인 모듈 실행 중..."
@@ -135,6 +135,9 @@ MSG_STATUS_WORKDIR="작업 디렉토리"
 # start 모듈 메시지
 MSG_START_START="컨테이너 시작 모듈 실행 중..."
 MSG_CONTAINER_ALREADY_RUNNING="컨테이너가 이미 실행 중입니다."
+MSG_CONTAINER_NOT_FOUND_INFO="컨테이너가 존재하지 않습니다. 컨테이너를 생성하고 시작하려면 다음 명령어를 사용하세요:"
+MSG_STARTING_CONTAINER="컨테이너 시작 중..."
+MSG_CONTAINER_START_FAILED="컨테이너 시작에 실패했습니다."
 
 # 일반 메시지
 MSG_GOODBYE="Docker 환경을 종료합니다"

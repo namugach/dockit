@@ -7,29 +7,51 @@
 # 공통 모듈 로드
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
-source "$MODULES_DIR/up.sh"
 
 # Main function
 # 메인 함수
 start_main() {
     log "INFO" "$MSG_START_START"
     
-    up_main
+    # 설정 로드
+    # Load configuration
+    load_env
     
-    log "SUCCESS" "$MSG_CONTAINER_STARTED"
+    # Docker Compose 파일이 있는지 확인
+    # Check if Docker Compose file exists
+    if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
+        log "ERROR" "$MSG_COMPOSE_NOT_FOUND"
+        exit 1
+    fi
     
-    # Ask if user wants to connect to container
-    # 컨테이너 접속 여부 확인
-    echo -e "\n${YELLOW}$MSG_CONNECT_CONTAINER_NOW?${NC}"
-    read -p "$MSG_SELECT_CHOICE [Y/n]: " connect_container
-    connect_container=${connect_container:-y}
+    # 컨테이너 존재 여부 확인
+    # Check if container exists
+    if ! docker container inspect "$CONTAINER_NAME" &>/dev/null; then
+        log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
+        echo -e "\n${YELLOW}$MSG_CONTAINER_NOT_FOUND_INFO${NC}"
+        echo -e "${BLUE}dockit up${NC}"
+        exit 1
+    fi
     
-    if [[ $connect_container == "y" || $connect_container == "Y" ]]; then
-        log "INFO" "$MSG_CONNECTING_CONTAINER"
-        docker exec -it "$CONTAINER_NAME" /bin/bash
+    # 컨테이너가 이미 실행 중인지 확인
+    # Check if container is already running
+    if [ "$(docker container inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" = "true" ]; then
+        log "WARNING" "$MSG_CONTAINER_ALREADY_RUNNING"
+        exit 0
+    fi
+    
+    # 컨테이너 시작
+    # Start container
+    log "INFO" "$MSG_STARTING_CONTAINER"
+    if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" start; then
+        log "SUCCESS" "$MSG_CONTAINER_STARTED"
+        
+        # 연결 방법 안내
+        # Show connect instruction
+        echo -e "\n${BLUE}$MSG_CONNECT_INFO${NC} dockit connect"
     else
-        log "INFO" "$MSG_SKIPPING_CONNECT"
-        echo -e "\n${BLUE}$MSG_CONNECT_LATER${NC} ./dockit.sh connect"
+        log "ERROR" "$MSG_CONTAINER_START_FAILED"
+        exit 1
     fi
 }
 
