@@ -52,6 +52,8 @@ MSG_COMMON_NOT_INITIALIZED="초기화가 필요합니다. init 명령을 실행�
 
 # init 모듈 메시지
 MSG_INIT_START="초기화 시작..."
+MSG_CREATING_DOCKIT_DIR=".dockit 디렉토리 생성 중..."
+MSG_DOCKIT_DIR_CREATED=".dockit 디렉토리가 생성되었습니다."
 MSG_OLD_LOG_FOUND="이전 버전의 로그 파일 발견, 삭제 중..."
 MSG_OLD_LOG_REMOVED="이전 버전의 로그 파일이 삭제되었습니다."
 MSG_MOVING_ENV="기존 .env 파일을 새 위치로 이동 중..."

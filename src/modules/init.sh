@@ -13,6 +13,10 @@ source "$SCRIPT_DIR/common.sh" "init"
 CONFIG_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")/config"
 source "$CONFIG_DIR/defaults.sh"
 
+source "$MODULES_DIR/build.sh"
+source "$MODULES_DIR/up.sh"
+source "$MODULES_DIR/connect.sh"
+
 # 버전 정보 로드
 # Load version information
 VERSION_FILE="$PROJECT_ROOT/bin/VERSION"
@@ -130,7 +134,7 @@ get_custom_values() {
     read -p "$MSG_INPUT_WORKDIR [${WORKDIR:-$DEFAULT_WORKDIR}]: " input
     WORKDIR=${input:-${WORKDIR:-$DEFAULT_WORKDIR}}
     
-    read -p "$MSG_INPUT_BASE_IMAGE [${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}]: " input
+    read -p "$MSG_BASE_IMAGE [${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}]: " input
     BASE_IMAGE=${input:-${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}}
     
     read -p "$MSG_INPUT_IMAGE_NAME [${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}]: " input
@@ -403,20 +407,32 @@ create_dockerfile() {
     fi
 }
 
+# Check and set BASE_IMAGE if not already set
+# BASE_IMAGE가 설정되지 않은 경우 확인 및 설정
+check_base_image() {
+    if [ -z "$BASE_IMAGE" ]; then
+        log "WARNING" "$MSG_BASE_IMAGE_NOT_SET"
+        # 현재 언어에 맞는 기본 이미지 사용
+        BASE_IMAGE="${DEFAULT_IMAGES["$LANGUAGE"]}"
+    fi
+    log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
+}
+
 # Build Docker image if user confirms
 # 사용자 확인 후 Docker 이미지 빌드
-build_image_if_confirmed() {
-    # 이미지 빌드 여부 확인
-    echo -e "\n${YELLOW}$MSG_BUILD_IMAGE_PROMPT${NC}"
-    read -p "$MSG_SELECT_CHOICE [Y/n]: " build_image
-    build_image=${build_image:-y}
-    
-    if [[ $build_image == "y" || $build_image == "Y" ]]; then
-        build_docker_image
-    else
-        log "INFO" "$MSG_EXIT_IMAGE_BUILD"
-        exit 0
-    fi
+build_image() {
+  # 이미지 빌드 여부 확인
+  echo -e "\n${YELLOW}$MSG_BUILD_IMAGE_PROMPT${NC}"
+  read -p "$MSG_SELECT_CHOICE [Y/n]: " user_choice
+  user_choice=${user_choice:-y}
+  
+  if [[ $user_choice == "y" || $user_choice == "Y" ]]; then
+    build_main "$@"
+    # build_docker_image
+  else
+    log "INFO" "$MSG_EXIT_IMAGE_BUILD"
+    return 1
+  fi
 }
 
 
@@ -445,14 +461,15 @@ create_docker_compose() {
 
 # Handle container connection prompt and execution
 # 컨테이너 연결 프롬프트 및 실행 처리
-handle_container_connection() {
+handle_container() {
     echo -e "\n${YELLOW}$MSG_CONNECT_CONTAINER_NOW?${NC}"
     read -p "$MSG_SELECT_CHOICE [Y/n]: " connect_container
     connect_container=${connect_container:-y}
     
     if [[ $connect_container == "y" || $connect_container == "Y" ]]; then
-        log "INFO" "$MSG_CONNECTING_CONTAINER"
-        docker exec -it "$CONTAINER_NAME" bash
+      # log "INFO" "$MSG_CONNECTING_CONTAINER"
+      # docker exec -it "$CONTAINER_NAME" bash
+      connect_main "$@"
     else
         log "INFO" "$MSG_SKIP_CONTAINER_CONNECTION"
     fi
@@ -462,20 +479,27 @@ handle_container_connection() {
 
 # Start container and handle user interaction
 # 컨테이너 시작 및 사용자 상호작용 처리
-start_and_connect_container() {
+start_container() {
     echo -e "\n${YELLOW}$MSG_START_CONTAINER_NOW?${NC}"
     read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
     start_container=${start_container:-y}
     
     if [[ $start_container == "y" || $start_container == "Y" ]]; then
         log "INFO" "$MSG_STARTING_CONTAINER"
-        
-        if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
-            log "SUCCESS" "$MSG_CONTAINER_STARTED"
-        else
+
+        # up_main 함수 호출 결과 확인
+        # 실패 시 오류 메시지 출력 후 종료
+        if ! up_main; then
             log "ERROR" "$MSG_CONTAINER_START_FAILED"
-            exit 0
+            exit 1
         fi
+        
+        # if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
+        #     log "SUCCESS" "$MSG_CONTAINER_STARTED"
+        # else
+        #     log "ERROR" "$MSG_CONTAINER_START_FAILED"
+        #     exit 0
+        # fi
     else
         log "INFO" "$MSG_START_LATER"
         echo -e "\n${BLUE}$MSG_START_LATER${NC} ./dockit.sh start"
@@ -483,96 +507,11 @@ start_and_connect_container() {
     fi
 }
 
-# Check and set BASE_IMAGE if not already set
-# BASE_IMAGE가 설정되지 않은 경우 확인 및 설정
-check_base_image() {
-    if [ -z "$BASE_IMAGE" ]; then
-        log "WARNING" "$MSG_BASE_IMAGE_NOT_SET"
-        # 현재 언어에 맞는 기본 이미지 사용
-        BASE_IMAGE="${DEFAULT_IMAGES["$LANGUAGE"]}"
-    fi
-    log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
-}
 
 
 
-# Process template using multilingual settings system
-# 다국어 설정 시스템을 사용하여 템플릿 처리
-process_multilang_template() {
-    local temp_dockerfile="$1"
-    log "INFO" "$MSG_MULTILANG_SETTINGS: BASE_IMAGE=$BASE_IMAGE"
-    process_template_with_base_image "$DOCKERFILE_TEMPLATE" "$temp_dockerfile"
-}
-
-# Process template using traditional method
-# 기존 방식으로 템플릿 처리
-process_traditional_template() {
-    local temp_dockerfile="$1"
-    log "INFO" "$MSG_PROCESSING_TEMPLATE"
-    
-    # Read and process template content
-    # 템플릿 내용 읽기 및 처리
-    local template_content=$(<"$DOCKERFILE_TEMPLATE")
-    echo "$template_content" | \
-    sed "1s|^FROM .*|FROM $BASE_IMAGE|" | \
-    sed -e "s|\${USERNAME}|${USERNAME}|g" \
-        -e "s|\${USER_UID}|${USER_UID}|g" \
-        -e "s|\${USER_GID}|${USER_GID}|g" \
-        -e "s|\${WORKDIR}|${WORKDIR}|g" \
-        -e "s|\${USER_PASSWORD}|${USER_PASSWORD}|g" \
-    > "$temp_dockerfile"
-}
 
 
-
-# Create temporary Dockerfile with proper base image and substitutions
-# 적절한 베이스 이미지와 치환으로 임시 Dockerfile 생성
-create_temp_dockerfile() {
-    local temp_dockerfile="$1"
-    
-    # Check and set BASE_IMAGE
-    # BASE_IMAGE 확인 및 설정
-    check_base_image
-    
-    # Process template based on available functions
-    # 사용 가능한 함수에 따라 템플릿 처리
-    if [ -f "$PROJECT_ROOT/config/system.sh" ] && type process_template_with_base_image &>/dev/null; then
-        process_multilang_template "$temp_dockerfile"
-    else
-        process_traditional_template "$temp_dockerfile"
-    fi
-}
-
-# Build Docker image from temporary Dockerfile
-# 임시 Dockerfile로 Docker 이미지 빌드
-build_image_from_temp() {
-    local temp_dockerfile="$1"
-    
-    if docker build -t "$IMAGE_NAME" -f "$temp_dockerfile" .; then
-        log "SUCCESS" "$MSG_IMAGE_BUILT: $IMAGE_NAME"
-        rm -f "$temp_dockerfile"
-        return 0
-    else
-        log "ERROR" "$MSG_IMAGE_BUILD_FAILED"
-        rm -f "$temp_dockerfile"
-        return 1
-    fi
-}
-
-# Build Docker image
-# Docker 이미지 빌드
-build_docker_image() {
-    log "INFO" "$MSG_BUILDING_IMAGE: $IMAGE_NAME"
-    
-    # Create and process temporary Dockerfile
-    # 임시 Dockerfile 생성 및 처리
-    local temp_dockerfile="$PROJECT_ROOT/.dockerfile.tmp"
-    create_temp_dockerfile "$temp_dockerfile"
-    
-    # Build image using temporary Dockerfile
-    # 임시 Dockerfile을 사용하여 이미지 빌드
-    build_image_from_temp "$temp_dockerfile"
-}
 
 
 
@@ -601,12 +540,13 @@ init_main() {
     
     echo -e "${YELLOW}$MSG_BUILD_CTRL_C_HINT${NC}"
     
-    build_image_if_confirmed
-    start_and_connect_container
+    # build_image
+    build_main "$@"
+    start_container
     
     log "SUCCESS" "$MSG_INIT_COMPLETE"
 
-    handle_container_connection
+    handle_container
     
 }
 

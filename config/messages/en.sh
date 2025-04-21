@@ -60,6 +60,8 @@ MSG_COMMON_REQUIRED_FILES_MISSING="Required configuration files are missing."
 # init 모듈 메시지
 # init module messages
 MSG_INIT_START="Starting initialization..."
+MSG_CREATING_DOCKIT_DIR="Creating .dockit directory..."
+MSG_DOCKIT_DIR_CREATED=".dockit directory has been created."
 MSG_OLD_LOG_FOUND="Found old version log file, removing..."
 MSG_OLD_LOG_REMOVED="Old version log file has been removed."
 MSG_MOVING_ENV="Moving existing .env file to new location..."
