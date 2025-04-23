@@ -173,6 +173,9 @@ This command displays the following information:
 - Image information
 - IP address (if running)
 - Port information (if running)
+- Container user information (username, UID, GID)
+
+The `status` command shows both the configured user information and the actual container internal user information, which is particularly useful for diagnosing permission issues.
 
 ### migrate - Upgrade Version
 
@@ -244,4 +247,12 @@ This file can be manually edited as needed.
 **Solution**:
 - Check if the container is running
 - Check if the container name is correct
-- Check if Docker commands can be executed 
+- Check if Docker commands can be executed
+
+### Container Username Issues
+
+**Problem**: The configured username (USERNAME) is different from the container's internal username
+**Solution**:
+- This is normal behavior. The container user information displayed by the `dockit status` command might be different if the base image already has a user with the same UID/GID.
+- What matters is whether the UID and GID match. File system permissions are determined by UID/GID, not by names.
+- If you encounter file permission issues, check with `dockit status` to verify that the container user's UID/GID matches your host system's user UID/GID. 
