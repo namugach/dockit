@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 언어 메타데이터 / Language Metadata
+# 언어 메타데이터
 LANG_CODE="ko"
 LANG_NAME="한국어"
 LANG_LOCALE="ko_KR.UTF-8"
@@ -41,6 +41,8 @@ MSG_INIT_CANCELLED_BY_USER="사용자에 의해 초기화가 취소되었습니�
 MSG_PROCESS_CANCELLED_BY_USER="사용자에 의해 작업이 중단되었습니다."
 MSG_TEMP_DIR_REMOVED="임시 디렉토리가 제거되었습니다."
 MSG_INVALID_CHOICE="잘못된 선택입니다. 초기화가 취소되었습니다."
+
+# Common 모듈 메시지
 MSG_COMMON_LOADING_CONFIG="설정 파일 로드 중: %s"
 MSG_COMMON_CONFIG_NOT_FOUND="설정 파일을 찾을 수 없습니다. 기본값을 사용합니다."
 MSG_COMMON_BASE_IMAGE_NOT_SET="BASE_IMAGE가 설정되지 않았습니다. 기본 이미지를 사용합니다."
@@ -49,6 +51,8 @@ MSG_COMMON_CONTAINER_RUNNING="컨테이너가 실행 중입니다: %s"
 MSG_COMMON_CONTAINER_STOPPED="컨테이너가 중지되었습니다: %s"
 MSG_COMMON_CONTAINER_NOT_FOUND="컨테이너가 존재하지 않습니다: %s"
 MSG_COMMON_NOT_INITIALIZED="초기화가 필요합니다. init 명령을 실행하세요: \n\ndockit init"
+MSG_COMMON_RUN_INIT_FIRST="먼저 init 명령을 실행하세요: dockit init"
+MSG_COMMON_REQUIRED_FILES_MISSING="필요한 설정 파일이 없습니다."
 
 # init 모듈 메시지
 MSG_INIT_START="초기화 시작..."
@@ -67,11 +71,6 @@ MSG_CREATING_DOCKERFILE="Dockerfile 템플릿 파일 생성 중..."
 MSG_DOCKERFILE_CREATED="Dockerfile 템플릿 파일이 생성되었습니다."
 MSG_DOCKERFILE_FAILED="Dockerfile 템플릿 파일 생성에 실패했습니다."
 MSG_ERROR_TEMPLATE_NOT_FOUND="템플릿 파일을 찾을 수 없습니다."
-MSG_BUILDING_IMAGE="Docker 이미지 빌드 중:"
-MSG_MULTILANG_SETTINGS="다국어 설정 시스템 활용:"
-MSG_PROCESSING_TEMPLATE="기존 방식으로 템플릿 처리 중..."
-MSG_IMAGE_BUILT="Docker 이미지가 성공적으로 빌드되었습니다:"
-MSG_IMAGE_BUILD_FAILED="Docker 이미지 빌드 중 오류가 발생했습니다."
 MSG_CREATING_COMPOSE="Docker Compose 파일 생성 중..."
 MSG_COMPOSE_CREATED="Docker Compose 파일이 생성되었습니다."
 MSG_COMPOSE_FAILED="Docker Compose 파일 생성에 실패했습니다."
@@ -155,6 +154,8 @@ MSG_CONTAINER_NOT_EXIST="컨테이너가 존재하지 않습니다"
 MSG_CONTAINER_NOT_FOUND="해당 컨테이너를 찾을 수 없습니다"
 MSG_IMAGE_EXIST="도커 이미지가 존재합니다"
 MSG_IMAGE_NOT_EXIST="도커 이미지가 존재하지 않습니다"
+MSG_USING_BASE_IMAGE="사용할 베이스 이미지: %s"
+MSG_BASE_IMAGE_NOT_SET="베이스 이미지가 설정되지 않았습니다. 기본 이미지를 사용합니다."
 
 # 명령어 관련 메시지
 MSG_START_CONTAINER="컨테이너를 시작합니다"
@@ -199,6 +200,7 @@ MSG_EXAMPLE_UP="  dockit up       # 컨테이너 백그라운드에서 시작"
 MSG_EXAMPLE_STOP="  dockit stop     # 컨테이너 정지 (상태 유지)"
 MSG_EXAMPLE_DOWN="  dockit down     # 컨테이너 완전 제거"
 MSG_EXAMPLE_CONNECT="  dockit connect  # 컨테이너 접속"
+MSG_EXAMPLE_MIGRATE="  dockit migrate  # 최신 버전으로 업그레이드"
 
 MSG_CONFIG_FILES_HEADER="설정 파일"
 MSG_CONFIG_FILE_ENV="  .dockit_project/.env                # 사용자 설정이 저장되는 파일"
@@ -356,7 +358,7 @@ MSG_COMMON_CURRENT_DIR="현재 디렉토리"
 MSG_COMMON_GENERATED_NAME="생성된 이름"
 MSG_COMMON_TESTING_EXPLICIT="명시적 경로로 테스트"
 
-# language setup messages
+# 언어 설정 메시지
 MSG_INSTALL_LANGUAGE_SETUP="언어 설정 중..."
 MSG_INSTALL_LANGUAGE_AVAILABLE="사용 가능한 언어:"
 MSG_INSTALL_LANGUAGE_DEFAULT="기본값"
@@ -375,10 +377,8 @@ MSG_VERSION_FEATURE_UNAVAILABLE="이 기능은 현재 버전에서 사용할 수
 MSG_VERSION_COMPARE_ERROR="버전 비교 중 오류가 발생했습니다."
 
 # 마이그레이션 모듈 메시지
-# Migration module messages
 
 # 마이그레이션 기본 과정 메시지
-# Basic migration process messages
 MSG_MIGRATE_START="마이그레이션 모듈을 시작합니다."
 MSG_MIGRATE_PROCESSING="마이그레이션을 처리하는 중..."
 MSG_MIGRATE_SUCCESS="마이그레이션이 성공적으로 완료되었습니다. 현재 버전: %s"
@@ -387,7 +387,6 @@ MSG_MIGRATE_PROCESS_STARTED="%s에서 %s로 마이그레이션 프로세스를 �
 MSG_MIGRATE_PROCESS_COMPLETED="마이그레이션 프로세스가 성공적으로 완료되었습니다."
 
 # 버전 관련 메시지
-# Version related messages
 MSG_MIGRATE_CHECKING="버전 정보를 확인하는 중..."
 MSG_MIGRATE_CURRENT_VER="현재 버전: %s"
 MSG_MIGRATE_TARGET_VER="대상 버전: %s"
@@ -398,12 +397,10 @@ MSG_MIGRATE_NO_VERSION_FILE="%s에서 버전 파일을 찾을 수 없습니다."
 MSG_MIGRATE_EMPTY_VERSION="대상 버전이 비어 있습니다."
 
 # 사용자 상호작용 메시지
-# User interaction messages
 MSG_MIGRATE_CONFIRM="현재 버전 %s에서 새 버전 %s(으)로 마이그레이션을 진행하시겠습니까?"
 MSG_MIGRATE_CANCELLED="사용자에 의해 마이그레이션이 취소되었습니다."
 
 # 백업 관련 메시지
-# Backup related messages
 MSG_MIGRATE_BACKING_UP="기존 설정을 백업하는 중..."
 MSG_MIGRATE_BACKUP_CREATED="백업이 생성되었습니다: %s"
 MSG_MIGRATE_BACKUP_FAILED="백업 생성에 실패했습니다."
@@ -412,28 +409,24 @@ MSG_MIGRATE_SAVED_CONFIG="이전 설정이 %s에 저장되었습니다."
 MSG_MIGRATE_NO_OLD_CONFIG="이전 설정을 찾을 수 없습니다."
 
 # 롤백 관련 메시지
-# Rollback related messages
 MSG_MIGRATE_ROLLBACK="변경 사항을 롤백하는 중..."
 MSG_MIGRATE_ROLLBACK_SUCCESS="롤백이 성공적으로 완료되었습니다."
 MSG_MIGRATE_ROLLBACK_FAILED="롤백에 실패했습니다: %s"
 MSG_MIGRATE_NO_BACKUP="롤백을 위한 백업을 찾을 수 없습니다."
 
 # 설정 관련 메시지
-# Settings related messages
 MSG_MIGRATE_UPDATING_ENV="환경 설정을 업데이트하는 중..."
 MSG_MIGRATE_SETTINGS_FAILED="설정 마이그레이션에 실패했습니다."
 MSG_MIGRATE_NO_ENV="이전 .env 파일을 찾을 수 없습니다."
 MSG_MIGRATE_SAVE_FAILED="이전 설정 저장에 실패했습니다."
 
 # 초기화 관련 메시지
-# Initialization related messages
 MSG_MIGRATE_INIT_FAILED="새 환경 초기화에 실패했습니다."
 MSG_MIGRATE_INIT_NOT_FOUND="Init 모듈을 찾을 수 없습니다."
 MSG_MIGRATE_BACKUP_INIT_FAILED="백업 및 초기화에 실패했습니다."
 MSG_MIGRATE_DIR_STRUCTURE_FAILED="마이그레이션 디렉토리 구조 생성에 실패했습니다."
 
 # 마이그레이션 로직 관련 메시지
-# Migration logic related messages
 MSG_MIGRATE_CHECKING_LOGIC="%s에서 %s로의 버전별 마이그레이션 로직을 확인하는 중입니다."
 MSG_MIGRATE_PATH_FOUND="%s에서 %s로의 직접 마이그레이션 경로를 찾았습니다."
 MSG_MIGRATE_NO_DIRECT_PATH="직접 마이그레이션 경로를 찾을 수 없어 증분 마이그레이션을 확인합니다."
@@ -444,19 +437,16 @@ MSG_MIGRATE_PARTIALLY_REACHED="마이그레이션이 %s까지만 도달하고 %s
 MSG_MIGRATE_LOGIC_FAILED="버전별 마이그레이션 로직 실행에 실패했습니다."
 
 # 마이그레이션 단계 관련 메시지
-# Migration steps related messages
 MSG_MIGRATE_EXECUTING_STEPS="%s에서 %s로 마이그레이션 단계를 실행 중입니다."
 MSG_MIGRATE_STEPS_COMPLETED="모든 마이그레이션 단계가 성공적으로 완료되었습니다."
 MSG_MIGRATE_STEPS_FAILED="마이그레이션 단계 실행에 실패했습니다."
 
 # 스크립트 관련 메시지
-# Script related messages
 MSG_MIGRATE_SCRIPT_FOUND="마이그레이션 스크립트를 찾았습니다: %s"
 MSG_MIGRATE_SCRIPT_SUCCESS="마이그레이션 스크립트가 성공적으로 실행되었습니다."
 MSG_MIGRATE_SCRIPT_FAILED="마이그레이션 스크립트 실행에 실패했습니다."
 
 # 버전별 실패 메시지
-# Version-specific failure messages
 MSG_MIGRATE_MAJOR_FAILED="메이저 버전 마이그레이션에 실패했습니다."
 MSG_MIGRATE_MINOR_FAILED="마이너 버전 마이그레이션에 실패했습니다."
 MSG_MIGRATE_PATCH_FAILED="패치 버전 마이그레이션에 실패했습니다."
@@ -507,6 +497,7 @@ MSG_UPDATED_INFO="업데이트된 정보: %s (UID:%s, GID:%s)"
 MSG_CONFIG_FILE_NOT_FOUND="설정 파일을 찾을 수 없습니다: %s"
 MSG_CONFIG_ENV_NOT_SET="설정 파일 경로(CONFIG_ENV)가 설정되지 않았습니다."
 MSG_CONTAINER_NAME_EMPTY_CHECKING="컨테이너 이름(CONTAINER_NAME)이 비어있습니다. 설정 파일에서 다시 확인합니다."
+MSG_CONTAINER_NAME="컨테이너 이름: %s"
 MSG_USING_COMPOSE_FILE="사용할 Docker Compose 파일: %s"
 MSG_COMPOSE_NOT_FOUND="Docker Compose 파일을 찾을 수 없습니다"
 MSG_CONTAINER_ALREADY_RUNNING="컨테이너가 이미 실행 중입니다"
@@ -514,4 +505,14 @@ MSG_CONTAINER_STARTED="컨테이너가 시작되었습니다"
 MSG_CONTAINER_START_FAILED="컨테이너 시작에 실패했습니다"
 MSG_CHECK_DOCKER="Docker가 실행 중인지 확인하세요"
 MSG_CHECK_PORTS="포트가 이미 사용 중인지 확인하세요"
-MSG_CHECK_IMAGE="이미지를 빌드했는지 확인하세요" 
+MSG_CHECK_IMAGE="이미지를 빌드했는지 확인하세요"
+
+# build 모듈 메시지
+MSG_BUILD_START="Docker 이미지 빌드 모듈 실행 중..."
+MSG_BUILDING_IMAGE="Docker 이미지 빌드 중: %s"
+MSG_IMAGE_BUILT="Docker 이미지가 성공적으로 빌드되었습니다: %s"
+MSG_IMAGE_BUILD_FAILED="Docker 이미지 빌드 중 오류가 발생했습니다."
+MSG_BUILD_COMPLETE="이미지 빌드가 완료되었습니다."
+MSG_BUILD_CANCELLED="이미지 빌드가 취소되었습니다."
+MSG_BUILD_FAILED="이미지 빌드에 실패했습니다."
+MSG_DOCKERFILE_NOT_FOUND="Dockerfile을 찾을 수 없습니다." 

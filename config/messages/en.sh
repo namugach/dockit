@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 언어 메타데이터 / Language Metadata
+# Language Metadata
 LANG_CODE="en"
 LANG_NAME="English"
 LANG_LOCALE="en_US.UTF-8"
@@ -9,10 +9,8 @@ LANG_DIRECTION="ltr"
 LANG_VERSION="1.0"
 LANG_AUTHOR="Dockit Team"
 
-# 영어 메시지 정의
 # English message definitions
 
-# 공통 메시지
 # Common messages
 MSG_WELCOME="Docker Development Environment Setup"
 MSG_INPUT_DEFAULT="(Press Enter to use the default value in parentheses)"
@@ -44,7 +42,6 @@ MSG_PROCESS_CANCELLED_BY_USER="Process cancelled by user."
 MSG_TEMP_DIR_REMOVED="Temporary directory has been removed."
 MSG_INVALID_CHOICE="Invalid choice. Initialization has been cancelled."
 
-# 공통 메시지
 # Common Messages
 MSG_COMMON_LOADING_CONFIG="Loading configuration file: %s"
 MSG_COMMON_CONFIG_NOT_FOUND="Configuration file not found. Using default values."
@@ -57,7 +54,6 @@ MSG_COMMON_NOT_INITIALIZED="Initialization required. Please run init command: \n
 MSG_COMMON_RUN_INIT_FIRST="Run init command first: dockit init"
 MSG_COMMON_REQUIRED_FILES_MISSING="Required configuration files are missing."
 
-# init 모듈 메시지
 # init module messages
 MSG_INIT_START="Starting initialization..."
 MSG_CREATING_DOCKIT_DIR="Creating .dockit directory..."
@@ -75,13 +71,6 @@ MSG_CREATING_DOCKERFILE="Creating Dockerfile template..."
 MSG_DOCKERFILE_CREATED="Dockerfile template has been created."
 MSG_DOCKERFILE_FAILED="Failed to create Dockerfile template."
 MSG_ERROR_TEMPLATE_NOT_FOUND="Template file not found."
-MSG_BUILDING_IMAGE="Building Docker image:"
-MSG_BASE_IMAGE_NOT_SET="BASE_IMAGE is not set. Using default image."
-MSG_USING_BASE_IMAGE="Using base image:"
-MSG_MULTILANG_SETTINGS="Using multilingual settings system:"
-MSG_PROCESSING_TEMPLATE="Processing template using default method..."
-MSG_IMAGE_BUILT="Docker image has been built successfully:"
-MSG_IMAGE_BUILD_FAILED="Failed to build Docker image."
 MSG_CREATING_COMPOSE="Creating Docker Compose file..."
 MSG_COMPOSE_CREATED="Docker Compose file has been created."
 MSG_COMPOSE_FAILED="Failed to create Docker Compose file."
@@ -103,13 +92,11 @@ MSG_BACKING_UP_TO="Backing up existing settings to %s."
 MSG_INIT_CTRL_C_HINT="Press Ctrl+C during initialization to cancel and clean up temporary files."
 MSG_BUILD_CTRL_C_HINT="Press Ctrl+C during image building to abort. Created files will be preserved."
 
-# down 모듈 메시지
 # down module messages
 MSG_DOWN_START="Starting container removal module..."
 MSG_COMPOSE_NOT_FOUND="Docker Compose file not found."
 MSG_CONTAINER_DOWNMSG_CONTAINER_STOP_FAILED="Failed to remove container."
 
-# stop 모듈 메시지
 # stop module messages
 MSG_STOP_START="Container stop module running..."
 MSG_CONTAINER_NOT_FOUND="No container to stop."
@@ -117,7 +104,6 @@ MSG_CONTAINER_STOPPED="Container has been successfully stopped."
 MSG_CONTAINER_STOP_FAILED="Failed to stop container."
 MSG_CONTAINER_STOPPED_INFO="Container has been stopped. To start again: dockit start"
 
-# connect 모듈 메시지
 # connect module messages
 MSG_CONNECT_START="Running connect module..."
 MSG_CONTAINER_NOT_RUNNING="Container is not running."
@@ -128,7 +114,6 @@ MSG_CONNECTED="Successfully connected to container."
 MSG_CONNECT_FAILED="Failed to connect to container."
 MSG_CONNECT_INFO="To connect to the container, use:"
 
-# status 모듈 메시지
 # status module messages
 MSG_STATUS_START="Running status check module..."
 MSG_CONTAINER_STATUS="Container Status"
@@ -153,7 +138,6 @@ MSG_STATUS_CONTAINER_USERNAME="Container Username"
 MSG_STATUS_CONTAINER_USER_UID="Container User UID"
 MSG_STATUS_CONTAINER_USER_GID="Container User GID"
 
-# start 모듈 메시지
 # start module messages
 MSG_START_START="Starting container start module..."
 MSG_CONTAINER_ALREADY_RUNNING="Container is already running."
@@ -161,18 +145,18 @@ MSG_CONTAINER_NOT_FOUND_INFO="Container doesn't exist. To create and start a con
 MSG_STARTING_CONTAINER="Starting container..."
 MSG_CONTAINER_START_FAILED="Failed to start container."
 
-# 일반 메시지
 # General messages
 MSG_GOODBYE="Exiting Docker environment"
 
-# 상태 메시지
 # Status messages
 MSG_CONTAINER_RUNNING="Container is running"
 MSG_CONTAINER_NOT_EXIST="Container does not exist"
+MSG_CONTAINER_NOT_FOUND="Container does not exist"
 MSG_IMAGE_EXIST="Docker image exists"
 MSG_IMAGE_NOT_EXIST="Docker image does not exist"
+MSG_USING_BASE_IMAGE="Using base image"
+MSG_BASE_IMAGE_NOT_SET="Base image not set"
 
-# 명령어 관련 메시지
 # Command related messages
 MSG_START_CONTAINER="Starting container"
 MSG_STOP_CONTAINER="Stopping container"
@@ -185,14 +169,12 @@ MSG_CMD_FAILED="Command execution failed"
 MSG_BUILD_IMAGE_PROMPT="Do you want to build the Docker image?"
 MSG_EXIT_IMAGE_BUILD="Exiting image build"
 
-# 질문 메시지
 # Question messages
 MSG_CONFIRM_STOP="Do you want to stop the running container? (y/n): "
 MSG_CONFIRM_DOWN="Do you want to completely remove the container? (y/n): "
 MSG_CONFIRM_START="Do you want to start a new container? (y/n): "
 MSG_CONFIRM_INIT="Do you want to proceed with initialization? (y/n): "
 
-# 도움말 메시지
 # Help messages
 MSG_HELP_USAGE="Usage: dockit [command]"
 MSG_HELP_COMMANDS="Available commands:"
@@ -208,7 +190,6 @@ MSG_HELP_MIGRATE="  migrate  - Upgrade to a newer version"
 MSG_HELP_HELP="  help     - Display this help"
 MSG_HELP_VERSION="  version  - Display version information"
 
-# 도움말 추가 메시지
 # Help additional messages
 MSG_TITLE="Docker Development Environment Tool"
 MSG_EXAMPLES_HEADER="Examples"
@@ -227,7 +208,6 @@ MSG_CONFIG_FILE_COMPOSE="  .dockit_project/docker-compose.yml  # Docker Compose 
 MSG_CONFIG_FILE_LOG="  .dockit_project/dockit.log          # Log file"
 MSG_CONFIG_FILE_SETTINGS="  config/settings.env         # Language and default settings file"
 
-# 시스템 메시지
 # System Messages
 MSG_SYSTEM_DEBUG_INITIAL_LANG="===== Initial Language Settings ====="
 MSG_SYSTEM_DEBUG_LANG_VAR="Environment Variable LANGUAGE: %s"
@@ -264,7 +244,6 @@ MSG_SYSTEM_TEMPLATE_PROCESSING="Processing Template: %s -> %s"
 MSG_SYSTEM_FILE_CREATED="File created: %s"
 MSG_SYSTEM_FILE_CREATE_FAILED="Failed to create file: %s"
 
-# 디버그 테스트 메시지
 # Debug Test Messages
 MSG_SYSTEM_DEBUG_MSG_TEST="===== Message Output Test ====="
 MSG_SYSTEM_DEBUG_WELCOME="Welcome Message: %s"
@@ -387,7 +366,6 @@ MSG_INSTALL_LANGUAGE_SELECT="Select language"
 MSG_INSTALL_LANGUAGE_SELECTED="Selected language: %s (%s)"
 MSG_INSTALL_LANGUAGE_INVALID="Invalid selection. Using default: %s (%s)"
 
-# 버전 유효성 검사 메시지
 # Version validation messages
 MSG_VERSION_CHECK_HEADER="Checking version compatibility..."
 MSG_VERSION_PROJECT_HIGHER="Warning: This project was created with a higher version of dockit (Project: %s, Current: %s)."
@@ -473,7 +451,7 @@ MSG_MIGRATE_MAJOR_FAILED="Failed to migrate major version."
 MSG_MIGRATE_MINOR_FAILED="Failed to migrate minor version."
 MSG_MIGRATE_PATCH_FAILED="Failed to migrate patch version."
 
-# 설치 관련 새로운 메시지
+# install module messages
 MSG_INSTALL_CONFIRM_PROCEED="All preparations are complete. Proceed with installation? (Y/n)"
 MSG_INSTALL_PATH_UPDATED="PATH settings have been updated."
 MSG_INSTALL_DIRECT_PATH="Or you can run it directly by specifying the path:"
@@ -495,7 +473,7 @@ MSG_INSTALL_MESSAGES_COPIED="Message files copied"
 MSG_INSTALL_MESSAGES_DIR_NOT_FOUND="Message directory not found: %s"
 MSG_INSTALL_SCRIPT_NOT_FOUND="dockit script not found or not executable: %s"
 
-# up 모듈 메시지
+
 # up module messages
 MSG_UP_START="Running container start module in background..."
 MSG_STARTING_IN_BACKGROUND="Starting container in background..."
@@ -528,3 +506,13 @@ MSG_CONTAINER_START_FAILED="Failed to start container"
 MSG_CHECK_DOCKER="Check if Docker is running"
 MSG_CHECK_PORTS="Check if ports are already in use"
 MSG_CHECK_IMAGE="Check if you have built the image" 
+
+# build module messages
+MSG_BUILD_START="Running Docker image build module..."
+MSG_BUILDING_IMAGE="Building Docker image: %s"
+MSG_IMAGE_BUILT="Docker image has been built successfully: %s"
+MSG_IMAGE_BUILD_FAILED="Failed to build Docker image."
+MSG_BUILD_COMPLETE="Image build completed."
+MSG_BUILD_CANCELLED="Image build cancelled."
+MSG_BUILD_FAILED="Image build failed."
+MSG_DOCKERFILE_NOT_FOUND="Dockerfile not found."
