@@ -483,26 +483,40 @@ handle_container() {
 # Start container and handle user interaction
 # 컨테이너 시작 및 사용자 상호작용 처리
 start_container() {
-    echo -e "\n${YELLOW}$MSG_START_CONTAINER_NOW?${NC}"
+    echo -e "\n${YELLOW}$MSG_START_CONTAINER_NOW${NC}"
     read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
     start_container=${start_container:-y}
     
     if [[ $start_container == "y" || $start_container == "Y" ]]; then
         log "INFO" "$MSG_STARTING_CONTAINER"
 
-        # up_main 함수 호출 결과 확인
-        # 실패 시 오류 메시지 출력 후 종료
-        if ! up_main; then
-            log "ERROR" "$MSG_CONTAINER_START_FAILED"
+        # 직접 Docker Compose 실행
+        # Docker Compose 파일이 있는지 확인
+        if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
+            log "ERROR" "$MSG_COMPOSE_NOT_FOUND"
             exit 1
         fi
         
-        # if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
-        #     log "SUCCESS" "$MSG_CONTAINER_STARTED"
-        # else
-        #     log "ERROR" "$MSG_CONTAINER_START_FAILED"
-        #     exit 0
-        # fi
+        # 컨테이너를 백그라운드에서 시작
+        log "INFO" "$MSG_STARTING_IN_BACKGROUND"
+        if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
+            log "SUCCESS" "$MSG_CONTAINER_STARTED"
+            log "INFO" "$MSG_CONTAINER_RUNNING_BACKGROUND"
+            
+            # 컨테이너 사용자 정보 업데이트 - up.sh에서 가져와서 직접 호출
+            source "$MODULES_DIR/up.sh"
+            update_container_user_info
+            
+            # 컨테이너 상태 출력
+            log "INFO" "$MSG_CONTAINER_INFO: $CONTAINER_NAME"
+            docker ps --filter "name=$CONTAINER_NAME" --format "table {{.ID}}\t{{.Status}}\t{{.Ports}}"
+        else
+            log "ERROR" "$MSG_CONTAINER_START_FAILED"
+            log "INFO" "$MSG_CHECK_DOCKER"
+            log "INFO" "$MSG_CHECK_PORTS"
+            log "INFO" "$MSG_CHECK_IMAGE"
+            exit 1
+        fi
     else
         log "INFO" "$MSG_START_LATER"
         echo -e "\n${BLUE}$MSG_START_LATER${NC} dockit up"

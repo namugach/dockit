@@ -136,9 +136,6 @@ build_main() {
     # Trap ctrl-c
     trap 'echo -e "\n${YELLOW}$MSG_PROCESS_CANCELLED_BY_USER${NC}"; exit 1' INT
     
-    # Print hint for ctrl-c
-    echo -e "${YELLOW}$MSG_BUILD_CTRL_C_HINT${NC}"
-    
     # Build image with confirmation
     if build_image_if_confirmed; then
         log "SUCCESS" "$MSG_BUILD_COMPLETE"

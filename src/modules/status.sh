@@ -54,8 +54,8 @@ status_main() {
     
     # 컨테이너 상태 출력
     # Display container status
-    echo -e "\n${YELLOW}$MSG_CONTAINER_STATUS:${NC}"
-    echo -e "$MSG_CONTAINER_NAME: ${GREEN}$CONTAINER_NAME${NC}"
+    echo -e "\n${YELLOW}$MSG_CONTAINER_STATUS${NC}"
+    echo -e "$MSG_STATUS_CONTAINER_NAME: ${GREEN}$CONTAINER_NAME${NC}"
     echo -e "$MSG_CONTAINER_ID: ${GREEN}$(docker container inspect -f '{{.Id}}' "$CONTAINER_NAME")${NC}"
     echo -e "$MSG_CONTAINER_STATE: ${GREEN}$(docker container inspect -f '{{.State.Status}}' "$CONTAINER_NAME")${NC}"
     echo -e "$MSG_CONTAINER_CREATED: ${GREEN}$(docker container inspect -f '{{.Created}}' "$CONTAINER_NAME")${NC}"
