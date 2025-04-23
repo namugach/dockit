@@ -289,6 +289,9 @@ process_template() {
         -e "s|\${IMAGE_NAME}|${IMAGE_NAME}|g" \
         -e "s|\${DATE}|${current_date}|g" \
         -e "s|\${DOCKIT_VERSION}|${DOCKIT_VERSION:-unknown}|g" \
+        -e "s|\${CONTAINER_USERNAME}|${CONTAINER_USERNAME:-}|g" \
+        -e "s|\${CONTAINER_USER_UID}|${CONTAINER_USER_UID:-}|g" \
+        -e "s|\${CONTAINER_USER_GID}|${CONTAINER_USER_GID:-}|g" \
         "$template_file" > "$output_file"
         
     echo "$(printf "$MSG_TEMPLATE_GENERATED" "$output_file")"

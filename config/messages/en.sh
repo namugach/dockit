@@ -130,16 +130,16 @@ MSG_CONNECT_INFO="To connect to the container, use:"
 
 # status 모듈 메시지
 # status module messages
-MSG_STATUS_START="Running status check module..."
-MSG_CONTAINER_STATUS="Container status:"
+MSG_STATUS_START="Status check module is running..."
+MSG_CONTAINER_STATUS="Container Status"
 MSG_CONTAINER_ID="Container ID"
 MSG_CONTAINER_STATE="State"
 MSG_CONTAINER_CREATED="Created"
 MSG_CONTAINER_IMAGE="Image"
 MSG_CONTAINER_IP="IP Address"
 MSG_CONTAINER_PORTS="Ports"
-MSG_STATUS_COMPLETE="Status check complete."
-MSG_STATUS_PROJECT_CONFIG="Project Dockit Configuration:"
+MSG_STATUS_COMPLETE="Status check completed."
+MSG_STATUS_PROJECT_CONFIG="Project Dockit Configuration"
 MSG_STATUS_VERSION="Dockit Version"
 MSG_STATUS_IMAGE_NAME="Image Name"
 MSG_STATUS_CONTAINER_NAME="Container Name"
@@ -147,6 +147,9 @@ MSG_STATUS_USERNAME="Username"
 MSG_STATUS_USER_UID="User UID"
 MSG_STATUS_USER_GID="User GID"
 MSG_STATUS_WORKDIR="Working Directory"
+MSG_STATUS_CONTAINER_USERNAME="Container Username"
+MSG_STATUS_CONTAINER_USER_UID="Container User UID"
+MSG_STATUS_CONTAINER_USER_GID="Container User GID"
 
 # start 모듈 메시지
 # start module messages

@@ -33,6 +33,14 @@ status_main() {
     echo -e "$MSG_STATUS_USERNAME: ${GREEN}${USERNAME}${NC}"
     echo -e "$MSG_STATUS_USER_UID: ${GREEN}${USER_UID}${NC}"
     echo -e "$MSG_STATUS_USER_GID: ${GREEN}${USER_GID}${NC}"
+    
+    # 컨테이너 사용자 정보 표시 (있을 경우)
+    if [ -n "${CONTAINER_USERNAME}" ]; then
+        echo -e "$MSG_STATUS_CONTAINER_USERNAME: ${GREEN}${CONTAINER_USERNAME}${NC}"
+        echo -e "$MSG_STATUS_CONTAINER_USER_UID: ${GREEN}${CONTAINER_USER_UID}${NC}"
+        echo -e "$MSG_STATUS_CONTAINER_USER_GID: ${GREEN}${CONTAINER_USER_GID}${NC}"
+    fi
+    
     echo -e "$MSG_STATUS_WORKDIR: ${GREEN}${WORKDIR}${NC}"
     
     # 컨테이너 상태 확인
