@@ -505,7 +505,7 @@ start_container() {
         # fi
     else
         log "INFO" "$MSG_START_LATER"
-        echo -e "\n${BLUE}$MSG_START_LATER${NC} ./dockit.sh start"
+        echo -e "\n${BLUE}$MSG_START_LATER${NC} dockit up"
         exit 0
     fi
 }

@@ -166,16 +166,32 @@ dockit status
 ```
 
 This command displays the following information:
-- Container name
-- Container ID
-- Running state
-- Creation time
-- Image information
-- IP address (if running)
-- Port information (if running)
-- Container user information (username, UID, GID)
 
-The `status` command shows both the configured user information and the actual container internal user information, which is particularly useful for diagnosing permission issues.
+- **Project Configuration**:
+  - Dockit Version
+  - Image Name
+  - Container Name
+
+- **Host User Configuration**:
+  - Username
+  - User UID
+  - User GID
+  - Working Directory
+
+- **Container User Information**:
+  - Container Username
+  - Container User UID
+  - Container User GID
+
+- **Container Status** (if container exists):
+  - Container ID
+  - Running State
+  - Creation Time
+  - Image Information
+  - IP Address (if running)
+  - Port Information (if running)
+
+The host user configuration and container user information are always shown separately, which is particularly useful for diagnosing permission issues. Even if the container has not been created yet, you can still check the host configuration.
 
 ### migrate - Upgrade Version
 
