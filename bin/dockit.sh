@@ -103,6 +103,10 @@ execute_command() {
             source "$MODULES_DIR/run.sh"
             run_main "$@"
             ;;
+        join)
+            source "$MODULES_DIR/join.sh"
+            join_main "$@"
+            ;;
         help)
             source "$MODULES_DIR/help.sh"
             show_help

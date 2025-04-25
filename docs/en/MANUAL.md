@@ -18,6 +18,7 @@ This document explains the detailed usage of Dockit.
     - [migrate](#migrate---upgrade-version)
     - [setup](#setup---complete-environment-setup)
     - [run](#run---automated-run)
+    - [join](#join---automated-run-and-connect)
     - [help](#help---display-help)
 4. [Configuration File](#configuration-file)
 5. [Troubleshooting](#troubleshooting)
@@ -241,6 +242,22 @@ This command performs the following tasks without user confirmation prompts:
 - Starts the container in background (equivalent to `up`)
 
 Unlike the `setup` command which prompts for confirmation at each step, the `run` command executes all operations automatically in sequence. This is ideal for scripts or situations where you want to perform all operations without interruption.
+
+### join - Automated Run and Connect
+
+Automatically run initialization, build, start and connect to container in one command.
+
+```bash
+dockit join
+```
+
+This command performs the following tasks:
+- Initializes the Docker development environment (equivalent to `init`)
+- Builds the Docker image (equivalent to `build`)
+- Starts the container (equivalent to `up`)
+- Connects to the container immediately (equivalent to `connect`)
+
+The `join` command combines the functionality of both `run` and `connect` commands, providing a complete end-to-end workflow from initialization to interactive shell. This is perfect for when you want to start working in your development environment with a single command.
 
 ### help - Display Help
 

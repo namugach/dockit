@@ -51,6 +51,7 @@ _dockit() {
         "migrate:$(dockit_get_message MSG_COMPLETION_MIGRATE)"
         "setup:$(dockit_get_message MSG_COMPLETION_SETUP)"
         "run:$(dockit_get_message MSG_COMPLETION_RUN)"
+        "join:$(dockit_get_message MSG_COMPLETION_JOIN)"
     )
     
     # 자동완성 설명 표시

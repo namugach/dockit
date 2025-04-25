@@ -69,6 +69,8 @@ To remove Dockit from your system:
 - `connect`: Connect to a running container
 - `status`: Check container status
 - `migrate`: Upgrade to a newer version
+- `run`: Automatically initialize, build, and start container without interaction
+- `join`: Automatically initialize, build, start, and connect to container in one command
 - `help`: Display help information
 
 ## License
