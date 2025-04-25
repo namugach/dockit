@@ -95,28 +95,6 @@ build_docker_image() {
     build_image_from_temp "$temp_dockerfile"
 }
 
-# Build Docker image if user confirms
-# 사용자 확인 후 Docker 이미지 빌드
-build_image_if_confirmed() {
-    # Dockerfile이 있는지 확인
-    if [ ! -f "$DOCKERFILE" ]; then
-        log "ERROR" "$MSG_DOCKERFILE_NOT_FOUND"
-        return 1
-    fi
-    
-    # 이미지 빌드 여부 확인
-    echo -e "\n${YELLOW}$MSG_BUILD_IMAGE_PROMPT${NC}"
-    read -p "$MSG_SELECT_CHOICE [Y/n]: " build_image
-    build_image=${build_image:-y}
-    
-    if [[ $build_image == "y" || $build_image == "Y" ]]; then
-        build_docker_image
-        return $?
-    else
-        log "INFO" "$MSG_EXIT_IMAGE_BUILD"
-        return 1
-    fi
-}
 
 # Main function for build module
 # build 모듈의 메인 함수
@@ -135,19 +113,7 @@ build_main() {
     
     # Trap ctrl-c
     trap 'echo -e "\n${YELLOW}$MSG_PROCESS_CANCELLED_BY_USER${NC}"; exit 1' INT
-    
-    # Build image with confirmation
-    if build_image_if_confirmed; then
-        log "SUCCESS" "$MSG_BUILD_COMPLETE"
-        return 0
-    else
-        if [ $? -eq 1 ]; then
-            log "INFO" "$MSG_BUILD_CANCELLED"
-        else
-            log "ERROR" "$MSG_BUILD_FAILED"
-        fi
-        return 1
-    fi
+    build_docker_image
 }
 
 # Execute main function if script is run directly
