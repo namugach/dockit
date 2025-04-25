@@ -50,6 +50,7 @@ _dockit() {
         "version:$(dockit_get_message MSG_COMPLETION_VERSION)"
         "migrate:$(dockit_get_message MSG_COMPLETION_MIGRATE)"
         "setup:$(dockit_get_message MSG_COMPLETION_SETUP)"
+        "run:$(dockit_get_message MSG_COMPLETION_RUN)"
     )
     
     # 자동완성 설명 표시

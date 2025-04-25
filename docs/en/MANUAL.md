@@ -17,6 +17,7 @@ This document explains the detailed usage of Dockit.
     - [status](#status---check-status)
     - [migrate](#migrate---upgrade-version)
     - [setup](#setup---complete-environment-setup)
+    - [run](#run---automated-run)
     - [help](#help---display-help)
 4. [Configuration File](#configuration-file)
 5. [Troubleshooting](#troubleshooting)
@@ -225,6 +226,21 @@ This command provides a streamlined process by sequentially performing these tas
 - Connects to the container (equivalent to `connect`)
 
 At each step, you will be prompted to confirm whether you want to proceed, allowing you to stop at any point in the process. This is ideal for those who want to set up their entire environment with a single command while maintaining control over each step.
+
+### run - Automated Run
+
+Automatically run initialization, build, and start in one command.
+
+```bash
+dockit run
+```
+
+This command performs the following tasks without user confirmation prompts:
+- Initializes the Docker development environment (equivalent to `init`)
+- Builds the Docker image (equivalent to `build`)
+- Starts the container in background (equivalent to `up`)
+
+Unlike the `setup` command which prompts for confirmation at each step, the `run` command executes all operations automatically in sequence. This is ideal for scripts or situations where you want to perform all operations without interruption.
 
 ### help - Display Help
 

@@ -99,6 +99,10 @@ execute_command() {
             source "$MODULES_DIR/setup.sh"
             setup_main "$@"
             ;;
+        run)
+            source "$MODULES_DIR/run.sh"
+            run_main "$@"
+            ;;
         help)
             source "$MODULES_DIR/help.sh"
             show_help
