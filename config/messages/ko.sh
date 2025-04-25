@@ -351,6 +351,7 @@ MSG_COMPLETION_CONNECT="컨테이너에 접속"
 MSG_COMPLETION_HELP="도움말 표시"
 MSG_COMPLETION_VERSION="버전 정보 표시"
 MSG_COMPLETION_MIGRATE="프로젝트를 새 버전으로 마이그레이션"
+MSG_COMPLETION_SETUP="초기화, 빌드, 시작, 접속을 한번에 실행"
 
 # 공통 모듈 테스트 메시지
 MSG_COMMON_TESTING_FUNCTION="generate_container_name 함수 테스트 중..."
@@ -518,3 +519,14 @@ MSG_BUILD_FAILED="이미지 빌드에 실패했습니다."
 MSG_DOCKERFILE_NOT_FOUND="Dockerfile을 찾을 수 없습니다." 
 MSG_MULTILANG_SETTINGS="다국어 설정: BASE_IMAGE=%s"
 MSG_PROCESSING_TEMPLATE="템플릿 처리 중..."
+
+# setup 모듈 메시지
+MSG_SETUP_START="전체 설정 프로세스를 시작합니다..."
+MSG_SETUP_COMPLETE="전체 설정 프로세스가 완료되었습니다."
+MSG_SETUP_INIT_COMPLETE="초기화 단계가 완료되었습니다."
+MSG_SETUP_BUILD_PROMPT="Docker 이미지를 빌드하시겠습니까?"
+MSG_SETUP_BUILD_SKIPPED="이미지 빌드를 건너뜁니다."
+MSG_SETUP_UP_LATER="컨테이너를 나중에 시작하려면: dockit up"
+MSG_SETUP_CONNECT_LATER="컨테이너에 나중에 접속하려면: dockit connect"
+MSG_SETUP_HELP="  setup    - 초기화, 빌드, 시작, 접속을 한번에 실행"
+MSG_EXAMPLE_SETUP="  dockit setup   # 전체 환경 설정 (init, build, up, connect)"

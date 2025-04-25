@@ -95,6 +95,10 @@ execute_command() {
             source "$MODULES_DIR/migrate.sh"
             migrate_main "$@"
             ;;
+        setup)
+            source "$MODULES_DIR/setup.sh"
+            setup_main "$@"
+            ;;
         help)
             source "$MODULES_DIR/help.sh"
             show_help

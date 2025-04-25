@@ -16,6 +16,7 @@ This document explains the detailed usage of Dockit.
     - [connect](#connect---connect-to-container)
     - [status](#status---check-status)
     - [migrate](#migrate---upgrade-version)
+    - [setup](#setup---complete-environment-setup)
     - [help](#help---display-help)
 4. [Configuration File](#configuration-file)
 5. [Troubleshooting](#troubleshooting)
@@ -208,6 +209,22 @@ This command performs the following tasks:
 - Preserves custom configuration
 
 The migration process is designed to be safe and includes automatic rollback in case of failure.
+
+### setup - Complete Environment Setup
+
+Run initialization, build, start, and connect in one go.
+
+```bash
+dockit setup
+```
+
+This command provides a streamlined process by sequentially performing these tasks:
+- Initializes the Docker development environment (equivalent to `init`)
+- Builds the Docker image (equivalent to `build`)
+- Starts the container (equivalent to `up`)
+- Connects to the container (equivalent to `connect`)
+
+At each step, you will be prompted to confirm whether you want to proceed, allowing you to stop at any point in the process. This is ideal for those who want to set up their entire environment with a single command while maintaining control over each step.
 
 ### help - Display Help
 
