@@ -215,9 +215,9 @@ check_version_compatibility() {
 # Check dockit directory validity
 # dockit 디렉토리 유효성 검사
 check_dockit_validity() {
-    # Skip check for init command
-    # init 명령어일 때는 체크 건너뛰기
-    if [[ "$1" == "init" ]]; then
+    # Skip check for init command and list command
+    # init 명령어와 list 명령어일 때는 체크 건너뛰기
+    if [[ "$1" == "init" || "$1" == "list" ]]; then
         return 0
     fi
 

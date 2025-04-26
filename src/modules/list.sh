@@ -10,7 +10,7 @@ source "$SCRIPT_DIR/common.sh"
 
 # Load configuration
 # 설정 로드
-load_env
+load_env "list"
 
 # Function to truncate text if it's longer than max_length
 # 텍스트가 최대 길이보다 길면 잘라내는 함수
@@ -194,6 +194,10 @@ list_main() {
     # 컨테이너가 없는 경우 처리
     if [ -z "$container_ids" ]; then
         echo -e "${YELLOW}$(get_message MSG_LIST_NO_CONTAINERS)${NC}"
+        echo ""
+        echo "$(get_message MSG_LIST_RUN_INIT_HINT)"
+        echo "  dockit init"
+        echo ""
         return 0
     fi
 
