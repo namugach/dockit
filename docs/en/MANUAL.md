@@ -19,6 +19,7 @@ This document explains the detailed usage of Dockit.
     - [setup](#setup---complete-environment-setup)
     - [run](#run---automated-run)
     - [join](#join---automated-run-and-connect)
+    - [list](#list---list-containers)
     - [help](#help---display-help)
 4. [Configuration File](#configuration-file)
 5. [Troubleshooting](#troubleshooting)
@@ -258,6 +259,30 @@ This command performs the following tasks:
 - Connects to the container immediately (equivalent to `connect`)
 
 The `join` command combines the functionality of both `run` and `connect` commands, providing a complete end-to-end workflow from initialization to interactive shell. This is perfect for when you want to start working in your development environment with a single command.
+
+### list - List Containers
+
+List all dockit containers (running and stopped).
+
+```bash
+dockit list
+```
+
+This command displays the following information for all containers created with dockit:
+- Container ID (12 characters)
+- Image name
+- Container name (displayed in simplified form)
+- Creation date and time
+- Status (running or stopped, color-coded)
+- IP address (for running containers)
+- Exposed ports (for running containers)
+
+Container names are displayed in a simplified form for better readability:
+- The 'dockit-' prefix is removed
+- The meaningful last part of the directory path is shown instead of the full path
+  - Example: 'dockit-home-hgs-dockit-test-temp-b' → 'temp-b'
+
+This feature is particularly useful when managing multiple dockit environments, making it easy to identify and check the status of containers created from different projects at a glance.
 
 ### help - Display Help
 

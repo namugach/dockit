@@ -44,14 +44,15 @@ _dockit() {
         "up:$(dockit_get_message MSG_COMPLETION_UP)"
         "stop:$(dockit_get_message MSG_COMPLETION_STOP)"
         "down:$(dockit_get_message MSG_COMPLETION_DOWN)"
-        "status:$(dockit_get_message MSG_COMPLETION_STATUS)"
         "connect:$(dockit_get_message MSG_COMPLETION_CONNECT)"
+        "status:$(dockit_get_message MSG_COMPLETION_STATUS)"
         "help:$(dockit_get_message MSG_COMPLETION_HELP)"
         "version:$(dockit_get_message MSG_COMPLETION_VERSION)"
         "migrate:$(dockit_get_message MSG_COMPLETION_MIGRATE)"
         "setup:$(dockit_get_message MSG_COMPLETION_SETUP)"
         "run:$(dockit_get_message MSG_COMPLETION_RUN)"
         "join:$(dockit_get_message MSG_COMPLETION_JOIN)"
+        "list:$(dockit_get_message MSG_COMPLETION_LIST)"
     )
     
     # 자동완성 설명 표시

@@ -61,6 +61,7 @@ Dockit provides the following main commands:
 - `setup`: Run initialization, build, start, and connect in one go
 - `run`: Automatically run initialization, build and start
 - `join`: Automatically run initialization, build, start, and connect to container in one command
+- `list`: List all containers created with dockit
 - `migrate`: Upgrade to a newer version
 - `help`: Display help information
 
