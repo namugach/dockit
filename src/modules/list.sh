@@ -8,9 +8,6 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-# Load configuration
-# 설정 로드
-load_env "list"
 
 # Function to truncate text if it's longer than max_length
 # 텍스트가 최대 길이보다 길면 잘라내는 함수
