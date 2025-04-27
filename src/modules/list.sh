@@ -135,9 +135,9 @@ get_status_display() {
     esac
 }
 
-# Print container row
-# 컨테이너 행 출력
-print_container_row() {
+# Format container info for display
+# 컨테이너 정보를 표시용으로 포맷팅
+format_container_info() {
     local container_id="$1"
     local format="$2"
     
@@ -160,7 +160,7 @@ print_container_row() {
     # 상태 텍스트 가져오기
     local status_display=$(get_status_display "$status")
     
-    # docker ps 스타일로 행 출력
+    # 포맷된 결과 반환
     printf "$format" \
         "${container_id:0:12}" \
         "$image_display" \
@@ -171,6 +171,72 @@ print_container_row() {
         "$ports_display"
 }
 
+# 로딩 메시지 표시
+# Display loading message
+show_loading() {
+    local message="$1"
+    
+    # 간단한 메시지만 출력하고 백그라운드 프로세스 없이 진행
+    echo -e "* ${message} *"
+}
+# 모든 dockit 컨테이너 가져오기 및 없는 경우 처리하는 함수
+get_and_check_containers() {
+    local format="$1"
+    local container_ids=$(get_dockit_containers)
+    
+    # 컨테이너가 없는 경우 처리
+    if [ -z "$container_ids" ]; then
+        print_header "$format"
+        echo -e "${YELLOW}$(get_message MSG_LIST_NO_CONTAINERS)${NC}"
+        echo ""
+        echo "$(get_message MSG_LIST_RUN_INIT_HINT)"
+        echo "  dockit init"
+        echo ""
+        return 1
+    fi
+    
+    echo "$container_ids"
+    return 0
+}
+
+# 컨테이너 정보를 수집하고 파일에 저장하는 함수
+collect_container_data() {
+    local container_ids="$1"
+    local format="$2"
+    local output_file="$3"
+    
+    for container_id in $container_ids; do
+        # 컨테이너 기본 정보 가져오기
+        local container_info=$(get_container_info "$container_id")
+        local name=$(echo "$container_info" | cut -d'|' -f1)
+        local image=$(echo "$container_info" | cut -d'|' -f2)
+        local created=$(echo "$container_info" | cut -d'|' -f3)
+        local status=$(echo "$container_info" | cut -d'|' -f4)
+        
+        # 추가 정보 가져오기
+        local ip_address=$(get_container_ip "$container_id" "$status")
+        local ports=$(get_container_ports "$container_id" "$status")
+        
+        # 긴 텍스트 필드 잘라내기
+        local image_display=$(truncate_text "$image" 20)
+        local name_display=$(truncate_text "$name" 20)
+        local ports_display=$(truncate_text "$ports" 20)
+        
+        # 상태 텍스트 가져오기
+        local status_display=$(get_status_display "$status")
+        
+        # 로우 데이터를 파일에 저장
+        printf "$format" \
+            "${container_id:0:12}" \
+            "$image_display" \
+            "$name_display" \
+            "$created" \
+            "$status_display" \
+            "$ip_address" \
+            "$ports_display" >> "$output_file"
+    done
+}
+
 # Main function for listing dockit containers
 # dockit 컨테이너 목록 표시를 위한 메인 함수
 list_main() {
@@ -179,29 +245,35 @@ list_main() {
         exit 1
     fi
 
-    # 헤더 출력을 위한 형식 문자열 정의
+    # 형식 문자열 정의
     local format="%-13s  %-20s  %-25s  %-25s  %-10s  %-17s  %s\n"
+
+    # 컨테이너 데이터를 파일에 저장
+    local temp_file=$(mktemp)
+
     
-    # 헤더 출력
-    print_header "$format"
-    
-    # 모든 dockit 컨테이너 가져오기
-    local container_ids=$(get_dockit_containers)
-    
-    # 컨테이너가 없는 경우 처리
-    if [ -z "$container_ids" ]; then
-        echo -e "${YELLOW}$(get_message MSG_LIST_NO_CONTAINERS)${NC}"
-        echo ""
-        echo "$(get_message MSG_LIST_RUN_INIT_HINT)"
-        echo "  dockit init"
-        echo ""
+    # 컨테이너 가져오기 및 확인
+    local container_ids=$(get_and_check_containers "$format")
+    if [ $? -ne 0 ]; then
         return 0
     fi
 
-    # 각 컨테이너 정보 출력
-    for container_id in $container_ids; do
-        print_container_row "$container_id" "$format"
-    done
+    loading_msg="$(get_message MSG_LIST_LOADING_DATA)"
+    show_loading "$loading_msg"
+
+    # 모든 컨테이너 정보를 임시 파일에 수집
+    collect_container_data "$container_ids" "$format" "$temp_file"
+
+    
+    # 빈 줄 추가
+    echo
+    
+    # 헤더와 함께 모든 정보를 한 번에 출력
+    print_header "$format"
+    cat "$temp_file"
+    
+    # 임시 파일 삭제
+    rm -f "$temp_file"
 }
 
 # Run main function if this script is called directly

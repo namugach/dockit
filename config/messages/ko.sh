@@ -572,3 +572,4 @@ MSG_LIST_NO_CONTAINERS="No dockit containers found."
 MSG_STATUS_RUNNING="running"
 MSG_STATUS_STOPPED="stopped"
 # 줄바꿈 때문에 영어를 강제로 사용함 한글로 변역 X End
+MSG_LIST_LOADING_DATA="컨테이너 정보를 불러오는 중..."
