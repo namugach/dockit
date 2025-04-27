@@ -7,7 +7,6 @@
 # 공통 모듈 로드
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
-source "$MODULES_DIR/list.sh"
 
 # 컨테이너 시작 함수
 # Function to start a container
@@ -130,12 +129,11 @@ start_all_containers() {
 # 사용법 표시 함수
 # Show usage function
 show_usage() {
-    list_main "$@"
-    echo ""
     log "INFO" "$MSG_START_USAGE"
     echo -e "  dockit start <no> - $MSG_START_USAGE_NO"
     echo -e "  dockit start this - $MSG_START_USAGE_THIS"
     echo -e "  dockit start all - $MSG_START_USAGE_ALL"
+    echo ""
 }
 
 # this 인자 처리 함수
@@ -193,7 +191,7 @@ start_main() {
     # 인자가 없는 경우 컨테이너 목록 표시
     # If no arguments, show container list
     if [ $# -eq 0 ]; then
-        show_usage "$@"
+        show_usage
         return 0
     fi
     

@@ -80,6 +80,11 @@ _dockit_completion() {
         # Second argument completion for start command
         COMPREPLY=( $(compgen -W "this all" -- ${cur}) )
         return 0
+    elif [ "$COMP_CWORD" -eq 2 ] && [ "$prev" = "stop" ]; then
+        # stop 명령어의 두 번째 인자 자동완성
+        # Second argument completion for stop command
+        COMPREPLY=( $(compgen -W "this all" -- ${cur}) )
+        return 0
     fi
 }
 

@@ -29,6 +29,7 @@ dockit_get_message() {
 _dockit() {
     local -a commands
     local -a start_options
+    local -a stop_options
     
     # 특별한 하위 명령어 자동완성 처리
     # Handle special subcommand completion
@@ -40,6 +41,14 @@ _dockit() {
                     "all:$(dockit_get_message MSG_START_USAGE_ALL)"
                 )
                 _describe 'start_option' start_options
+                return 0
+                ;;
+            stop)
+                stop_options=(
+                    "this:$(dockit_get_message MSG_STOP_USAGE_THIS)"
+                    "all:$(dockit_get_message MSG_STOP_USAGE_ALL)"
+                )
+                _describe 'stop_option' stop_options
                 return 0
                 ;;
         esac

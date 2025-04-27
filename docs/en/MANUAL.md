@@ -91,37 +91,29 @@ During initialization, you can configure the following information:
 - Image name
 - Container name
 
-### start - Start Container
+### Start Command
 
-Start containers created with Dockit.
+The `start` command allows you to start containers. This is used to start existing containers.
 
+Usage:
 ```bash
-dockit start              # List all containers and show usage
-dockit start <number>     # Start container with specified number(s)
-dockit start this         # Start container for current project directory
-dockit start all          # Start all dockit containers
+dockit start [options]
 ```
 
-This command provides several ways to start containers:
-
-- Without arguments: Shows a list of all containers and displays usage information
-- With number(s): Starts the container(s) with the specified number(s) from the list
-- With `this`: Starts the container associated with the current directory (if it's a Dockit project)
-- With `all`: Starts all containers created with Dockit
+Options:
+- (no arguments): Shows a list of available containers
+- `number`: Starts the container with the specified number from the list
+- `"this"`: Starts the container for the current project directory
+- `"all"`: Starts all dockit containers
 
 Examples:
 ```bash
-# Start containers with numbers 1 and 2 from the list
-dockit start 1 2
-
-# Start the container for the current directory's project
-dockit start this
-
-# Start all dockit containers
-dockit start all
+dockit start           # Shows container list
+dockit start 1         # Starts container number 1
+dockit start 1 2 3     # Starts containers number 1, 2, and 3
+dockit start this      # Starts container for current project
+dockit start all       # Starts all dockit containers
 ```
-
-This command uses the container numbers shown in the `dockit list` output to identify which containers to start.
 
 ### build - Build Docker Image
 
@@ -151,15 +143,29 @@ This command performs the following tasks:
 - Shows the container status information
 - Useful for automated scripts or when you don't need to connect immediately
 
-### stop - Stop Container
+### Stop Command
 
-Stop a running container (preserving state).
+The `stop` command allows you to stop running containers. This preserves the container state.
 
+Usage:
 ```bash
-dockit stop
+dockit stop [options]
 ```
 
-This command stops the container but does not delete it. All data and settings are preserved, and you can restart it later with the `start` command.
+Options:
+- (no arguments): Shows a list of available containers
+- `number`: Stops the container with the specified number from the list
+- `"this"`: Stops the container for the current project directory
+- `"all"`: Stops all dockit containers
+
+Examples:
+```bash
+dockit stop           # Shows container list
+dockit stop 1         # Stops container number 1
+dockit stop 1 2 3     # Stops containers number 1, 2, and 3
+dockit stop this      # Stops container for current project
+dockit stop all       # Stops all dockit containers
+```
 
 ### down - Remove Container
 
