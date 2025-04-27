@@ -226,8 +226,9 @@ check_dockit_validity() {
     # Check if .dockit_project directory exists first
     # 먼저 .dockit_project 디렉토리가 있는지 확인
     if [ ! -d "$dockit_dir" ]; then
+        # ERROR 레벨로만 메시지 출력
         log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
-        log "INFO" "$MSG_COMMON_NOT_INITIALIZED"
+        echo "" # 빈 줄 추가
         exit 1
     fi
     
@@ -236,8 +237,8 @@ check_dockit_validity() {
     local required_files=("docker-compose.yml" "Dockerfile" ".env")
     for file in "${required_files[@]}"; do
         if [ ! -f "$dockit_dir/$file" ]; then
-            log "ERROR" "$MSG_COMMON_NOT_INITIALIZED"
-            log "INFO" "$MSG_COMMON_RUN_INIT_FIRST"
+            # ERROR 레벨로만 메시지 출력
+            log "ERROR" "$MSG_COMMON_RUN_INIT_FIRST"
             exit 1
         fi
     done
