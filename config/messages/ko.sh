@@ -189,20 +189,7 @@ MSG_HELP_HELP="  help     - 도움말 표시"
 MSG_HELP_VERSION="  version  - 버전 정보 표시"
 MSG_HELP_LIST="  list     - 모든 dockit 컨테이너 목록 표시"
 
-# 도움말 추가 메시지
-MSG_TITLE="Docker 개발 환경 도구"
-MSG_EXAMPLES_HEADER="예제"
-MSG_EXAMPLE_INIT="  dockit init      # 초기 설정 및 환경 구성"
-MSG_EXAMPLE_START="  dockit start    # 컨테이너 시작"
-MSG_EXAMPLE_BUILD="  dockit build    # Docker 이미지 빌드"
-MSG_EXAMPLE_UP="  dockit up       # 컨테이너 백그라운드에서 시작"
-MSG_EXAMPLE_STOP="  dockit stop     # 컨테이너 정지 (상태 유지)"
-MSG_EXAMPLE_DOWN="  dockit down     # 컨테이너 완전 제거"
-MSG_EXAMPLE_CONNECT="  dockit connect  # 컨테이너 접속"
-MSG_EXAMPLE_MIGRATE="  dockit migrate  # 최신 버전으로 업그레이드"
-MSG_EXAMPLE_SETUP="  dockit setup   # 전체 환경 설정 (init, build, up, connect)"
-MSG_EXAMPLE_RUN="  dockit run     # 자동 실행 (init, build, up, start)"
-MSG_EXAMPLE_JOIN="  dockit join    # 자동 실행 및 접속 (run + connect)"
+
 
 MSG_CONFIG_FILES_HEADER="설정 파일"
 MSG_CONFIG_FILE_ENV="  .dockit_project/.env                # 사용자 설정이 저장되는 파일"

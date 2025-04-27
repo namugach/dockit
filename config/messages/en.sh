@@ -189,20 +189,7 @@ MSG_HELP_HELP="  help     - Display this help"
 MSG_HELP_VERSION="  version  - Display version information"
 MSG_HELP_LIST="  list     - List all dockit containers"
 
-# Help additional messages
-MSG_TITLE="Docker Development Environment Tool"
-MSG_EXAMPLES_HEADER="Examples"
-MSG_EXAMPLE_INIT="  dockit init      # Initial setup and configuration"
-MSG_EXAMPLE_START="  dockit start    # Start container"
-MSG_EXAMPLE_BUILD="  dockit build    # Build Docker image"
-MSG_EXAMPLE_UP="  dockit up       # Start container in background"
-MSG_EXAMPLE_STOP="  dockit stop     # Stop container (preserves state)"
-MSG_EXAMPLE_DOWN="  dockit down     # Remove container completely"
-MSG_EXAMPLE_CONNECT="  dockit connect  # Connect to container"
-MSG_EXAMPLE_MIGRATE="  dockit migrate  # Upgrade to the latest version"
-MSG_EXAMPLE_SETUP="  dockit setup    # Complete environment setup (init, build, up, connect)"
-MSG_EXAMPLE_RUN="  dockit run       # Automated run (init, build, up, start)"
-MSG_EXAMPLE_JOIN="  dockit join      # Automated run and connect (run + connect)"
+
 
 MSG_CONFIG_FILES_HEADER="Configuration Files"
 MSG_CONFIG_FILE_ENV="  .dockit_project/.env                # User settings file"
