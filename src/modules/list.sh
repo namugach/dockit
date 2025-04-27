@@ -171,14 +171,22 @@ format_container_info() {
         "$ports_display"
 }
 
-# 로딩 메시지 표시
-# Display loading message
+# 로딩 메시지 표시 - 같은 줄에 출력하고 나중에 지울 수 있게
+# Display loading message - print on the same line for later removal
 show_loading() {
     local message="$1"
     
-    # 간단한 메시지만 출력하고 백그라운드 프로세스 없이 진행
-    echo -e "* ${message} *"
+    # 같은 줄에 로딩 메시지 출력 (줄바꿈 없이)
+    echo -en "* ${message} *"
 }
+
+# 로딩 메시지 지우기
+# Clear loading message
+clear_loading() {
+    # 커서를 줄 시작으로 이동시키고 현재 줄을 지움
+    echo -en "\r\033[K"
+}
+
 # 모든 dockit 컨테이너 가져오기 및 없는 경우 처리하는 함수
 get_and_check_containers() {
     local format="$1"
@@ -258,15 +266,15 @@ list_main() {
         return 0
     fi
 
+    # 로딩 메시지 표시
     loading_msg="$(get_message MSG_LIST_LOADING_DATA)"
     show_loading "$loading_msg"
 
     # 모든 컨테이너 정보를 임시 파일에 수집
     collect_container_data "$container_ids" "$format" "$temp_file"
 
-    
-    # 빈 줄 추가
-    echo
+    # 로딩 메시지 지우기
+    clear_loading
     
     # 헤더와 함께 모든 정보를 한 번에 출력
     print_header "$format"
