@@ -213,7 +213,17 @@ collect_container_data() {
     local format="$2"
     local output_file="$3"
     
-    for container_id in $container_ids; do
+    # 컨테이너 ID를 배열로 변환
+    local container_array=()
+    for id in $container_ids; do
+        container_array+=("$id")
+    done
+    
+    # 배열을 역순으로 처리 (최신 컨테이너가 먼저 오도록)
+    local container_count=${#container_array[@]}
+    for (( i=${container_count}-1; i>=0; i-- )); do
+        local container_id=${container_array[$i]}
+        
         # 컨테이너 기본 정보 가져오기
         local container_info=$(get_container_info "$container_id")
         local name=$(echo "$container_info" | cut -d'|' -f1)
