@@ -37,6 +37,7 @@ check_docker_availability() {
 print_header() {
     local format="$1"
     printf "$format" \
+        "$(get_message MSG_LIST_NUMBER)" \
         "$(get_message MSG_LIST_ID)" \
         "$(get_message MSG_LIST_IMAGE)" \
         "$(get_message MSG_LIST_NAME)" \
@@ -221,6 +222,8 @@ collect_container_data() {
     
     # 배열을 역순으로 처리 (최신 컨테이너가 먼저 오도록)
     local container_count=${#container_array[@]}
+    local index=1
+    
     for (( i=${container_count}-1; i>=0; i-- )); do
         local container_id=${container_array[$i]}
         
@@ -243,8 +246,9 @@ collect_container_data() {
         # 상태 텍스트 가져오기
         local status_display=$(get_status_display "$status")
         
-        # 로우 데이터를 파일에 저장
+        # 로우 데이터를 파일에 저장 (인덱스 추가)
         printf "$format" \
+            "$index" \
             "${container_id:0:12}" \
             "$image_display" \
             "$name_display" \
@@ -252,6 +256,9 @@ collect_container_data() {
             "$status_display" \
             "$ip_address" \
             "$ports_display" >> "$output_file"
+        
+        # 인덱스 증가
+        ((index++))
     done
 }
 
@@ -263,12 +270,11 @@ list_main() {
         exit 1
     fi
 
-    # 형식 문자열 정의
-    local format="%-13s  %-20s  %-25s  %-25s  %-10s  %-17s  %s\n"
+    # 형식 문자열 정의 (인덱스 칼럼 추가)
+    local format="%-6s  %-13s  %-20s  %-25s  %-25s  %-10s  %-17s  %s\n"
 
     # 컨테이너 데이터를 파일에 저장
     local temp_file=$(mktemp)
-
     
     # 컨테이너 가져오기 및 확인
     local container_ids=$(get_and_check_containers "$format")

@@ -546,17 +546,16 @@ MSG_EXAMPLE_JOIN="  dockit join    # 자동 실행 및 접속 (run + connect)"
 MSG_COMPLETION_JOIN="자동 실행 및 접속을 한번에 실행"
 
 # List module messages
-MSG_LIST_HEADER="Dockit 컨테이너"
-# 줄바꿈 때문에 영어를 강제로 사용함 한글로 변역 X Start
+MSG_LIST_NUMBER="NO"
 MSG_LIST_ID="ID"
 MSG_LIST_IMAGE="IMAGE"
 MSG_LIST_NAME="NAME"
 MSG_LIST_CREATED="CREATED"
 MSG_LIST_STATUS="STATUS"
-MSG_LIST_IP="IP ADDRESS"
+MSG_LIST_IP="IP"
 MSG_LIST_PORTS="PORTS"
-MSG_LIST_NO_CONTAINERS="No dockit containers found."
+MSG_LIST_NO_CONTAINERS="No dockit containers are currently running"
+MSG_LIST_RUN_INIT_HINT="To create a container, run:"
 MSG_STATUS_RUNNING="running"
 MSG_STATUS_STOPPED="stopped"
-# 줄바꿈 때문에 영어를 강제로 사용함 한글로 변역 X End
 MSG_LIST_LOADING_DATA="컨테이너 정보를 불러오는 중..."
