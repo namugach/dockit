@@ -75,6 +75,11 @@ _dockit_completion() {
             done
             echo "" >&2
         fi
+    elif [ "$COMP_CWORD" -eq 2 ] && [ "$prev" = "start" ]; then
+        # start 명령어의 두 번째 인자 자동완성
+        # Second argument completion for start command
+        COMPREPLY=( $(compgen -W "this all" -- ${cur}) )
+        return 0
     fi
 }
 

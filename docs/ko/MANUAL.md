@@ -93,15 +93,35 @@ dockit init
 
 ### start - 컨테이너 시작
 
-초기화된 Docker 컨테이너를 시작합니다.
+Dockit으로 생성된 컨테이너를 시작합니다.
 
 ```bash
-dockit start
+dockit start              # 모든 컨테이너 목록 표시 및 사용법 표시
+dockit start <번호>       # 지정된 번호의 컨테이너 시작
+dockit start this         # 현재 프로젝트 디렉토리의 컨테이너 시작
+dockit start all          # 모든 dockit 컨테이너 시작
 ```
 
-이 명령어는 다음 작업을 수행합니다:
-- Docker Compose를 사용하여 컨테이너 시작
-- 컨테이너 접속 여부 확인 (선택 사항)
+이 명령어는 컨테이너를 시작하는 여러 방법을 제공합니다:
+
+- 인자 없이: 모든 컨테이너 목록을 표시하고 사용법 정보를 제공합니다
+- 번호 지정: 목록에서 지정된 번호의 컨테이너를 시작합니다
+- `this` 사용: 현재 디렉토리와 연결된 컨테이너를 시작합니다 (Dockit 프로젝트인 경우)
+- `all` 사용: Dockit으로 생성된 모든 컨테이너를 시작합니다
+
+예시:
+```bash
+# 목록에서 1번과 2번 컨테이너 시작
+dockit start 1 2
+
+# 현재 디렉토리 프로젝트의 컨테이너 시작
+dockit start this
+
+# 모든 dockit 컨테이너 시작
+dockit start all
+```
+
+이 명령어는 `dockit list` 출력에 표시된 컨테이너 번호를 사용하여 시작할 컨테이너를 식별합니다.
 
 ### build - Docker 이미지 빌드
 

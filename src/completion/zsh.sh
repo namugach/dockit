@@ -28,6 +28,23 @@ dockit_get_message() {
 # ZSH completion function
 _dockit() {
     local -a commands
+    local -a start_options
+    
+    # 특별한 하위 명령어 자동완성 처리
+    # Handle special subcommand completion
+    if (( CURRENT == 3 )); then
+        case ${words[2]} in
+            start)
+                start_options=(
+                    "this:$(dockit_get_message MSG_START_USAGE_THIS)"
+                    "all:$(dockit_get_message MSG_START_USAGE_ALL)"
+                )
+                _describe 'start_option' start_options
+                return 0
+                ;;
+        esac
+        return 0
+    fi
     
     # 첫 번째 인자만 자동완성 처리 (두 번째 단어 입력 중일 때만)
     # Only handle completion for the first argument (only when entering the second word)

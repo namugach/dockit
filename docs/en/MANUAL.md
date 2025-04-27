@@ -93,15 +93,35 @@ During initialization, you can configure the following information:
 
 ### start - Start Container
 
-Start the initialized Docker container.
+Start containers created with Dockit.
 
 ```bash
-dockit start
+dockit start              # List all containers and show usage
+dockit start <number>     # Start container with specified number(s)
+dockit start this         # Start container for current project directory
+dockit start all          # Start all dockit containers
 ```
 
-This command performs the following tasks:
-- Starts the container using Docker Compose
-- Asks whether to connect to the container (optional)
+This command provides several ways to start containers:
+
+- Without arguments: Shows a list of all containers and displays usage information
+- With number(s): Starts the container(s) with the specified number(s) from the list
+- With `this`: Starts the container associated with the current directory (if it's a Dockit project)
+- With `all`: Starts all containers created with Dockit
+
+Examples:
+```bash
+# Start containers with numbers 1 and 2 from the list
+dockit start 1 2
+
+# Start the container for the current directory's project
+dockit start this
+
+# Start all dockit containers
+dockit start all
+```
+
+This command uses the container numbers shown in the `dockit list` output to identify which containers to start.
 
 ### build - Build Docker Image
 
