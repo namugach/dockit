@@ -142,15 +142,22 @@ check_project_container_state() {
     local already_msg=""
     local not_found_info=""
     
-    if [ "$action" = "start" ]; then
-        check_state="true"
-        already_msg="$MSG_CONTAINER_ALREADY_RUNNING"
-        not_found_info="$MSG_CONTAINER_NOT_FOUND_INFO"
-    else
-        check_state="false"
-        already_msg="$MSG_CONTAINER_ALREADY_STOPPED"
-        not_found_info=""
-    fi
+    case "$action" in
+        "start")
+            check_state="true"
+            already_msg="$MSG_CONTAINER_ALREADY_RUNNING"
+            not_found_info="$MSG_CONTAINER_NOT_FOUND_INFO"
+            ;;
+        "stop")  # 명확하게 stop 케이스 지정
+            check_state="false"
+            already_msg="$MSG_CONTAINER_ALREADY_STOPPED"
+            not_found_info=""
+            ;;
+        *)  # 그 외 케이스
+            log "ERROR" "지원되지 않는 액션: $action"
+            return 1
+            ;;
+    esac
     
     # 컨테이너 존재 여부 확인
     # Check if container exists
@@ -211,19 +218,26 @@ perform_current_project_action() {
     local docker_compose_cmd=""
     local success_info=""
     
-    if [ "$action" = "start" ]; then
-        action_msg="$MSG_STARTING_CONTAINER"
-        success_msg="$MSG_CONTAINER_STARTED"
-        fail_msg="$MSG_CONTAINER_START_FAILED"
-        docker_compose_cmd="start"
-        success_info="\n${BLUE}$MSG_CONNECT_INFO${NC} dockit connect"
-    else
-        action_msg="$MSG_STOPPING_CONTAINER"
-        success_msg="$MSG_CONTAINER_STOPPED"
-        fail_msg="$MSG_CONTAINER_STOP_FAILED"
-        docker_compose_cmd="stop"
-        success_info="\n${BLUE}$MSG_CONTAINER_STOPPED_INFO${NC}"
-    fi
+    case "$action" in
+        "start")
+            action_msg="$MSG_STARTING_CONTAINER"
+            success_msg="$MSG_CONTAINER_STARTED"
+            fail_msg="$MSG_CONTAINER_START_FAILED"
+            docker_compose_cmd="start"
+            success_info="\n${BLUE}$MSG_CONNECT_INFO${NC} dockit connect"
+            ;;
+        "stop")  # 명확하게 stop 케이스 지정
+            action_msg="$MSG_STOPPING_CONTAINER"
+            success_msg="$MSG_CONTAINER_STOPPED"
+            fail_msg="$MSG_CONTAINER_STOP_FAILED"
+            docker_compose_cmd="stop"
+            success_info="\n${BLUE}$MSG_CONTAINER_STOPPED_INFO${NC}"
+            ;;
+        *)  # 그 외 케이스
+            log "ERROR" "지원되지 않는 액션: $action"
+            return 1
+            ;;
+    esac
     
     # 컨테이너 액션 수행
     # Perform container action
@@ -285,17 +299,24 @@ perform_all_containers_action() {
     local no_containers_msg=""
     local spinner_action_text=""
     
-    if [ "$action" = "start" ]; then
-        start_msg="$MSG_START_ALL"
-        result_msg="$MSG_START_ALL_RESULT"
-        no_containers_msg="$MSG_NO_CONTAINERS"
-        spinner_action_text="시작 중"
-    else  # stop
-        start_msg="$MSG_STOP_ALL"
-        result_msg="$MSG_STOP_ALL_RESULT"
-        no_containers_msg="$MSG_NO_RUNNING_CONTAINERS"
-        spinner_action_text="중지 중"
-    fi
+    case "$action" in
+        "start")
+            start_msg="$MSG_START_ALL"
+            result_msg="$MSG_START_ALL_RESULT"
+            no_containers_msg="$MSG_NO_CONTAINERS"
+            spinner_action_text="시작 중"
+            ;;
+        "stop")  # 명확하게 stop 케이스 지정
+            start_msg="$MSG_STOP_ALL"
+            result_msg="$MSG_STOP_ALL_RESULT"
+            no_containers_msg="$MSG_NO_RUNNING_CONTAINERS"
+            spinner_action_text="중지 중"
+            ;;
+        *)  # 그 외 케이스
+            log "ERROR" "지원되지 않는 액션: $action"
+            return 1
+            ;;
+    esac
     
     log "INFO" "$start_msg"
     
@@ -390,11 +411,15 @@ set_action_messages() {
     case "$action" in
         "start")
             action_messages[invalid_number_msg]="$MSG_START_INVALID_NUMBER"
-            action_messages[spinner_action_text]="시작 중??"
+            action_messages[spinner_action_text]="시작 중"
             ;;
-        "stop")
+        "stop")  # 명확하게 stop 케이스 지정
             action_messages[invalid_number_msg]="$MSG_STOP_INVALID_NUMBER"
-            action_messages[spinner_action_text]="중지 중??"
+            action_messages[spinner_action_text]="중지 중"
+            ;;
+        *)  # 그 외 케이스
+            log "ERROR" "지원되지 않는 액션: $action"
+            return 1
             ;;
     esac
 }
