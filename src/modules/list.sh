@@ -7,7 +7,7 @@
 # 공통 모듈 로드
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
-
+source "$UTILS_DIR/async_tasks.sh"
 
 # Function to truncate text if it's longer than max_length
 # 텍스트가 최대 길이보다 길면 잘라내는 함수
@@ -287,10 +287,12 @@ list_main() {
     show_loading "$loading_msg"
 
     # 모든 컨테이너 정보를 임시 파일에 수집
-    collect_container_data "$container_ids" "$format" "$temp_file"
-
+    add_task "$loading_msg" 'collect_container_data "$container_ids" "$format" "$temp_file"'
+    # collect_container_data "$container_ids" "$format" "$temp_file"
+    ( spinner_finish_message )
     # 로딩 메시지 지우기
-    clear_loading
+    # clear_loading
+
     
     # 헤더와 함께 모든 정보를 한 번에 출력
     print_header "$format"
