@@ -344,7 +344,7 @@ perform_all_containers_action() {
     done
     
     # 비동기 작업 실행 (메시지 표시 없음)
-    async_tasks_hide_finish_message
+    async_tasks "작업들 끝!"
     
     # 결과 읽기
     local counts=$(cat "$temp_result")
@@ -381,6 +381,8 @@ handle_this_argument() {
     fi
 }
 
+# 액션에 따른 메시지 설정
+# Set messages according to action  
 set_action_messages() {
     local action="$1"
     declare -gA action_messages=()   # 전역 associative array로 선언
@@ -397,6 +399,8 @@ set_action_messages() {
     esac
 }
 
+# 모든 인자가 숫자인지 확인
+# Check if all arguments are numeric  
 check_if_all_numeric() {
     local -a check_args=("$@")
     for arg in "${check_args[@]}"; do
@@ -406,6 +410,40 @@ check_if_all_numeric() {
         fi
     done
     echo "true"
+}
+
+# 컨테이너 작업 처리 함수
+# Function to process container tasks
+process_container_tasks() {
+    local action="$1"
+    local spinner_action_text="$2"
+    local invalid_number_msg="$3"
+    shift 3
+    local container_indices=("$@")
+    
+    for container_index in "${container_indices[@]}"; do
+        local container_id=$(get_container_id_by_index "$container_index")
+        if [ -n "$container_id" ]; then
+            local container_short=${container_id:0:12}
+            
+            # 컨테이너 기본 정보 가져오기
+            local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+            local container_desc="$container_short"
+            if [ -n "$name" ]; then
+                container_desc="$container_desc ($name)"
+            fi
+            
+            # 직접 스피너 텍스트 생성
+            local spinner_text="컨테이너 ${container_desc} ${spinner_action_text}"
+            
+            # 작업 추가
+            add_task "$spinner_text" "
+                perform_container_action \"$action\" \"$container_id\" \"true\"
+            "
+        else
+            log "ERROR" "$(printf "$invalid_number_msg" "$container_index")"
+        fi
+    done
 }
 
 # 숫자 인자 처리 함수
@@ -428,33 +466,8 @@ handle_numeric_arguments() {
         return 1
     fi
     
-    # 숫자에 해당하는 컨테이너 액션 수행 - 비동기 방식
-    # 결과 저장용 임시 파일
-    local temp_result=$(mktemp)
-    
-    for arg in "${args[@]}"; do
-        local container_id=$(get_container_id_by_index "$arg")
-        if [ -n "$container_id" ]; then
-            local container_short=${container_id:0:12}
-            
-            # 컨테이너 기본 정보 가져오기
-            local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
-            local container_desc="$container_short"
-            if [ -n "$name" ]; then
-                container_desc="$container_desc ($name)"
-            fi
-            
-            # 직접 스피너 텍스트 생성
-            local spinner_text="컨테이너 ${container_desc} ${spinner_action_text}"
-            
-            # 작업 추가
-            add_task "$spinner_text" "
-                perform_container_action \"$action\" \"$container_id\" \"true\"
-            "
-        else
-            log "ERROR" "$(printf "$invalid_number_msg" "$arg")"
-        fi
-    done
+    # 컨테이너 작업 처리 함수 호출
+    process_container_tasks "$action" "$spinner_action_text" "$invalid_number_msg" "${args[@]}"
     
     # 비동기 작업 실행 (메시지 표시 없음)
     async_tasks "작업 끝"
