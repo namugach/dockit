@@ -397,6 +397,17 @@ set_action_messages() {
     esac
 }
 
+check_if_all_numeric() {
+    local -a check_args=("$@")
+    for arg in "${check_args[@]}"; do
+        if ! [[ "$arg" =~ ^[0-9]+$ ]]; then
+            echo "false"
+            break
+        fi
+    done
+    echo "true"
+}
+
 # 숫자 인자 처리 함수
 # Handle numeric arguments function
 handle_numeric_arguments() {
@@ -411,13 +422,7 @@ handle_numeric_arguments() {
     local spinner_action_text=${action_messages[spinner_action_text]}
     
     # 모든 인자가 숫자인지 확인
-    local all_numeric=true
-    for arg in "${args[@]}"; do
-        if ! [[ "$arg" =~ ^[0-9]+$ ]]; then
-            all_numeric=false
-            break
-        fi
-    done
+    local all_numeric=$(check_if_all_numeric "${args[@]}")
     
     if ! $all_numeric; then
         return 1
