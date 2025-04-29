@@ -289,7 +289,7 @@ list_main() {
     # 모든 컨테이너 정보를 임시 파일에 수집
     add_task "$loading_msg" 'collect_container_data "$container_ids" "$format" "$temp_file"'
     # collect_container_data "$container_ids" "$format" "$temp_file"
-    ( spinner_finish_message )
+    ( async_tasks_hide_finish_message )
     # 로딩 메시지 지우기
     # clear_loading
 

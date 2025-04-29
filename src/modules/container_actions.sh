@@ -4,6 +4,12 @@
 # container_actions.sh - 컨테이너 액션 관련 공통 함수
 # container_actions.sh - Common functions for container actions
 
+# Load utils
+# 유틸리티 로드
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
+source "$UTILS_DIR/async_tasks.sh"
+
 # 컨테이너 존재 여부 확인 함수
 # Function to check if container exists
 container_exists() {
@@ -246,8 +252,8 @@ get_containers_for_action() {
     fi
 }
 
-# 모든 컨테이너 액션 수행
-# Perform action on all containers
+# 모든 컨테이너 액션 수행 - 비동기 방식
+# Perform action on all containers - async way
 perform_all_containers_action() {
     local action="$1"  # "start" 또는 "stop"
     
@@ -276,17 +282,52 @@ perform_all_containers_action() {
         return 0
     fi
     
-    local success_count=0
-    local fail_count=0
+    # 결과 저장용 임시 파일
+    local temp_result=$(mktemp)
+    echo "0 0" > "$temp_result"  # 성공, 실패 카운트 초기화
     
+    # 각 컨테이너에 대한 작업 추가
     for container_id in $container_ids; do
-        if perform_container_action "$action" "$container_id"; then
-            ((success_count++))
-        else
-            ((fail_count++))
-        fi
+        local container_short=${container_id:0:12}
+        
+        # 컨테이너 기본 정보 가져오기
+        local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+        
+        # 작업 설정 로드
+        local config=$(load_action_config "$action")
+        local action_msg=$(echo "$config" | cut -d'|' -f2)
+        action_msg=${!action_msg}
+        
+        # 작업 추가
+        add_task "$(printf "$action_msg" "$container_short ($name)")" "
+            if perform_container_action \"$action\" \"$container_id\"; then
+                # 성공 카운트 증가
+                local counts=\$(cat \"$temp_result\")
+                local success=\$(echo \"\$counts\" | cut -d' ' -f1)
+                local fail=\$(echo \"\$counts\" | cut -d' ' -f2)
+                echo \"\$((success+1)) \$fail\" > \"$temp_result\"
+            else
+                # 실패 카운트 증가
+                local counts=\$(cat \"$temp_result\")
+                local success=\$(echo \"\$counts\" | cut -d' ' -f1)
+                local fail=\$(echo \"\$counts\" | cut -d' ' -f2)
+                echo \"\$success \$((fail+1))\" > \"$temp_result\"
+            fi
+        "
     done
     
+    # 비동기 작업 실행 (메시지 표시 없음)
+    (async_tasks_hide_finish_message)
+    
+    # 결과 읽기
+    local counts=$(cat "$temp_result")
+    local success_count=$(echo "$counts" | cut -d' ' -f1)
+    local fail_count=$(echo "$counts" | cut -d' ' -f2)
+    
+    # 임시 파일 삭제
+    rm -f "$temp_result"
+    
+    # 결과 출력
     log "INFO" "$(printf "$result_msg" "$success_count" "$fail_count")"
 }
 
@@ -342,15 +383,34 @@ handle_numeric_arguments() {
         return 1
     fi
     
-    # 숫자에 해당하는 컨테이너 액션 수행
+    # 숫자에 해당하는 컨테이너 액션 수행 - 비동기 방식
+    # 결과 저장용 임시 파일
+    local temp_result=$(mktemp)
+    
     for arg in "${args[@]}"; do
         local container_id=$(get_container_id_by_index "$arg")
         if [ -n "$container_id" ]; then
-            perform_container_action "$action" "$container_id"
+            local container_short=${container_id:0:12}
+            
+            # 컨테이너 기본 정보 가져오기
+            local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+            
+            # 작업 설정 로드
+            local config=$(load_action_config "$action")
+            local action_msg=$(echo "$config" | cut -d'|' -f2)
+            action_msg=${!action_msg}
+            
+            # 작업 추가
+            add_task "$(printf "$action_msg" "$container_short ($name)")" "
+                perform_container_action \"$action\" \"$container_id\"
+            "
         else
             log "ERROR" "$(printf "$invalid_number_msg" "$arg")"
         fi
     done
+    
+    # 비동기 작업 실행 (메시지 표시 없음)
+    (async_tasks)
     
     return 0
 } 

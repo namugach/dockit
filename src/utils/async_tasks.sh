@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 
-# spinner.sh - 멀티 작업 스피너 유틸리티 (완료 메시지 유지)
+# async_tasks.sh - 멀티 작업 스피너 유틸리티 (완료 메시지 유지)
 
 # 1. 기본 변수
 init_spinner_vars() {
-  frames=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
-  delay=0.12
+  # 다양한 스피너 스타일 (주석 해제하여 사용)
+  # 1. 브레이스 스타일 (기본)
+  # frames=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
+  # delay=0.12
+  frames=(▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▇ ▆ ▅ ▄ ▃ ▂ ▁ )
+  delay=0.08
   cyan=$'\033[36m'; reset=$'\033[0m'
 }
 
@@ -81,7 +85,7 @@ cleanup() {
 }
 
 # 7. 메인 
-spinner() {
+async_tasks() {
   trap 'cleanup interrupt' INT TERM
   trap 'cleanup normal' EXIT        # 단독 실행일 때만 EXIT 트랩
   
@@ -94,7 +98,7 @@ spinner() {
   cleanup normal          # 직접 호출해도 EXIT 트랩은 중복 실행 안 됨
 }
 
-spinner_finish_message() {
+async_tasks_hide_finish_message() {
   trap 'cleanup interrupt' INT TERM
   trap 'cleanup normal' EXIT        # 단독 실행일 때만 EXIT 트랩
   
@@ -112,4 +116,4 @@ spinner_finish_message() {
 # add_task "캐시 삭제 중..."              "sleep 3"
 # add_task "설정 파일 업데이트 중..."      "sleep 6"
 # add_task "서비스 재시작 중..."          "sleep 4"
-# spinner
+# async_tasks
