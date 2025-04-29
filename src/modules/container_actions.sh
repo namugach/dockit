@@ -50,11 +50,14 @@ load_action_config() {
 perform_container_action() {
     local action="$1"      # "start" 또는 "stop"
     local container_id="$2"
+    local quiet="${3:-false}"  # 로그 출력 여부 (기본값: 출력함)
     
     # 컨테이너 존재 여부 확인
     # Check if container exists
     if ! container_exists "$container_id"; then
-        log "ERROR" "$(printf "$MSG_CONTAINER_NOT_FOUND" "$container_id")"
+        if [ "$quiet" != "true" ]; then
+            log "ERROR" "$MSG_CONTAINER_NOT_FOUND"
+        fi
         return 1
     fi
     
@@ -76,24 +79,43 @@ perform_container_action() {
     success_msg=${!success_msg}
     fail_msg=${!fail_msg}
     
+    # 컨테이너 간단 정보 가져오기
+    local container_short=${container_id:0:12}
+    local name=$(docker inspect --format "{{.Name}}" "$container_id" 2>/dev/null | sed 's/^\///')
+    local container_desc="$container_short"
+    if [ -n "$name" ]; then
+        container_desc="$container_desc ($name)"
+    fi
+    
     # 컨테이너가 이미 원하는 상태인지 확인
     # Check if container is already in desired state
     if [ "$check_state" = "true" ] && is_container_running "$container_id"; then
-        log "WARNING" "$(printf "$already_msg" "$container_id")"
+        if [ "$quiet" != "true" ]; then
+            log "WARNING" "$(printf "$already_msg" "$container_desc")"
+        fi
         return 0
     elif [ "$check_state" = "false" ] && ! is_container_running "$container_id"; then
-        log "WARNING" "$(printf "$already_msg" "$container_id")"
+        if [ "$quiet" != "true" ]; then
+            log "WARNING" "$(printf "$already_msg" "$container_desc")"
+        fi
         return 0
     fi
     
     # 컨테이너 액션 수행
     # Perform container action
-    log "INFO" "$(printf "$action_msg" "$container_id")"
+    if [ "$quiet" != "true" ]; then
+        log "INFO" "$(printf "$action_msg" "$container_desc")"
+    fi
+    
     if $docker_cmd "$container_id"; then
-        log "SUCCESS" "$(printf "$success_msg" "$container_id")"
+        if [ "$quiet" != "true" ]; then
+            log "SUCCESS" "$(printf "$success_msg" "$container_desc")"
+        fi
         return 0
     else
-        log "ERROR" "$(printf "$fail_msg" "$container_id")"
+        if [ "$quiet" != "true" ]; then
+            log "ERROR" "$(printf "$fail_msg" "$container_desc")"
+        fi
         return 1
     fi
 }
@@ -261,15 +283,18 @@ perform_all_containers_action() {
     local start_msg=""
     local result_msg=""
     local no_containers_msg=""
+    local spinner_action_text=""
     
     if [ "$action" = "start" ]; then
         start_msg="$MSG_START_ALL"
         result_msg="$MSG_START_ALL_RESULT"
         no_containers_msg="$MSG_NO_CONTAINERS"
+        spinner_action_text="시작 중"
     else  # stop
         start_msg="$MSG_STOP_ALL"
         result_msg="$MSG_STOP_ALL_RESULT"
         no_containers_msg="$MSG_NO_RUNNING_CONTAINERS"
+        spinner_action_text="중지 중"
     fi
     
     log "INFO" "$start_msg"
@@ -292,15 +317,17 @@ perform_all_containers_action() {
         
         # 컨테이너 기본 정보 가져오기
         local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+        local container_desc="$container_short"
+        if [ -n "$name" ]; then
+            container_desc="$container_desc ($name)"
+        fi
         
-        # 작업 설정 로드
-        local config=$(load_action_config "$action")
-        local action_msg=$(echo "$config" | cut -d'|' -f2)
-        action_msg=${!action_msg}
+        # 직접 스피너 텍스트 생성
+        local spinner_text="컨테이너 ${container_desc} ${spinner_action_text}"
         
         # 작업 추가
-        add_task "$(printf "$action_msg" "$container_short ($name)")" "
-            if perform_container_action \"$action\" \"$container_id\"; then
+        add_task "$spinner_text" "
+            if perform_container_action \"$action\" \"$container_id\" \"true\"; then
                 # 성공 카운트 증가
                 local counts=\$(cat \"$temp_result\")
                 local success=\$(echo \"\$counts\" | cut -d' ' -f1)
@@ -317,7 +344,7 @@ perform_all_containers_action() {
     done
     
     # 비동기 작업 실행 (메시지 표시 없음)
-    (async_tasks_hide_finish_message)
+    async_tasks_hide_finish_message
     
     # 결과 읽기
     local counts=$(cat "$temp_result")
@@ -354,21 +381,34 @@ handle_this_argument() {
     fi
 }
 
+set_action_messages() {
+    local action="$1"
+    declare -gA action_messages=()   # 전역 associative array로 선언
+
+    case "$action" in
+        "start")
+            action_messages[invalid_number_msg]="$MSG_START_INVALID_NUMBER"
+            action_messages[spinner_action_text]="시작 중??"
+            ;;
+        "stop")
+            action_messages[invalid_number_msg]="$MSG_STOP_INVALID_NUMBER"
+            action_messages[spinner_action_text]="중지 중??"
+            ;;
+    esac
+}
+
 # 숫자 인자 처리 함수
 # Handle numeric arguments function
 handle_numeric_arguments() {
     local action="$1"  # "start" 또는 "stop"
     shift
     local args=("$@")
-    
-    # 액션에 따른 메시지 설정
+
+        # 액션에 따른 메시지 설정
     # Set messages according to action
-    local invalid_number_msg=""
-    if [ "$action" = "start" ]; then
-        invalid_number_msg="$MSG_START_INVALID_NUMBER"
-    else  # stop
-        invalid_number_msg="$MSG_STOP_INVALID_NUMBER"
-    fi
+    set_action_messages "$action"
+    local invalid_number_msg=${action_messages[invalid_number_msg]}
+    local spinner_action_text=${action_messages[spinner_action_text]}
     
     # 모든 인자가 숫자인지 확인
     local all_numeric=true
@@ -394,15 +434,17 @@ handle_numeric_arguments() {
             
             # 컨테이너 기본 정보 가져오기
             local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+            local container_desc="$container_short"
+            if [ -n "$name" ]; then
+                container_desc="$container_desc ($name)"
+            fi
             
-            # 작업 설정 로드
-            local config=$(load_action_config "$action")
-            local action_msg=$(echo "$config" | cut -d'|' -f2)
-            action_msg=${!action_msg}
+            # 직접 스피너 텍스트 생성
+            local spinner_text="컨테이너 ${container_desc} ${spinner_action_text}"
             
             # 작업 추가
-            add_task "$(printf "$action_msg" "$container_short ($name)")" "
-                perform_container_action \"$action\" \"$container_id\"
+            add_task "$spinner_text" "
+                perform_container_action \"$action\" \"$container_id\" \"true\"
             "
         else
             log "ERROR" "$(printf "$invalid_number_msg" "$arg")"
@@ -410,7 +452,7 @@ handle_numeric_arguments() {
     done
     
     # 비동기 작업 실행 (메시지 표시 없음)
-    (async_tasks)
+    async_tasks "작업 끝"
     
     return 0
 } 

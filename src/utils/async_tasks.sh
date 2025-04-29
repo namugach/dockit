@@ -2,6 +2,12 @@
 
 # async_tasks.sh - 멀티 작업 스피너 유틸리티 (완료 메시지 유지)
 
+
+
+declare -a tasks pids
+lines=0        # 스피너 줄 수
+orig_stty=""
+
 # 1. 기본 변수
 init_spinner_vars() {
   # 다양한 스피너 스타일 (주석 해제하여 사용)
@@ -12,11 +18,6 @@ init_spinner_vars() {
   # delay=0.08
   cyan=$'\033[36m'; reset=$'\033[0m'
 }
-
-declare -a tasks pids
-lines=0        # 스피너 줄 수
-orig_stty=""
-show_finish_message=true   # 완료 메시지 표시 여부 (기본값: 표시)
 
 # 2. 작업 추가
 add_task() { tasks+=("$1|$2"); }
@@ -67,6 +68,8 @@ run_spinner() {
 # 6. 정리 
 cleanup() {
   local mode=$1   # normal / interrupt
+  local done_msg=$2  # 완료 메시지
+  
   for pid in "${pids[@]}"; do kill "$pid" 2>/dev/null; done
   [[ -n $orig_stty ]] && stty "$orig_stty"
   tput cnorm
@@ -74,8 +77,8 @@ cleanup() {
   if [[ $mode == "normal" ]]; then
     # 스피너 영역만 지우고 완료 메시지 출력
     [[ $lines -gt 0 ]] && printf "\033[%dA\033[J" "$lines"
-    if $show_finish_message; then
-      printf "${cyan}✔${reset} done.\n"
+    if [ -n "$done_msg" ]; then
+      printf "${cyan}✔${reset} %s\n" "$done_msg"
     fi
   else
     # 강제 종료 시 화면 전부 정리
@@ -86,23 +89,23 @@ cleanup() {
 
 # 7. 메인 
 async_tasks() {
-  trap 'cleanup interrupt' INT TERM
-  trap 'cleanup normal' EXIT        # 단독 실행일 때만 EXIT 트랩
+  local done_message="${1:-done.}"  # 기본값은 "done."
   
-  show_finish_message=true  # 완료 메시지 표시
+  trap "cleanup interrupt \"$done_message\"" INT TERM
+  trap "cleanup normal \"$done_message\"" EXIT  # 단독 실행일 때만 EXIT 트랩
   
   init_spinner_vars
   run_tasks
   init_spinner
   run_spinner
-  cleanup normal          # 직접 호출해도 EXIT 트랩은 중복 실행 안 됨
+  cleanup normal "$done_message"  # 직접 호출해도 EXIT 트랩은 중복 실행 안 됨
 }
 
 async_tasks_hide_finish_message() {
-  trap 'cleanup interrupt' INT TERM
-  trap 'cleanup normal' EXIT        # 단독 실행일 때만 EXIT 트랩
+  local done_message="${1:-done.}"  # 기본값은 "done." (사용되지 않음)
   
-  show_finish_message=false  # 완료 메시지 표시하지 않음
+  trap "cleanup interrupt " INT TERM
+  trap "cleanup normal " EXIT  # 단독 실행일 때만 EXIT 트랩
   
   init_spinner_vars
   run_tasks
