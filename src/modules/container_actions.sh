@@ -288,29 +288,27 @@ get_containers_for_action() {
     fi
 }
 
-# 모든 컨테이너 액션 수행 - 비동기 방식
-# Perform action on all containers - async way
-perform_all_containers_action() {
-    local action="$1"  # "start" 또는 "stop"
-    
-    # 액션별 메시지 설정
-    local start_msg=""
-    local result_msg=""
-    local no_containers_msg=""
-    local spinner_action_text=""
+# 모든 컨테이너 액션용 메시지 설정 함수
+# Function to set messages for all containers action
+set_all_containers_action_messages() {
+    local action="$1"
+    local -n start_msg_ref="$2"
+    local -n result_msg_ref="$3"
+    local -n no_containers_msg_ref="$4"
+    local -n spinner_action_text_ref="$5"
     
     case "$action" in
         "start")
-            start_msg="$MSG_START_ALL"
-            result_msg="$MSG_START_ALL_RESULT"
-            no_containers_msg="$MSG_NO_CONTAINERS"
-            spinner_action_text="시작 중"
+            start_msg_ref="$MSG_START_ALL"
+            result_msg_ref="$MSG_START_ALL_RESULT"
+            no_containers_msg_ref="$MSG_NO_CONTAINERS"
+            spinner_action_text_ref="시작 중"
             ;;
         "stop")  # 명확하게 stop 케이스 지정
-            start_msg="$MSG_STOP_ALL"
-            result_msg="$MSG_STOP_ALL_RESULT"
-            no_containers_msg="$MSG_NO_RUNNING_CONTAINERS"
-            spinner_action_text="중지 중"
+            start_msg_ref="$MSG_STOP_ALL"
+            result_msg_ref="$MSG_STOP_ALL_RESULT"
+            no_containers_msg_ref="$MSG_NO_RUNNING_CONTAINERS"
+            spinner_action_text_ref="중지 중"
             ;;
         *)  # 그 외 케이스
             log "ERROR" "지원되지 않는 액션: $action"
@@ -318,21 +316,17 @@ perform_all_containers_action() {
             ;;
     esac
     
-    log "INFO" "$start_msg"
+    return 0
+}
+
+# 컨테이너 작업 추가 함수
+# Function to add container tasks
+add_container_tasks() {
+    local action="$1"
+    local spinner_action_text="$2"
+    local temp_result="$3"
+    local container_ids="$4"
     
-    # 컨테이너 목록 가져오기
-    local container_ids=$(get_containers_for_action "$action")
-    
-    if [ -z "$container_ids" ]; then
-        log "INFO" "$no_containers_msg"
-        return 0
-    fi
-    
-    # 결과 저장용 임시 파일
-    local temp_result=$(mktemp)
-    echo "0 0" > "$temp_result"  # 성공, 실패 카운트 초기화
-    
-    # 각 컨테이너에 대한 작업 추가
     for container_id in $container_ids; do
         local container_short=${container_id:0:12}
         
@@ -363,9 +357,13 @@ perform_all_containers_action() {
             fi
         "
     done
-    
-    # 비동기 작업 실행 (메시지 표시 없음)
-    async_tasks "작업들 끝!"
+}
+
+# 결과 처리 함수
+# Function to process results
+process_action_results() {
+    local temp_result="$1"
+    local result_msg="$2"
     
     # 결과 읽기
     local counts=$(cat "$temp_result")
@@ -377,6 +375,47 @@ perform_all_containers_action() {
     
     # 결과 출력
     log "INFO" "$(printf "$result_msg" "$success_count" "$fail_count")"
+}
+
+# 모든 컨테이너 액션 수행 - 비동기 방식
+# Perform action on all containers - async way
+perform_all_containers_action() {
+    local action="$1"  # "start" 또는 "stop"
+    
+    # 액션별 메시지 설정
+    local start_msg=""
+    local result_msg=""
+    local no_containers_msg=""
+    local spinner_action_text=""
+    
+    if ! set_all_containers_action_messages "$action" start_msg result_msg no_containers_msg spinner_action_text; then
+        return 1
+    fi
+    
+    log "INFO" "$start_msg"
+    
+    # 컨테이너 목록 가져오기
+    local container_ids=$(get_containers_for_action "$action")
+    
+    if [ -z "$container_ids" ]; then
+        log "INFO" "$no_containers_msg"
+        return 0
+    fi
+    
+    # 결과 저장용 임시 파일
+    local temp_result=$(mktemp)
+    echo "0 0" > "$temp_result"  # 성공, 실패 카운트 초기화
+    
+    # 컨테이너 작업 추가
+    add_container_tasks "$action" "$spinner_action_text" "$temp_result" "$container_ids"
+    
+    # 비동기 작업 실행 (메시지 표시 있음)
+    async_tasks "작업들 끝!"
+    
+    # 결과 처리
+    process_action_results "$temp_result" "$result_msg"
+    
+    return 0
 }
 
 # this 인자 처리 함수
