@@ -134,24 +134,25 @@ load_project_config() {
     return 0
 }
 
-# 프로젝트 컨테이너 상태 확인 함수
-# Function to check project container state
-check_project_container_state() {
+
+# 컨테이너 상태 파라미터 설정 함수
+# Function to set container state parameters
+set_container_state_params() {
     local action="$1"
-    local check_state=""
-    local already_msg=""
-    local not_found_info=""
+    local -n state_ref="$2"
+    local -n already_msg_ref="$3"
+    local -n not_found_info_ref="$4"
     
     case "$action" in
         "start")
-            check_state="true"
-            already_msg="$MSG_CONTAINER_ALREADY_RUNNING"
-            not_found_info="$MSG_CONTAINER_NOT_FOUND_INFO"
+            state_ref="true"
+            already_msg_ref="$MSG_CONTAINER_ALREADY_RUNNING"
+            not_found_info_ref="$MSG_CONTAINER_NOT_FOUND_INFO"
             ;;
         "stop")  # 명확하게 stop 케이스 지정
-            check_state="false"
-            already_msg="$MSG_CONTAINER_ALREADY_STOPPED"
-            not_found_info=""
+            state_ref="false"
+            already_msg_ref="$MSG_CONTAINER_ALREADY_STOPPED"
+            not_found_info_ref=""
             ;;
         *)  # 그 외 케이스
             log "ERROR" "지원되지 않는 액션: $action"
@@ -159,8 +160,15 @@ check_project_container_state() {
             ;;
     esac
     
-    # 컨테이너 존재 여부 확인
-    # Check if container exists
+    return 0
+}
+
+# 컨테이너 존재 여부 확인
+# Check if container exists
+check_container_exists() {
+    local action="$1"
+    local not_found_info="$2"
+    
     if ! container_exists "$CONTAINER_NAME"; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
         if [ "$action" = "start" ] && [ -n "$not_found_info" ]; then
@@ -169,6 +177,31 @@ check_project_container_state() {
             return 1
         fi
         return 2
+    fi
+    
+    return 0
+}
+
+# 프로젝트 컨테이너 상태 확인 함수
+# Function to check project container state
+check_project_container_state() {
+    local action="$1"
+    local check_state=""
+    local already_msg=""
+    local not_found_info=""
+    
+    # 액션에 따른 상태 및 메시지 설정
+    # Set state and messages according to action
+    set_container_state_params "$action" check_state already_msg not_found_info
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+
+    
+    # 컨테이너 존재 여부 확인 실행
+    if ! check_container_exists "$action" "$not_found_info"; then
+        return $?
     fi
     
     # 컨테이너가 이미 원하는 상태인지 확인
