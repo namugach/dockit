@@ -184,18 +184,61 @@ check_project_container_state() {
     return 0
 }
 
+
+# 액션 시작 메시지 설정 함수
+# Function to set action start message
+set_action_start_message() {
+    local action="$1"
+    local -n msg_ref="$2"
+    
+    if [ "$action" = "start" ]; then
+        msg_ref="$MSG_START_START"
+    else
+        msg_ref="$MSG_STOP_START"
+    fi
+}
+
+# 액션 메시지 및 명령어 설정 함수
+# Function to set action messages and commands
+set_action_messages_and_commands() {
+    local action="$1"
+    local -n action_msg_ref="$2"
+    local -n success_msg_ref="$3"
+    local -n fail_msg_ref="$4"
+    local -n docker_compose_cmd_ref="$5"
+    local -n success_info_ref="$6"
+    
+    case "$action" in
+        "start")
+            action_msg_ref="$MSG_STARTING_CONTAINER"
+            success_msg_ref="$MSG_CONTAINER_STARTED"
+            fail_msg_ref="$MSG_CONTAINER_START_FAILED"
+            docker_compose_cmd_ref="start"
+            success_info_ref="\n${BLUE}$MSG_CONNECT_INFO${NC} dockit connect"
+            ;;
+        "stop")  # 명확하게 stop 케이스 지정
+            action_msg_ref="$MSG_STOPPING_CONTAINER"
+            success_msg_ref="$MSG_CONTAINER_STOPPED"
+            fail_msg_ref="$MSG_CONTAINER_STOP_FAILED"
+            docker_compose_cmd_ref="stop"
+            success_info_ref="\n${BLUE}$MSG_CONTAINER_STOPPED_INFO${NC}"
+            ;;
+        *)  # 그 외 케이스
+            log "ERROR" "지원되지 않는 액션: $action"
+            return 1
+            ;;
+    esac
+    
+    return 0
+}
+
 # 현재 디렉토리 기반 컨테이너 액션 함수
 # Function to perform action on container based on current directory
 perform_current_project_action() {
     local action="$1"  # "start" 또는 "stop"
     
-    # 액션 시작 메시지
-    local start_msg=""
-    if [ "$action" = "start" ]; then
-        start_msg="$MSG_START_START"
-    else
-        start_msg="$MSG_STOP_START"
-    fi
+    # 액션 시작 메시지 설정 및 출력
+    set_action_start_message "$action" start_msg
     log "INFO" "$start_msg"
     
     # 프로젝트 설정 로드
@@ -218,26 +261,7 @@ perform_current_project_action() {
     local docker_compose_cmd=""
     local success_info=""
     
-    case "$action" in
-        "start")
-            action_msg="$MSG_STARTING_CONTAINER"
-            success_msg="$MSG_CONTAINER_STARTED"
-            fail_msg="$MSG_CONTAINER_START_FAILED"
-            docker_compose_cmd="start"
-            success_info="\n${BLUE}$MSG_CONNECT_INFO${NC} dockit connect"
-            ;;
-        "stop")  # 명확하게 stop 케이스 지정
-            action_msg="$MSG_STOPPING_CONTAINER"
-            success_msg="$MSG_CONTAINER_STOPPED"
-            fail_msg="$MSG_CONTAINER_STOP_FAILED"
-            docker_compose_cmd="stop"
-            success_info="\n${BLUE}$MSG_CONTAINER_STOPPED_INFO${NC}"
-            ;;
-        *)  # 그 외 케이스
-            log "ERROR" "지원되지 않는 액션: $action"
-            return 1
-            ;;
-    esac
+    set_action_messages_and_commands "$action" action_msg success_msg fail_msg docker_compose_cmd success_info
     
     # 컨테이너 액션 수행
     # Perform container action
@@ -256,6 +280,8 @@ perform_current_project_action() {
         return 1
     fi
 }
+
+
 
 # 인덱스로 컨테이너 ID 가져오기
 # Get container ID by index
