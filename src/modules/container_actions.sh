@@ -45,6 +45,56 @@ load_action_config() {
     esac
 }
 
+# 컨테이너 설명 가져오기 함수
+# Function to get container description
+get_container_description() {
+    local container_id="$1"
+    local container_short=${container_id:0:12}
+    local name=$(docker inspect --format "{{.Name}}" "$container_id" 2>/dev/null | sed 's/^\///')
+    
+    local container_desc="$container_short"
+    [ -n "$name" ] && container_desc="$container_desc ($name)"
+    
+    echo "$container_desc"
+}
+
+# 액션 설정 파싱 함수
+# Function to parse action configuration
+parse_action_config() {
+    local config="$1"
+    local container_desc="$2"
+    
+    local already_msg_key=$(echo "$config" | cut -d'|' -f1)
+    local action_msg_key=$(echo "$config" | cut -d'|' -f2)
+    local success_msg_key=$(echo "$config" | cut -d'|' -f3)
+    local fail_msg_key=$(echo "$config" | cut -d'|' -f4)
+    
+    # 전역 변수로 결과 설정
+    PARSED_CHECK_STATE=$(echo "$config" | cut -d'|' -f5)
+    PARSED_DOCKER_CMD=$(echo "$config" | cut -d'|' -f6)
+    
+    # 메시지 변수 참조 해결 및 컨테이너 설명 포맷팅
+    PARSED_ALREADY_MSG=$(printf "${!already_msg_key}" "$container_desc")
+    PARSED_ACTION_MSG=$(printf "${!action_msg_key}" "$container_desc")
+    PARSED_SUCCESS_MSG=$(printf "${!success_msg_key}" "$container_desc")
+    PARSED_FAIL_MSG=$(printf "${!fail_msg_key}" "$container_desc")
+}
+
+# 컨테이너 상태 확인 함수
+# Function to check container state
+check_container_state() {
+    local container_id="$1"
+    local check_state="$2"
+    
+    if [ "$check_state" = "true" ] && is_container_running "$container_id"; then
+        return 0
+    elif [ "$check_state" = "false" ] && ! is_container_running "$container_id"; then
+        return 0
+    fi
+    return 1
+}
+
+
 # 컨테이너 액션 수행 함수 (시작 또는 정지)
 # Function to perform action on a container (start or stop)
 perform_container_action() {
@@ -55,67 +105,42 @@ perform_container_action() {
     # 컨테이너 존재 여부 확인
     # Check if container exists
     if ! container_exists "$container_id"; then
-        if [ "$quiet" != "true" ]; then
-            log "ERROR" "$MSG_CONTAINER_NOT_FOUND"
-        fi
+        [ "$quiet" != "true" ] && log "ERROR" "$MSG_CONTAINER_NOT_FOUND"
         return 1
     fi
+    
+    # 컨테이너 정보 가져오기
+    local container_desc=$(get_container_description "$container_id")
     
     # 액션별 설정 로드
     local config=$(load_action_config "$action")
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
+    [ $? -ne 0 ] && return 1
     
-    local already_msg=$(echo "$config" | cut -d'|' -f1)
-    local action_msg=$(echo "$config" | cut -d'|' -f2)
-    local success_msg=$(echo "$config" | cut -d'|' -f3)
-    local fail_msg=$(echo "$config" | cut -d'|' -f4)
-    local check_state=$(echo "$config" | cut -d'|' -f5)
-    local docker_cmd=$(echo "$config" | cut -d'|' -f6)
-    
-    already_msg=${!already_msg}
-    action_msg=${!action_msg}
-    success_msg=${!success_msg}
-    fail_msg=${!fail_msg}
-    
-    # 컨테이너 간단 정보 가져오기
-    local container_short=${container_id:0:12}
-    local name=$(docker inspect --format "{{.Name}}" "$container_id" 2>/dev/null | sed 's/^\///')
-    local container_desc="$container_short"
-    if [ -n "$name" ]; then
-        container_desc="$container_desc ($name)"
-    fi
+    # 설정 파싱
+    parse_action_config "$config" "$container_desc"
+    local already_msg="$PARSED_ALREADY_MSG"
+    local action_msg="$PARSED_ACTION_MSG"
+    local success_msg="$PARSED_SUCCESS_MSG"
+    local fail_msg="$PARSED_FAIL_MSG"
+    local check_state="$PARSED_CHECK_STATE"
+    local docker_cmd="$PARSED_DOCKER_CMD"
     
     # 컨테이너가 이미 원하는 상태인지 확인
     # Check if container is already in desired state
-    if [ "$check_state" = "true" ] && is_container_running "$container_id"; then
-        if [ "$quiet" != "true" ]; then
-            log "WARNING" "$(printf "$already_msg" "$container_desc")"
-        fi
-        return 0
-    elif [ "$check_state" = "false" ] && ! is_container_running "$container_id"; then
-        if [ "$quiet" != "true" ]; then
-            log "WARNING" "$(printf "$already_msg" "$container_desc")"
-        fi
+    if check_container_state "$container_id" "$check_state"; then
+        [ "$quiet" != "true" ] && log "WARNING" "$already_msg"
         return 0
     fi
     
     # 컨테이너 액션 수행
     # Perform container action
-    if [ "$quiet" != "true" ]; then
-        log "INFO" "$(printf "$action_msg" "$container_desc")"
-    fi
+    [ "$quiet" != "true" ] && log "INFO" "$action_msg"
     
     if $docker_cmd "$container_id"; then
-        if [ "$quiet" != "true" ]; then
-            log "SUCCESS" "$(printf "$success_msg" "$container_desc")"
-        fi
+        [ "$quiet" != "true" ] && log "SUCCESS" "$success_msg"
         return 0
     else
-        if [ "$quiet" != "true" ]; then
-            log "ERROR" "$(printf "$fail_msg" "$container_desc")"
-        fi
+        [ "$quiet" != "true" ] && log "ERROR" "$fail_msg"
         return 1
     fi
 }
