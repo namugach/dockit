@@ -424,9 +424,9 @@ add_container_tasks() {
         # 직접 스피너 텍스트 생성
         local spinner_text="컨테이너 ${container_desc} ${spinner_action_text}"
         
-        # 작업 추가
+        # 작업 추가 - 완료 메시지가 출력되지 않도록 수정
         add_task "$spinner_text" "
-            if perform_container_action \"$action\" \"$container_id\" \"true\"; then
+            if perform_container_action \"$action\" \"$container_id\" \"true\" > /dev/null 2>&1; then
                 # 성공 카운트 증가
                 local counts=\$(cat \"$temp_result\")
                 local success=\$(echo \"\$counts\" | cut -d' ' -f1)
@@ -457,8 +457,10 @@ process_action_results() {
     # 임시 파일 삭제
     rm -f "$temp_result"
     
-    # 결과 출력
-    log "INFO" "$(printf "$result_msg" "$success_count" "$fail_count")"
+    # 결과 출력 - 완료 메시지가 이미 표시되었으므로 여기서는 결과 메시지만 조용히 로깅
+    if [ "$fail_count" -gt 0 ]; then
+        log "INFO" "$(printf "$result_msg" "$success_count" "$fail_count")"
+    fi
 }
 
 # 모든 컨테이너 액션 수행 - 비동기 방식
@@ -584,9 +586,9 @@ process_container_tasks() {
             # 직접 스피너 텍스트 생성
             local spinner_text="컨테이너 ${container_desc} ${spinner_action_text}"
             
-            # 작업 추가
+            # 작업 추가 - 출력 리다이렉션으로 메시지 숨기기
             add_task "$spinner_text" "
-                perform_container_action \"$action\" \"$container_id\" \"true\"
+                perform_container_action \"$action\" \"$container_id\" \"true\" > /dev/null 2>&1
             "
         else
             log "ERROR" "$(printf "$invalid_number_msg" "$container_index")"
