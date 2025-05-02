@@ -115,6 +115,7 @@ MSG_STOP_INVALID_ARGS="유효하지 않은 인자입니다."
 MSG_STOP_ALL="모든 dockit 컨테이너 중지 중..."
 MSG_STOP_ALL_RESULT="컨테이너 %d개가 성공적으로 중지되었습니다. %d개의 컨테이너 중지에 실패했습니다."
 MSG_NO_RUNNING_CONTAINERS="실행 중인 컨테이너가 없습니다."
+MSG_TASKS_DONE="작업들 끝!"
 
 # connect 모듈 메시지
 MSG_CONNECT_START="컨테이너 접속 모듈 실행 중..."
@@ -167,6 +168,10 @@ MSG_START_INVALID_ARGS="유효하지 않은 인자입니다."
 MSG_START_NOT_PROJECT="현재 디렉토리는 dockit 프로젝트가 아닙니다."
 MSG_START_ALL="모든 dockit 컨테이너 시작 중..."
 MSG_START_ALL_RESULT="컨테이너 %d개가 성공적으로 시작되었습니다. %d개의 컨테이너 시작에 실패했습니다."
+MSG_SPINNER_STARTING="시작 중"
+MSG_SPINNER_STOPPING="중지 중"
+MSG_ASYNC_DONE="완료"
+MSG_CONTAINER_ACTION_FORMAT="컨테이너 %s %s"
 
 # 일반 메시지
 MSG_GOODBYE="Docker 환경을 종료합니다"
@@ -580,3 +585,6 @@ MSG_LIST_RUN_INIT_HINT="To create a container, run:"
 MSG_STATUS_RUNNING="running"
 MSG_STATUS_STOPPED="stopped"
 MSG_LIST_LOADING_DATA="컨테이너 정보를 불러오는 중..."
+
+# 액션 관련 메시지
+MSG_ACTION_NOT_SUPPORTED="지원되지 않는 액션: %s"

@@ -115,6 +115,7 @@ MSG_STOP_INVALID_ARGS="Invalid arguments."
 MSG_STOP_ALL="Stopping all dockit containers..."
 MSG_STOP_ALL_RESULT="Stopped %d containers successfully. %d containers failed to stop."
 MSG_NO_RUNNING_CONTAINERS="No running containers found."
+MSG_TASKS_DONE="Tasks completed!"
 
 # connect module messages
 MSG_CONNECT_START="Running connect module..."
@@ -167,6 +168,10 @@ MSG_START_INVALID_ARGS="Invalid arguments."
 MSG_START_NOT_PROJECT="Current directory is not a dockit project."
 MSG_START_ALL="Starting all dockit containers..."
 MSG_START_ALL_RESULT="Started %d containers successfully. %d containers failed to start."
+MSG_SPINNER_STARTING="starting"
+MSG_SPINNER_STOPPING="stopping"
+MSG_ASYNC_DONE="Done"
+MSG_CONTAINER_ACTION_FORMAT="Container %s %s"
 
 # General messages
 MSG_GOODBYE="Exiting Docker environment"
@@ -582,3 +587,6 @@ MSG_LIST_RUN_INIT_HINT="To create a container, run:"
 MSG_STATUS_RUNNING="running"
 MSG_STATUS_STOPPED="stopped"
 MSG_LIST_LOADING_DATA="Loading container data..."
+
+# Action related messages
+MSG_ACTION_NOT_SUPPORTED="Unsupported action: %s"

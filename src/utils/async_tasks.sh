@@ -2,7 +2,18 @@
 
 # async_tasks.sh - 멀티 작업 스피너 유틸리티 (완료 메시지 유지)
 
+# 스크립트 디렉토리 경로 설정
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UTILS_DIR="$SCRIPT_DIR"
+SRC_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+MODULES_DIR="$SRC_DIR/modules"
 
+# messages 로드 여부 확인
+# 다른 모듈에서 이미 로드했을 수 있음
+if [ -z "$MSG_ASYNC_DONE" ]; then
+  # 메시지가 로드되지 않은 경우 기본값 설정
+  MSG_ASYNC_DONE="Done"
+fi
 
 declare -a tasks pids
 lines=0        # 스피너 줄 수
@@ -89,7 +100,7 @@ cleanup() {
 
 # 7. 메인 
 async_tasks() {
-  local done_message="${1:-done.}"  # 기본값은 "done."
+  local done_message="${1:-$MSG_ASYNC_DONE}"  # 기본값으로 메시지 변수 사용
   
   trap "cleanup interrupt \"$done_message\"" INT TERM
   trap "cleanup normal \"$done_message\"" EXIT  # 단독 실행일 때만 EXIT 트랩
@@ -102,7 +113,7 @@ async_tasks() {
 }
 
 async_tasks_hide_finish_message() {
-  local done_message="${1:-done.}"  # 기본값은 "done." (사용되지 않음)
+  local done_message="${1:-$MSG_ASYNC_DONE}"  # 기본값으로 메시지 변수 사용
   
   trap "cleanup interrupt " INT TERM
   trap "cleanup normal " EXIT  # 단독 실행일 때만 EXIT 트랩

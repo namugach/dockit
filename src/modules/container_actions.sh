@@ -39,7 +39,7 @@ load_action_config() {
             echo "MSG_CONTAINER_ALREADY_STOPPED|MSG_STOPPING_CONTAINER|MSG_CONTAINER_STOPPED|MSG_CONTAINER_STOP_FAILED|false|docker stop"
             ;;
         *)
-            log "ERROR" "Invalid action: $action"
+            log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
             return 1
             ;;
     esac
@@ -180,7 +180,7 @@ set_container_state_params() {
             not_found_info_ref=""
             ;;
         *)  # 그 외 케이스
-            log "ERROR" "지원되지 않는 액션: $action"
+            log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
             return 1
             ;;
     esac
@@ -282,7 +282,7 @@ set_action_messages_and_commands() {
             success_info_ref="\n${BLUE}$MSG_CONTAINER_STOPPED_INFO${NC}"
             ;;
         *)  # 그 외 케이스
-            log "ERROR" "지원되지 않는 액션: $action"
+            log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
             return 1
             ;;
     esac
@@ -386,16 +386,16 @@ set_all_containers_action_messages() {
             start_msg_ref="$MSG_START_ALL"
             result_msg_ref="$MSG_START_ALL_RESULT"
             no_containers_msg_ref="$MSG_NO_CONTAINERS"
-            spinner_action_text_ref="시작 중"
+            spinner_action_text_ref="$MSG_SPINNER_STARTING"
             ;;
         "stop")  # 명확하게 stop 케이스 지정
             start_msg_ref="$MSG_STOP_ALL"
             result_msg_ref="$MSG_STOP_ALL_RESULT"
             no_containers_msg_ref="$MSG_NO_RUNNING_CONTAINERS"
-            spinner_action_text_ref="중지 중"
+            spinner_action_text_ref="$MSG_SPINNER_STOPPING"
             ;;
         *)  # 그 외 케이스
-            log "ERROR" "지원되지 않는 액션: $action"
+            log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
             return 1
             ;;
     esac
@@ -422,7 +422,7 @@ add_container_tasks() {
         fi
         
         # 직접 스피너 텍스트 생성
-        local spinner_text="컨테이너 ${container_desc} ${spinner_action_text}"
+        local spinner_text=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "${container_desc}" "${spinner_action_text}")
         
         # 작업 추가 - 완료 메시지가 출력되지 않도록 수정
         add_task "$spinner_text" "
@@ -496,7 +496,7 @@ perform_all_containers_action() {
     add_container_tasks "$action" "$spinner_action_text" "$temp_result" "$container_ids"
     
     # 비동기 작업 실행 (메시지 표시 있음)
-    async_tasks "작업들 끝!"
+    async_tasks "$MSG_TASKS_DONE"
     
     # 결과 처리
     process_action_results "$temp_result" "$result_msg"
@@ -536,14 +536,14 @@ set_action_messages() {
     case "$action" in
         "start")
             action_messages[invalid_number_msg]="$MSG_START_INVALID_NUMBER"
-            action_messages[spinner_action_text]="시작 중"
+            action_messages[spinner_action_text]="$MSG_SPINNER_STARTING"
             ;;
         "stop")  # 명확하게 stop 케이스 지정
             action_messages[invalid_number_msg]="$MSG_STOP_INVALID_NUMBER"
-            action_messages[spinner_action_text]="중지 중"
+            action_messages[spinner_action_text]="$MSG_SPINNER_STOPPING"
             ;;
         *)  # 그 외 케이스
-            log "ERROR" "지원되지 않는 액션: $action"
+            log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
             return 1
             ;;
     esac
@@ -584,7 +584,7 @@ process_container_tasks() {
             fi
             
             # 직접 스피너 텍스트 생성
-            local spinner_text="컨테이너 ${container_desc} ${spinner_action_text}"
+            local spinner_text=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "${container_desc}" "${spinner_action_text}")
             
             # 작업 추가 - 출력 리다이렉션으로 메시지 숨기기
             add_task "$spinner_text" "
@@ -620,7 +620,7 @@ handle_numeric_arguments() {
     process_container_tasks "$action" "$spinner_action_text" "$invalid_number_msg" "${args[@]}"
     
     # 비동기 작업 실행 (메시지 표시 없음)
-    async_tasks "작업 끝"
+    async_tasks "$MSG_TASKS_DONE"
     
     return 0
 } 
