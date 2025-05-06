@@ -277,10 +277,12 @@ list_main() {
     local temp_file=$(mktemp)
     
     # 컨테이너 가져오기 및 확인
-    local container_ids=$(get_and_check_containers "$format")
-    if [ $? -ne 0 ]; then
+    if ! get_and_check_containers "$format"; then
         return 0
     fi
+    
+    # 컨테이너 ID 직접 가져오기
+    local container_ids=$(get_dockit_containers)
 
     # 로딩 메시지 표시
     loading_msg="$(get_message MSG_LIST_LOADING_DATA)"
