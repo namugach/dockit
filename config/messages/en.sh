@@ -215,7 +215,7 @@ MSG_HELP_STATUS="  status   - Check container status"
 MSG_HELP_MIGRATE="  migrate  - Upgrade to a newer version"
 MSG_HELP_HELP="  help     - Display this help"
 MSG_HELP_VERSION="  version  - Display version information"
-MSG_HELP_LIST="  list     - List all dockit containers"
+MSG_HELP_PS="  ps       - List all dockit containers"
 
 
 
@@ -371,7 +371,7 @@ MSG_COMPLETION_MIGRATE="Migrate project to new version"
 MSG_COMPLETION_SETUP="Run complete environment setup (init, build, up, connect)"
 MSG_COMPLETION_RUN="Run automated initialization, build and up"
 MSG_COMPLETION_JOIN="Run automated execution and connection in one go"
-MSG_COMPLETION_LIST="List all dockit containers"
+MSG_COMPLETION_PS="List all dockit containers"
 
 # Common module test messages
 MSG_COMMON_TESTING_FUNCTION="Testing generate_container_name function..."

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Test script for list module
-# list 모듈 테스트 스크립트
+# Test script for ps module
+# ps 모듈 테스트 스크립트
 
 # Set script dir and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,7 +35,7 @@ test_list_command() {
     fi
     
     # Source list module
-    source "$MODULES_DIR/list.sh"
+    source "$MODULES_DIR/ps.sh"
     
     # Run list command
     list_main
@@ -65,7 +65,7 @@ test_with_running_container() {
     echo "Test container created: $container_name"
     
     # Source list module
-    source "$MODULES_DIR/list.sh"
+    source "$MODULES_DIR/ps.sh"
     
     # Run list command
     list_main
@@ -97,7 +97,7 @@ test_mixed_containers() {
     echo "Test containers created: $container1 (running), $container2 (stopped)"
     
     # Source list module
-    source "$MODULES_DIR/list.sh"
+    source "$MODULES_DIR/ps.sh"
     
     # Run list command
     list_main

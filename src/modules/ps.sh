@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# List module - Show dockit containers
-# list 모듈 - dockit 컨테이너 목록 표시
+# PS module - Show dockit containers
+# ps 모듈 - dockit 컨테이너 목록 표시
 
 # Load common module
 # 공통 모듈 로드

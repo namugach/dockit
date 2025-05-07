@@ -215,7 +215,7 @@ MSG_HELP_STATUS="  status   - 컨테이너 상태 확인"
 MSG_HELP_MIGRATE="  migrate  - 새 버전으로 업그레이드"
 MSG_HELP_HELP="  help     - 도움말 표시"
 MSG_HELP_VERSION="  version  - 버전 정보 표시"
-MSG_HELP_LIST="  list     - 모든 dockit 컨테이너 목록 표시"
+MSG_HELP_PS="  ps       - 모든 dockit 컨테이너 목록 표시"
 
 MSG_CONFIG_FILES_HEADER="설정 파일"
 MSG_CONFIG_FILE_ENV="  .dockit_project/.env                # 사용자 설정이 저장되는 파일"
@@ -369,7 +369,7 @@ MSG_COMPLETION_MIGRATE="프로젝트를 새 버전으로 마이그레이션"
 MSG_COMPLETION_SETUP="초기화, 빌드, 시작, 접속을 한번에 실행"
 MSG_COMPLETION_RUN="자동 초기화, 빌드, 시작 실행"
 MSG_COMPLETION_JOIN="자동 실행 및 접속을 한번에 실행"
-MSG_COMPLETION_LIST="모든 dockit 컨테이너 목록 표시"
+MSG_COMPLETION_PS="모든 dockit 컨테이너 목록 표시"
 
 # 공통 모듈 테스트 메시지
 MSG_COMMON_TESTING_FUNCTION="generate_container_name 함수 테스트 중..."

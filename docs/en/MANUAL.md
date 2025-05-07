@@ -19,7 +19,7 @@ This document explains the detailed usage of Dockit.
     - [setup](#setup---complete-environment-setup)
     - [run](#run---automated-run)
     - [join](#join---automated-run-and-connect)
-    - [list](#list---list-containers)
+    - [ps](#ps---list-containers)
     - [help](#help---display-help)
 4. [Configuration File](#configuration-file)
 5. [Troubleshooting](#troubleshooting)
@@ -286,12 +286,12 @@ This command performs the following tasks:
 
 The `join` command combines the functionality of both `run` and `connect` commands, providing a complete end-to-end workflow from initialization to interactive shell. This is perfect for when you want to start working in your development environment with a single command.
 
-### list - List Containers
+### ps - List Containers
 
 List all dockit containers (running and stopped).
 
 ```bash
-dockit list
+dockit ps
 ```
 
 This command displays the following information for all containers created with dockit:
