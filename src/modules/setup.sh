@@ -31,8 +31,8 @@ run_build() {
         build_main "$@"
         return 0
     else
-        log "INFO" "$MSG_SETUP_BUILD_SKIPPED"
-        return 1
+        log "INFO" "$MSG_SETUP_TERMINATED"
+        exit 1
     fi
 }
 
@@ -48,9 +48,8 @@ run_up() {
         up_main "$@"
         return 0
     else
-        log "INFO" "$MSG_START_LATER"
-        echo -e "\n${BLUE}$MSG_SETUP_UP_LATER${NC}"
-        return 1
+        log "INFO" "$MSG_SETUP_TERMINATED"
+        exit 1
     fi
 }
 
@@ -66,9 +65,8 @@ run_connect() {
         connect_main "$@"
         return 0
     else
-        log "INFO" "$MSG_SKIP_CONTAINER_CONNECTION"
-        echo -e "\n${BLUE}$MSG_SETUP_CONNECT_LATER${NC}"
-        return 1
+        log "INFO" "$MSG_SETUP_TERMINATED"
+        exit 1
     fi
 }
 
@@ -88,6 +86,7 @@ setup_main() {
     
     # 4. 컨테이너 접속 실행
     run_connect "$@"
+
     
     log "SUCCESS" "$MSG_SETUP_COMPLETE"
 }
