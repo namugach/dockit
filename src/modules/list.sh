@@ -204,7 +204,7 @@ get_and_check_containers() {
         return 1
     fi
     
-    echo "$container_ids"
+    # 불필요한 출력을 제거함
     return 0
 }
 
