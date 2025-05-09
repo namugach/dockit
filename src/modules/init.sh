@@ -13,9 +13,12 @@ source "$SCRIPT_DIR/common.sh" "init"
 CONFIG_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")/config"
 source "$CONFIG_DIR/defaults.sh"
 
+# Load modules
+# 모듈 로드
 source "$MODULES_DIR/build.sh"
 source "$MODULES_DIR/up.sh"
 source "$MODULES_DIR/connect.sh"
+source "$MODULES_DIR/registry.sh"
 
 # 버전 정보 로드
 # Load version information
@@ -461,139 +464,8 @@ create_docker_compose() {
 #                     init_main                                    #
 ####################################################################
 
-# 프로젝트 상태 상수 정의
-# Project state constants
-readonly PROJECT_STATE_NONE="none"
-readonly PROJECT_STATE_RUNNING="running"
-readonly PROJECT_STATE_DOWN="down"
-
-# 프로젝트 ID 생성 함수
-# Function to generate project ID
-generate_project_id() {
-    local uuid_timestamp
-    uuid_timestamp="$(uuidgen)-$(date +%Y%m%dT%H%M%S.%6N)"
-    echo "$uuid_timestamp" | sha256sum | cut -d ' ' -f 1
-}
-
-# 레지스트리 디렉토리 확인 및 생성
-# Check and create registry directory
-ensure_registry_dir() {
-    if [ ! -d "$REGISTRY_DIR" ]; then
-        log "INFO" "$MSG_REGISTRY_CREATING_DIR"
-        mkdir -p "$REGISTRY_DIR"
-        log "SUCCESS" "$MSG_REGISTRY_DIR_CREATED"
-    fi
-}
-
-# 레지스트리 파일 초기화
-# Initialize registry file
-ensure_registry_file() {
-    if [ ! -f "$REGISTRY_FILE" ]; then
-        log "INFO" "$MSG_REGISTRY_INITIALIZING"
-        echo '{}' > "$REGISTRY_FILE"
-        log "SUCCESS" "$MSG_REGISTRY_INITIALIZED"
-    fi
-}
-
-# 프로젝트 ID 생성 및 저장
-# Generate and save project ID
-generate_and_save_project_id() {
-    local project_id=$(generate_project_id)
-    echo "$project_id" > "$PROJECT_ID_FILE"
-    # 로그 메시지를 stderr로 리디렉션하여 추후 값 반환과 서로 분리
-    # Redirect log message to stderr to separate it from return value
-    log "INFO" "$(printf "$MSG_REGISTRY_ID_GENERATED" "${project_id:0:12}...")" >&2
-    echo "$project_id"  # Return only project ID
-}
-
-# jq를 사용하여 레지스트리에 프로젝트 추가
-# Add project to registry using jq
-add_project_with_jq() {
-    local project_id="$1"
-    local project_path="$2"
-    local created_time="$3"
-    local state="${4:-$PROJECT_STATE_NONE}"
-    
-    local temp_file=$(mktemp)
-    
-    jq --arg id "$project_id" \
-       --arg path "$project_path" \
-       --argjson created "$created_time" \
-       --arg state "$state" \
-       '.[$id] = {"path": $path, "created": $created, "state": $state}' \
-       "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
-}
-
-# jq 없이 레지스트리에 프로젝트 추가
-# Add project to registry without jq
-add_project_without_jq() {
-    local project_id="$1"
-    local project_path="$2"
-    local created_time="$3"
-    local state="${4:-$PROJECT_STATE_NONE}"
-    
-    local registry_content=$(cat "$REGISTRY_FILE")
-    
-    # 기존 JSON이 비어있지 않은 경우 콤마 추가
-    # Add comma if existing JSON is not empty
-    if [ "$registry_content" != "{}" ]; then
-        registry_content="${registry_content%?},"
-    else
-        registry_content="{"
-    fi
-    
-    # 새 항목 추가
-    # Add new entry
-    registry_content+="\n  \"$project_id\": {\n    \"path\": \"$project_path\",\n    \"created\": $created_time,\n    \"state\": \"$state\"\n  }\n}"
-    
-    # 업데이트된 내용 저장
-    # Save updated content
-    echo "$registry_content" > "$REGISTRY_FILE"
-}
-
-# 레지스트리에 프로젝트 추가
-# Add project to registry
-add_project_to_registry() {
-    local project_id="$1"
-    local project_path="$2"
-    local created_time="$3"
-    local state="${4:-$PROJECT_STATE_NONE}"
-    
-    log "INFO" "$MSG_REGISTRY_ADDING_PROJECT"
-    
-    if command -v jq &> /dev/null; then
-        add_project_with_jq "$project_id" "$project_path" "$created_time" "$state"
-    else
-        add_project_without_jq "$project_id" "$project_path" "$created_time" "$state"
-    fi
-    
-    log "SUCCESS" "$MSG_REGISTRY_PROJECT_ADDED"
-}
-
-# 레지스트리 초기화 함수
-# Registry initialization function
-init_registry() {
-    # 레지스트리 디렉토리 및 파일 확인
-    # Ensure registry directory and file exist
-    ensure_registry_dir
-    ensure_registry_file
-    
-    # 프로젝트 ID 생성 및 저장
-    # Generate and save project ID
-    local project_id=$(generate_and_save_project_id)
-    
-    # 현재 프로젝트 경로
-    # Current project path
-    local project_path="$(pwd)"
-    
-    # 현재 시간 (Unix timestamp)
-    # Current time (Unix timestamp)
-    local created_time=$(date +%s)
-    
-    # 레지스트리에 프로젝트 추가
-    # Add project to registry
-    add_project_to_registry "$project_id" "$project_path" "$created_time"
-}
+# 이전 레지스트리 관련 코드는 registry.sh 모듈로 이동됨
+# Registry related code has been moved to the registry.sh module
 
 # Main initialization function
 # 메인 초기화 함수
@@ -617,7 +489,7 @@ init_main() {
     
     # 레지스트리 초기화 및 프로젝트 등록
     # Initialize registry and register project
-    init_registry
+    registry_main "init"
     
     log "SUCCESS" "$MSG_INIT_COMPLETE"
 }
