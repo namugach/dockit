@@ -8,6 +8,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 source "$UTILS_DIR/async_tasks.sh"
+source "$MODULES_DIR/registry.sh"
 
 # Function to truncate text if it's longer than max_length
 # 텍스트가 최대 길이보다 길면 잘라내는 함수
@@ -269,6 +270,10 @@ list_main() {
     if ! check_docker_availability; then
         exit 1
     fi
+    
+    # 레지스트리 조용히 정리 실행 (메시지 없이)
+    # Silently clean up registry (without messages)
+    cleanup_registry > /dev/null 2>&1
 
     # 형식 문자열 정의 (인덱스 칼럼 추가)
     local format="%-6s  %-13s  %-20s  %-25s  %-25s  %-10s  %-17s  %s\n"
