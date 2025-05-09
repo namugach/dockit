@@ -33,6 +33,9 @@ DOCKERFILE="$DOCKIT_DIR/Dockerfile"
 DOCKER_COMPOSE_FILE="$DOCKIT_DIR/docker-compose.yml"
 CONFIG_FILE="$DOCKIT_DIR/.env"
 LOG_FILE="$DOCKIT_DIR/dockit.log"
+REGISTRY_DIR="$HOME/.dockit"
+REGISTRY_FILE="$REGISTRY_DIR/registry.json"
+PROJECT_ID_FILE="$DOCKIT_DIR/id"
 
 # common.sh와 변수 이름 통일 (CONFIG_ENV)
 # Unify variable name with common.sh (CONFIG_ENV)
@@ -458,6 +461,95 @@ create_docker_compose() {
 #                     init_main                                    #
 ####################################################################
 
+# 프로젝트 ID 생성 함수
+# Function to generate project ID
+generate_project_id() {
+    local uuid_timestamp
+    uuid_timestamp="$(uuidgen)-$(date +%Y%m%dT%H%M%S.%6N)"
+    echo "$uuid_timestamp" | sha256sum | cut -d ' ' -f 1
+}
+
+# 레지스트리 초기화 함수
+# Registry initialization function
+init_registry() {
+    # 레지스트리 디렉토리 생성
+    # Create registry directory
+    if [ ! -d "$REGISTRY_DIR" ]; then
+        log "INFO" "$MSG_REGISTRY_CREATING_DIR"
+        mkdir -p "$REGISTRY_DIR"
+        log "SUCCESS" "$MSG_REGISTRY_DIR_CREATED"
+    fi
+    
+    # 레지스트리 파일 생성 (존재하지 않는 경우)
+    # Create registry file if it doesn't exist
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        log "INFO" "$MSG_REGISTRY_INITIALIZING"
+        echo '{}' > "$REGISTRY_FILE"
+        log "SUCCESS" "$MSG_REGISTRY_INITIALIZED"
+    fi
+    
+    # 프로젝트 ID 생성 및 저장
+    # Generate and save project ID
+    local project_id
+    project_id=$(generate_project_id)
+    
+    echo "$project_id" > "$PROJECT_ID_FILE"
+    log "INFO" "$(printf "$MSG_REGISTRY_ID_GENERATED" "${project_id:0:12}...")"
+    
+    # 현재 프로젝트 경로
+    # Current project path
+    local project_path
+    project_path="$(pwd)"
+    
+    # 현재 시간 (Unix timestamp)
+    # Current time (Unix timestamp)
+    local created_time
+    created_time=$(date +%s)
+    
+    # 임시 파일 생성
+    # Create temporary file
+    local temp_file
+    temp_file="$(mktemp)"
+    
+    # 레지스트리에 프로젝트 추가
+    # Add project to registry
+    log "INFO" "$MSG_REGISTRY_ADDING_PROJECT"
+    
+    # jq를 사용하여 JSON 업데이트
+    # Update JSON using jq
+    if command -v jq &> /dev/null; then
+        jq --arg id "$project_id" \
+           --arg path "$project_path" \
+           --argjson created "$created_time" \
+           --arg state "none" \
+           '.[$id] = {"path": $path, "created": $created, "state": $state}' \
+           "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
+    else
+        # jq가 없는 경우 간단한 방식으로 처리
+        # Simple handling if jq is not available
+        local registry_content
+        registry_content=$(cat "$REGISTRY_FILE")
+        
+        # 기존 JSON이 비어있지 않은 경우 콤마 추가
+        # Add comma if existing JSON is not empty
+        if [ "$registry_content" != "{}" ]; then
+            registry_content="${registry_content%?},"
+        else
+            registry_content="{"
+        fi
+        
+        # 새 항목 추가
+        # Add new entry
+        registry_content+="\n  \"$project_id\": {\n    \"path\": \"$project_path\",\n    \"created\": $created_time,\n    \"state\": \"none\"\n  }\n}"
+        
+        # 업데이트된 내용 저장
+        # Save updated content
+        echo "$registry_content" > "$REGISTRY_FILE"
+    fi
+    
+    log "SUCCESS" "$MSG_REGISTRY_PROJECT_ADDED"
+}
+
 # Main initialization function
 # 메인 초기화 함수
 init_main() {
@@ -477,6 +569,10 @@ init_main() {
     trap 'echo -e "\n${YELLOW}$MSG_PROCESS_CANCELLED_BY_USER${NC}"; exit 1' INT
     
     echo -e "${YELLOW}$MSG_BUILD_CTRL_C_HINT${NC}"
+    
+    # 레지스트리 초기화 및 프로젝트 등록
+    # Initialize registry and register project
+    init_registry
     
     log "SUCCESS" "$MSG_INIT_COMPLETE"
 }

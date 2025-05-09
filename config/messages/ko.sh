@@ -583,3 +583,13 @@ MSG_LIST_LOADING_DATA="컨테이너 정보를 불러오는 중..."
 
 # 액션 관련 메시지
 MSG_ACTION_NOT_SUPPORTED="지원되지 않는 액션: %s"
+
+# 레지스트리 관련 메시지
+MSG_REGISTRY_CREATING_DIR="레지스트리 디렉토리 생성 중..."
+MSG_REGISTRY_DIR_CREATED="레지스트리 디렉토리 생성 완료"
+MSG_REGISTRY_INITIALIZING="레지스트리 파일 초기화 중..."
+MSG_REGISTRY_INITIALIZED="레지스트리 파일 초기화 완료"
+MSG_REGISTRY_GENERATING_ID="프로젝트 ID 생성 중..."
+MSG_REGISTRY_ID_GENERATED="프로젝트 ID 생성 완료: %s"
+MSG_REGISTRY_ADDING_PROJECT="레지스트리에 프로젝트 추가 중..."
+MSG_REGISTRY_PROJECT_ADDED="레지스트리에 프로젝트 추가 완료"

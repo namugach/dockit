@@ -585,3 +585,13 @@ MSG_LIST_LOADING_DATA="Loading container data..."
 
 # Action related messages
 MSG_ACTION_NOT_SUPPORTED="Unsupported action: %s"
+
+# Registry related messages
+MSG_REGISTRY_CREATING_DIR="Creating registry directory..."
+MSG_REGISTRY_DIR_CREATED="Registry directory created successfully"
+MSG_REGISTRY_INITIALIZING="Initializing registry file..."
+MSG_REGISTRY_INITIALIZED="Registry file initialized successfully"
+MSG_REGISTRY_GENERATING_ID="Generating project ID..."
+MSG_REGISTRY_ID_GENERATED="Project ID generated: %s"
+MSG_REGISTRY_ADDING_PROJECT="Adding project to registry..."
+MSG_REGISTRY_PROJECT_ADDED="Project added to registry successfully"
