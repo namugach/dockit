@@ -15,10 +15,10 @@ readonly REGISTRY_FILE="$REGISTRY_DIR/registry.json"
 
 # 프로젝트 상태 상수 정의
 # Project state constants
-readonly PROJECT_STATE_NONE="none"
-readonly PROJECT_STATE_RUNNING="running"
-readonly PROJECT_STATE_DOWN="down"
-readonly PROJECT_STATE_UNKNOWN="???"
+readonly PROJECT_STATE_NONE="none"         # init 후 또는 down 후 상태
+readonly PROJECT_STATE_RUNNING="running"    # up 또는 start 후 상태
+readonly PROJECT_STATE_STOPPED="stopped"    # stop 후 상태
+readonly PROJECT_STATE_UNKNOWN="???"        # 상태를 확인할 수 없는 경우
 
 # 프로젝트 ID 생성 함수
 # Function to generate project ID
