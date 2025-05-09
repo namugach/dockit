@@ -461,6 +461,12 @@ create_docker_compose() {
 #                     init_main                                    #
 ####################################################################
 
+# 프로젝트 상태 상수 정의
+# Project state constants
+readonly PROJECT_STATE_NONE="none"
+readonly PROJECT_STATE_RUNNING="running"
+readonly PROJECT_STATE_DOWN="down"
+
 # 프로젝트 ID 생성 함수
 # Function to generate project ID
 generate_project_id() {
@@ -469,85 +475,124 @@ generate_project_id() {
     echo "$uuid_timestamp" | sha256sum | cut -d ' ' -f 1
 }
 
-# 레지스트리 초기화 함수
-# Registry initialization function
-init_registry() {
-    # 레지스트리 디렉토리 생성
-    # Create registry directory
+# 레지스트리 디렉토리 확인 및 생성
+# Check and create registry directory
+ensure_registry_dir() {
     if [ ! -d "$REGISTRY_DIR" ]; then
         log "INFO" "$MSG_REGISTRY_CREATING_DIR"
         mkdir -p "$REGISTRY_DIR"
         log "SUCCESS" "$MSG_REGISTRY_DIR_CREATED"
     fi
-    
-    # 레지스트리 파일 생성 (존재하지 않는 경우)
-    # Create registry file if it doesn't exist
+}
+
+# 레지스트리 파일 초기화
+# Initialize registry file
+ensure_registry_file() {
     if [ ! -f "$REGISTRY_FILE" ]; then
         log "INFO" "$MSG_REGISTRY_INITIALIZING"
         echo '{}' > "$REGISTRY_FILE"
         log "SUCCESS" "$MSG_REGISTRY_INITIALIZED"
     fi
-    
-    # 프로젝트 ID 생성 및 저장
-    # Generate and save project ID
-    local project_id
-    project_id=$(generate_project_id)
-    
+}
+
+# 프로젝트 ID 생성 및 저장
+# Generate and save project ID
+generate_and_save_project_id() {
+    local project_id=$(generate_project_id)
     echo "$project_id" > "$PROJECT_ID_FILE"
-    log "INFO" "$(printf "$MSG_REGISTRY_ID_GENERATED" "${project_id:0:12}...")"
+    # 로그 메시지를 stderr로 리디렉션하여 추후 값 반환과 서로 분리
+    # Redirect log message to stderr to separate it from return value
+    log "INFO" "$(printf "$MSG_REGISTRY_ID_GENERATED" "${project_id:0:12}...")" >&2
+    echo "$project_id"  # Return only project ID
+}
+
+# jq를 사용하여 레지스트리에 프로젝트 추가
+# Add project to registry using jq
+add_project_with_jq() {
+    local project_id="$1"
+    local project_path="$2"
+    local created_time="$3"
+    local state="${4:-$PROJECT_STATE_NONE}"
     
-    # 현재 프로젝트 경로
-    # Current project path
-    local project_path
-    project_path="$(pwd)"
+    local temp_file=$(mktemp)
     
-    # 현재 시간 (Unix timestamp)
-    # Current time (Unix timestamp)
-    local created_time
-    created_time=$(date +%s)
+    jq --arg id "$project_id" \
+       --arg path "$project_path" \
+       --argjson created "$created_time" \
+       --arg state "$state" \
+       '.[$id] = {"path": $path, "created": $created, "state": $state}' \
+       "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
+}
+
+# jq 없이 레지스트리에 프로젝트 추가
+# Add project to registry without jq
+add_project_without_jq() {
+    local project_id="$1"
+    local project_path="$2"
+    local created_time="$3"
+    local state="${4:-$PROJECT_STATE_NONE}"
     
-    # 임시 파일 생성
-    # Create temporary file
-    local temp_file
-    temp_file="$(mktemp)"
+    local registry_content=$(cat "$REGISTRY_FILE")
     
-    # 레지스트리에 프로젝트 추가
-    # Add project to registry
+    # 기존 JSON이 비어있지 않은 경우 콤마 추가
+    # Add comma if existing JSON is not empty
+    if [ "$registry_content" != "{}" ]; then
+        registry_content="${registry_content%?},"
+    else
+        registry_content="{"
+    fi
+    
+    # 새 항목 추가
+    # Add new entry
+    registry_content+="\n  \"$project_id\": {\n    \"path\": \"$project_path\",\n    \"created\": $created_time,\n    \"state\": \"$state\"\n  }\n}"
+    
+    # 업데이트된 내용 저장
+    # Save updated content
+    echo "$registry_content" > "$REGISTRY_FILE"
+}
+
+# 레지스트리에 프로젝트 추가
+# Add project to registry
+add_project_to_registry() {
+    local project_id="$1"
+    local project_path="$2"
+    local created_time="$3"
+    local state="${4:-$PROJECT_STATE_NONE}"
+    
     log "INFO" "$MSG_REGISTRY_ADDING_PROJECT"
     
-    # jq를 사용하여 JSON 업데이트
-    # Update JSON using jq
     if command -v jq &> /dev/null; then
-        jq --arg id "$project_id" \
-           --arg path "$project_path" \
-           --argjson created "$created_time" \
-           --arg state "none" \
-           '.[$id] = {"path": $path, "created": $created, "state": $state}' \
-           "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
+        add_project_with_jq "$project_id" "$project_path" "$created_time" "$state"
     else
-        # jq가 없는 경우 간단한 방식으로 처리
-        # Simple handling if jq is not available
-        local registry_content
-        registry_content=$(cat "$REGISTRY_FILE")
-        
-        # 기존 JSON이 비어있지 않은 경우 콤마 추가
-        # Add comma if existing JSON is not empty
-        if [ "$registry_content" != "{}" ]; then
-            registry_content="${registry_content%?},"
-        else
-            registry_content="{"
-        fi
-        
-        # 새 항목 추가
-        # Add new entry
-        registry_content+="\n  \"$project_id\": {\n    \"path\": \"$project_path\",\n    \"created\": $created_time,\n    \"state\": \"none\"\n  }\n}"
-        
-        # 업데이트된 내용 저장
-        # Save updated content
-        echo "$registry_content" > "$REGISTRY_FILE"
+        add_project_without_jq "$project_id" "$project_path" "$created_time" "$state"
     fi
     
     log "SUCCESS" "$MSG_REGISTRY_PROJECT_ADDED"
+}
+
+# 레지스트리 초기화 함수
+# Registry initialization function
+init_registry() {
+    # 레지스트리 디렉토리 및 파일 확인
+    # Ensure registry directory and file exist
+    ensure_registry_dir
+    ensure_registry_file
+    
+    # 프로젝트 ID 생성 및 저장
+    # Generate and save project ID
+    local project_id=$(generate_and_save_project_id)
+    
+    # 현재 프로젝트 경로
+    # Current project path
+    local project_path="$(pwd)"
+    
+    # 현재 시간 (Unix timestamp)
+    # Current time (Unix timestamp)
+    local created_time=$(date +%s)
+    
+    # 레지스트리에 프로젝트 추가
+    # Add project to registry
+    add_project_to_registry "$project_id" "$project_path" "$created_time"
 }
 
 # Main initialization function
