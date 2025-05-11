@@ -26,23 +26,125 @@ is_container_running() {
     return $?
 }
 
-# 액션별 메시지 및 설정 로드
-# Load messages and settings for specific action
-load_action_config() {
+# 기존 함수들을 대체할 통합 액션 설정 함수 추가
+# Unified function to get all action related configuration and messages
+get_action_config() {
     local action="$1"
+    local config_type="${2:-all}"  # 기본값으로 모든 설정 반환
+    
+    # 모든 액션별 설정과 메시지를 담을 associative array
+    declare -A config
     
     case "$action" in
         "start")
-            echo "MSG_CONTAINER_ALREADY_RUNNING|MSG_STARTING_CONTAINER|MSG_CONTAINER_STARTED|MSG_CONTAINER_START_FAILED|true|docker start"
+            # 기본 메시지 키와 값
+            config[already_msg_key]="$MSG_CONTAINER_ALREADY_RUNNING"
+            config[action_msg_key]="$MSG_STARTING_CONTAINER"
+            config[success_msg_key]="$MSG_CONTAINER_STARTED"
+            config[fail_msg_key]="$MSG_CONTAINER_START_FAILED"
+            config[check_state]="true"
+            config[docker_cmd]="docker start"
+            config[docker_compose_cmd]="start"
+            
+            # 컨테이너 상태 파라미터
+            config[not_found_info]="$MSG_CONTAINER_NOT_FOUND_INFO"
+            
+            # 모든 컨테이너 액션 메시지
+            config[start_msg]="$MSG_START_ALL"
+            config[result_msg]="$MSG_START_ALL_RESULT"
+            config[no_containers_msg]="$MSG_NO_CONTAINERS"
+            config[spinner_action_text]="$MSG_SPINNER_STARTING"
+            
+            # 현재 프로젝트 액션 메시지
+            config[project_start_msg]="$MSG_START_START"
+            config[success_info]="\n${BLUE}$MSG_CONNECT_INFO${NC} dockit connect"
+            
+            # 숫자 인자 메시지
+            config[invalid_number_msg]="$MSG_START_INVALID_NUMBER"
+            
+            # this 인자 메시지
+            config[not_project_msg]="$MSG_START_NOT_PROJECT"
             ;;
+            
         "stop")
-            echo "MSG_CONTAINER_ALREADY_STOPPED|MSG_STOPPING_CONTAINER|MSG_CONTAINER_STOPPED|MSG_CONTAINER_STOP_FAILED|false|docker stop"
+            # 기본 메시지 키와 값
+            config[already_msg_key]="$MSG_CONTAINER_ALREADY_STOPPED"
+            config[action_msg_key]="$MSG_STOPPING_CONTAINER" 
+            config[success_msg_key]="$MSG_CONTAINER_STOPPED"
+            config[fail_msg_key]="$MSG_CONTAINER_STOP_FAILED"
+            config[check_state]="false"
+            config[docker_cmd]="docker stop"
+            config[docker_compose_cmd]="stop"
+            
+            # 컨테이너 상태 파라미터
+            config[not_found_info]=""
+            
+            # 모든 컨테이너 액션 메시지
+            config[start_msg]="$MSG_STOP_ALL"
+            config[result_msg]="$MSG_STOP_ALL_RESULT"
+            config[no_containers_msg]="$MSG_NO_RUNNING_CONTAINERS"
+            config[spinner_action_text]="$MSG_SPINNER_STOPPING"
+            
+            # 현재 프로젝트 액션 메시지
+            config[project_start_msg]="$MSG_STOP_START"
+            config[success_info]="\n${BLUE}$MSG_CONTAINER_STOPPED_INFO${NC}"
+            
+            # 숫자 인자 메시지
+            config[invalid_number_msg]="$MSG_STOP_INVALID_NUMBER"
+            
+            # this 인자 메시지
+            config[not_project_msg]="$MSG_STOP_NOT_PROJECT"
             ;;
+            
         *)
             log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
             return 1
             ;;
     esac
+    
+    # 요청된 설정 타입에 따라 결과 반환
+    case "$config_type" in
+        "basic")
+            echo "${config[already_msg_key]}|${config[action_msg_key]}|${config[success_msg_key]}|${config[fail_msg_key]}|${config[check_state]}|${config[docker_cmd]}"
+            ;;
+        "state")
+            echo "${config[check_state]}|${config[already_msg_key]}|${config[not_found_info]}"
+            ;;
+        "messages")
+            echo "${config[action_msg_key]}|${config[success_msg_key]}|${config[fail_msg_key]}|${config[docker_compose_cmd]}|${config[success_info]}"
+            ;;
+        "all_containers")
+            echo "${config[start_msg]}|${config[result_msg]}|${config[no_containers_msg]}|${config[spinner_action_text]}"
+            ;;
+        "numeric_args")
+            echo "${config[invalid_number_msg]}|${config[spinner_action_text]}"
+            ;;
+        "this_arg")
+            echo "${config[not_project_msg]}"
+            ;;
+        "all") # 기본값: 모든 설정 반환
+            # associative array를 문자열로 변환해 반환
+            local result=""
+            for key in "${!config[@]}"; do
+                result+="$key:${config[$key]};"
+            done
+            echo "$result"
+            ;;
+        *)
+            log "ERROR" "$(printf "$MSG_CONFIG_TYPE_NOT_SUPPORTED" "$config_type")"
+            return 1
+            ;;
+    esac
+    
+    return 0
+}
+
+# 액션별 메시지 및 설정 로드
+# Load messages and settings for specific action
+load_action_config() {
+    local action="$1"
+    get_action_config "$action" "basic"
+    return $?
 }
 
 # 컨테이너 설명 가져오기 함수
@@ -168,22 +270,14 @@ set_container_state_params() {
     local -n already_msg_ref="$3"
     local -n not_found_info_ref="$4"
     
-    case "$action" in
-        "start")
-            state_ref="true"
-            already_msg_ref="$MSG_CONTAINER_ALREADY_RUNNING"
-            not_found_info_ref="$MSG_CONTAINER_NOT_FOUND_INFO"
-            ;;
-        "stop")  # 명확하게 stop 케이스 지정
-            state_ref="false"
-            already_msg_ref="$MSG_CONTAINER_ALREADY_STOPPED"
-            not_found_info_ref=""
-            ;;
-        *)  # 그 외 케이스
-            log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
-            return 1
-            ;;
-    esac
+    local config=$(get_action_config "$action" "state")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    state_ref=$(echo "$config" | cut -d'|' -f1)
+    already_msg_ref=$(echo "$config" | cut -d'|' -f2)
+    not_found_info_ref=$(echo "$config" | cut -d'|' -f3)
     
     return 0
 }
@@ -243,18 +337,6 @@ check_project_container_state() {
 }
 
 
-# 액션 시작 메시지 설정 함수
-# Function to set action start message
-set_action_start_message() {
-    local action="$1"
-    local -n msg_ref="$2"
-    
-    if [ "$action" = "start" ]; then
-        msg_ref="$MSG_START_START"
-    else
-        msg_ref="$MSG_STOP_START"
-    fi
-}
 
 # 액션 메시지 및 명령어 설정 함수
 # Function to set action messages and commands
@@ -266,26 +348,16 @@ set_action_messages_and_commands() {
     local -n docker_compose_cmd_ref="$5"
     local -n success_info_ref="$6"
     
-    case "$action" in
-        "start")
-            action_msg_ref="$MSG_STARTING_CONTAINER"
-            success_msg_ref="$MSG_CONTAINER_STARTED"
-            fail_msg_ref="$MSG_CONTAINER_START_FAILED"
-            docker_compose_cmd_ref="start"
-            success_info_ref="\n${BLUE}$MSG_CONNECT_INFO${NC} dockit connect"
-            ;;
-        "stop")  # 명확하게 stop 케이스 지정
-            action_msg_ref="$MSG_STOPPING_CONTAINER"
-            success_msg_ref="$MSG_CONTAINER_STOPPED"
-            fail_msg_ref="$MSG_CONTAINER_STOP_FAILED"
-            docker_compose_cmd_ref="stop"
-            success_info_ref="\n${BLUE}$MSG_CONTAINER_STOPPED_INFO${NC}"
-            ;;
-        *)  # 그 외 케이스
-            log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
-            return 1
-            ;;
-    esac
+    local config=$(get_action_config "$action" "messages")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    action_msg_ref=$(echo "$config" | cut -d'|' -f1)
+    success_msg_ref=$(echo "$config" | cut -d'|' -f2)
+    fail_msg_ref=$(echo "$config" | cut -d'|' -f3) 
+    docker_compose_cmd_ref=$(echo "$config" | cut -d'|' -f4)
+    success_info_ref=$(echo "$config" | cut -d'|' -f5)
     
     return 0
 }
@@ -296,7 +368,23 @@ perform_current_project_action() {
     local action="$1"  # "start" 또는 "stop"
     
     # 액션 시작 메시지 설정 및 출력
-    set_action_start_message "$action" start_msg
+    local config=$(get_action_config "$action" "all")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    # config에서 project_start_msg 추출
+    local start_msg=""
+    for item in $(echo "$config" | tr ';' '\n'); do
+        local key=$(echo "$item" | cut -d':' -f1)
+        local value=$(echo "$item" | cut -d':' -f2-)
+        
+        if [ "$key" = "project_start_msg" ]; then
+            start_msg="$value"
+            break
+        fi
+    done
+    
     log "INFO" "$start_msg"
     
     # 프로젝트 설정 로드
@@ -381,24 +469,15 @@ set_all_containers_action_messages() {
     local -n no_containers_msg_ref="$4"
     local -n spinner_action_text_ref="$5"
     
-    case "$action" in
-        "start")
-            start_msg_ref="$MSG_START_ALL"
-            result_msg_ref="$MSG_START_ALL_RESULT"
-            no_containers_msg_ref="$MSG_NO_CONTAINERS"
-            spinner_action_text_ref="$MSG_SPINNER_STARTING"
-            ;;
-        "stop")  # 명확하게 stop 케이스 지정
-            start_msg_ref="$MSG_STOP_ALL"
-            result_msg_ref="$MSG_STOP_ALL_RESULT"
-            no_containers_msg_ref="$MSG_NO_RUNNING_CONTAINERS"
-            spinner_action_text_ref="$MSG_SPINNER_STOPPING"
-            ;;
-        *)  # 그 외 케이스
-            log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
-            return 1
-            ;;
-    esac
+    local config=$(get_action_config "$action" "all_containers")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    start_msg_ref=$(echo "$config" | cut -d'|' -f1)
+    result_msg_ref=$(echo "$config" | cut -d'|' -f2)
+    no_containers_msg_ref=$(echo "$config" | cut -d'|' -f3)
+    spinner_action_text_ref=$(echo "$config" | cut -d'|' -f4)
     
     return 0
 }
@@ -510,13 +589,7 @@ handle_this_argument() {
     local action="$1"  # "start" 또는 "stop"
     
     # 액션에 따른 메시지 설정
-    # Set messages according to action
-    local not_project_msg=""
-    if [ "$action" = "start" ]; then
-        not_project_msg="$MSG_START_NOT_PROJECT"
-    else  # stop
-        not_project_msg="$MSG_STOP_NOT_PROJECT"
-    fi
+    local not_project_msg=$(get_action_config "$action" "this_arg")
     
     # 현재 디렉토리가 dockit 프로젝트인지 확인
     # Check if current directory is a dockit project
@@ -531,22 +604,18 @@ handle_this_argument() {
 # Set messages according to action  
 set_action_messages() {
     local action="$1"
-    declare -gA action_messages=()   # 전역 associative array로 선언
-
-    case "$action" in
-        "start")
-            action_messages[invalid_number_msg]="$MSG_START_INVALID_NUMBER"
-            action_messages[spinner_action_text]="$MSG_SPINNER_STARTING"
-            ;;
-        "stop")  # 명확하게 stop 케이스 지정
-            action_messages[invalid_number_msg]="$MSG_STOP_INVALID_NUMBER"
-            action_messages[spinner_action_text]="$MSG_SPINNER_STOPPING"
-            ;;
-        *)  # 그 외 케이스
-            log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
-            return 1
-            ;;
-    esac
+    
+    local config=$(get_action_config "$action" "numeric_args")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    # 전역 associative array 설정
+    declare -gA action_messages
+    action_messages[invalid_number_msg]=$(echo "$config" | cut -d'|' -f1)
+    action_messages[spinner_action_text]=$(echo "$config" | cut -d'|' -f2)
+    
+    return 0
 }
 
 # 모든 인자가 숫자인지 확인
