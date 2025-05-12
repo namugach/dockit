@@ -533,21 +533,6 @@ process_container_tasks() {
 }
 
 
-# 프로젝트 설정 로드 함수
-# Function to load project configuration
-load_project_config() {
-    if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
-        log "ERROR" "$MSG_COMPOSE_NOT_FOUND"
-        return 1
-    fi
-    
-    # 설정 로드
-    # Load configuration
-    load_env
-    return 0
-}
-
-
 # 현재 디렉토리 기반 컨테이너 액션 함수
 # Function to perform action on container based on current directory
 perform_current_project_action() {
@@ -573,10 +558,14 @@ perform_current_project_action() {
     
     log "INFO" "$start_msg"
     
-    # 프로젝트 설정 로드
-    if ! load_project_config; then
+    # 프로젝트 설정 로드 (load_project_config 함수 내용을 직접 통합)
+    if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
+        log "ERROR" "$MSG_COMPOSE_NOT_FOUND"
         return 1
     fi
+    
+    # 설정 로드
+    load_env
     
     # 컨테이너 상태 확인
     check_project_container_state "$action"
