@@ -290,30 +290,6 @@ check_container_exists() {
 }
 
 
-# 액션 메시지 및 명령어 설정 함수
-# Function to set action messages and commands
-set_action_messages_and_commands() {
-    local action="$1"
-    local -n action_msg_ref="$2"
-    local -n success_msg_ref="$3"
-    local -n fail_msg_ref="$4"
-    local -n docker_compose_cmd_ref="$5"
-    local -n success_info_ref="$6"
-    
-    local config=$(get_action_config "$action" "messages")
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
-    
-    action_msg_ref=$(echo "$config" | cut -d'|' -f1)
-    success_msg_ref=$(echo "$config" | cut -d'|' -f2)
-    fail_msg_ref=$(echo "$config" | cut -d'|' -f3) 
-    docker_compose_cmd_ref=$(echo "$config" | cut -d'|' -f4)
-    success_info_ref=$(echo "$config" | cut -d'|' -f5)
-    
-    return 0
-}
-
 
 
 # 인덱스로 컨테이너 ID 가져오기
@@ -562,14 +538,25 @@ perform_current_project_action() {
         return 3
     fi
     
-    # 액션 메시지 및 명령어 설정
+    # 액션 메시지 및 명령어 설정 (set_action_messages_and_commands 함수 내용을 직접 통합)
     local action_msg=""
     local success_msg=""
     local fail_msg=""
     local docker_compose_cmd=""
     local success_info=""
     
-    set_action_messages_and_commands "$action" action_msg success_msg fail_msg docker_compose_cmd success_info
+    # 메시지 관련 설정 가져오기
+    local messages_config=$(get_action_config "$action" "messages")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    # 설정에서 값 추출
+    action_msg=$(echo "$messages_config" | cut -d'|' -f1)
+    success_msg=$(echo "$messages_config" | cut -d'|' -f2)
+    fail_msg=$(echo "$messages_config" | cut -d'|' -f3) 
+    docker_compose_cmd=$(echo "$messages_config" | cut -d'|' -f4)
+    success_info=$(echo "$messages_config" | cut -d'|' -f5)
     
     # 컨테이너 액션 수행
     # Perform container action
