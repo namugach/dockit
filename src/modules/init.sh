@@ -36,8 +36,6 @@ DOCKERFILE="$DOCKIT_DIR/Dockerfile"
 DOCKER_COMPOSE_FILE="$DOCKIT_DIR/docker-compose.yml"
 CONFIG_FILE="$DOCKIT_DIR/.env"
 LOG_FILE="$DOCKIT_DIR/dockit.log"
-REGISTRY_DIR="$HOME/.dockit"
-REGISTRY_FILE="$REGISTRY_DIR/registry.json"
 PROJECT_ID_FILE="$DOCKIT_DIR/id"
 
 # common.sh와 변수 이름 통일 (CONFIG_ENV)
