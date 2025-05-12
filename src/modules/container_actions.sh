@@ -289,42 +289,6 @@ check_container_exists() {
     return 0
 }
 
-# 프로젝트 컨테이너 상태 확인 함수
-# Function to check project container state
-check_project_container_state() {
-    local action="$1"
-    local check_state=""
-    local already_msg=""
-    local not_found_info=""
-    
-    # 액션에 따른 상태 및 메시지 설정
-    # Set state and messages according to action
-    set_container_state_params "$action" check_state already_msg not_found_info
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
-    
-
-    
-    # 컨테이너 존재 여부 확인 실행
-    if ! check_container_exists "$action" "$not_found_info"; then
-        return $?
-    fi
-    
-    # 컨테이너가 이미 원하는 상태인지 확인
-    # Check if container is already in desired state
-    if [ "$check_state" = "true" ] && is_container_running "$CONTAINER_NAME"; then
-        log "WARNING" "$already_msg"
-        return 3
-    elif [ "$check_state" = "false" ] && ! is_container_running "$CONTAINER_NAME"; then
-        log "WARNING" "$already_msg"
-        return 3
-    fi
-    
-    return 0
-}
-
-
 
 # 액션 메시지 및 명령어 설정 함수
 # Function to set action messages and commands
@@ -558,7 +522,6 @@ perform_current_project_action() {
     
     log "INFO" "$start_msg"
     
-    # 프로젝트 설정 로드 (load_project_config 함수 내용을 직접 통합)
     if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
         log "ERROR" "$MSG_COMPOSE_NOT_FOUND"
         return 1
@@ -567,12 +530,36 @@ perform_current_project_action() {
     # 설정 로드
     load_env
     
-    # 컨테이너 상태 확인
-    check_project_container_state "$action"
-    local state_check=$?
+    local check_state=""
+    local already_msg=""
+    local not_found_info=""
     
-    if [ $state_check -eq 1 ] || [ $state_check -eq 2 ] || [ $state_check -eq 3 ]; then
-        return $state_check
+    # 액션에 따른 상태 및 메시지 설정
+    # Set state and messages according to action
+    set_container_state_params "$action" check_state already_msg not_found_info
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    # 컨테이너 존재 여부 확인
+    if ! container_exists "$CONTAINER_NAME"; then
+        log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
+        if [ "$action" = "start" ] && [ -n "$not_found_info" ]; then
+            echo -e "\n${YELLOW}$not_found_info${NC}"
+            echo -e "${BLUE}dockit up${NC}"
+            return 1
+        fi
+        return 2
+    fi
+    
+    # 컨테이너가 이미 원하는 상태인지 확인
+    # Check if container is already in desired state
+    if [ "$check_state" = "true" ] && is_container_running "$CONTAINER_NAME"; then
+        log "WARNING" "$already_msg"
+        return 3
+    elif [ "$check_state" = "false" ] && ! is_container_running "$CONTAINER_NAME"; then
+        log "WARNING" "$already_msg"
+        return 3
     fi
     
     # 액션 메시지 및 명령어 설정
