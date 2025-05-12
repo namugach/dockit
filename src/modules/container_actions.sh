@@ -247,19 +247,7 @@ perform_container_action() {
     fi
 }
 
-# 프로젝트 설정 로드 함수
-# Function to load project configuration
-load_project_config() {
-    if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
-        log "ERROR" "$MSG_COMPOSE_NOT_FOUND"
-        return 1
-    fi
-    
-    # 설정 로드
-    # Load configuration
-    load_env
-    return 0
-}
+
 
 
 # 컨테이너 상태 파라미터 설정 함수
@@ -360,71 +348,6 @@ set_action_messages_and_commands() {
     success_info_ref=$(echo "$config" | cut -d'|' -f5)
     
     return 0
-}
-
-# 현재 디렉토리 기반 컨테이너 액션 함수
-# Function to perform action on container based on current directory
-perform_current_project_action() {
-    local action="$1"  # "start" 또는 "stop"
-    
-    # 액션 시작 메시지 설정 및 출력
-    local config=$(get_action_config "$action" "all")
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
-    
-    # config에서 project_start_msg 추출
-    local start_msg=""
-    for item in $(echo "$config" | tr ';' '\n'); do
-        local key=$(echo "$item" | cut -d':' -f1)
-        local value=$(echo "$item" | cut -d':' -f2-)
-        
-        if [ "$key" = "project_start_msg" ]; then
-            start_msg="$value"
-            break
-        fi
-    done
-    
-    log "INFO" "$start_msg"
-    
-    # 프로젝트 설정 로드
-    if ! load_project_config; then
-        return 1
-    fi
-    
-    # 컨테이너 상태 확인
-    check_project_container_state "$action"
-    local state_check=$?
-    
-    if [ $state_check -eq 1 ] || [ $state_check -eq 2 ] || [ $state_check -eq 3 ]; then
-        return $state_check
-    fi
-    
-    # 액션 메시지 및 명령어 설정
-    local action_msg=""
-    local success_msg=""
-    local fail_msg=""
-    local docker_compose_cmd=""
-    local success_info=""
-    
-    set_action_messages_and_commands "$action" action_msg success_msg fail_msg docker_compose_cmd success_info
-    
-    # 컨테이너 액션 수행
-    # Perform container action
-    log "INFO" "$action_msg"
-    if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" $docker_compose_cmd; then
-        log "SUCCESS" "$success_msg"
-        
-        # 성공 후 추가 정보 출력
-        # Display additional info after success
-        if [ -n "$success_info" ]; then
-            echo -e "$success_info"
-        fi
-        return 0
-    else
-        log "ERROR" "$fail_msg"
-        return 1
-    fi
 }
 
 
@@ -542,63 +465,7 @@ process_action_results() {
     fi
 }
 
-# 모든 컨테이너 액션 수행 - 비동기 방식
-# Perform action on all containers - async way
-perform_all_containers_action() {
-    local action="$1"  # "start" 또는 "stop"
-    
-    # 액션별 메시지 설정
-    local start_msg=""
-    local result_msg=""
-    local no_containers_msg=""
-    local spinner_action_text=""
-    
-    if ! set_all_containers_action_messages "$action" start_msg result_msg no_containers_msg spinner_action_text; then
-        return 1
-    fi
-    
-    log "INFO" "$start_msg"
-    
-    # 컨테이너 목록 가져오기
-    local container_ids=$(get_containers_for_action "$action")
-    
-    if [ -z "$container_ids" ]; then
-        log "INFO" "$no_containers_msg"
-        return 0
-    fi
-    
-    # 결과 저장용 임시 파일
-    local temp_result=$(mktemp)
-    echo "0 0" > "$temp_result"  # 성공, 실패 카운트 초기화
-    
-    # 컨테이너 작업 추가
-    add_container_tasks "$action" "$spinner_action_text" "$temp_result" "$container_ids"
-    
-    # 비동기 작업 실행 (메시지 표시 있음)
-    async_tasks "$MSG_TASKS_DONE"
-    
-    # 결과 처리
-    process_action_results "$temp_result" "$result_msg"
-    
-    return 0
-}
 
-# this 인자 처리 함수
-# Handle 'this' argument function
-handle_this_argument() {
-    local action="$1"  # "start" 또는 "stop"
-    
-    # 액션에 따른 메시지 설정
-    local not_project_msg=$(get_action_config "$action" "this_arg")
-    
-    # 현재 디렉토리가 dockit 프로젝트인지 확인
-    # Check if current directory is a dockit project
-    if [ -d ".dockit_project" ]; then
-        perform_current_project_action "$action"
-    else
-        log "WARNING" "$not_project_msg"
-    fi
-}
 
 # 액션에 따른 메시지 설정
 # Set messages according to action  
@@ -665,6 +532,107 @@ process_container_tasks() {
     done
 }
 
+
+# 프로젝트 설정 로드 함수
+# Function to load project configuration
+load_project_config() {
+    if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
+        log "ERROR" "$MSG_COMPOSE_NOT_FOUND"
+        return 1
+    fi
+    
+    # 설정 로드
+    # Load configuration
+    load_env
+    return 0
+}
+
+
+# 현재 디렉토리 기반 컨테이너 액션 함수
+# Function to perform action on container based on current directory
+perform_current_project_action() {
+    local action="$1"  # "start" 또는 "stop"
+    
+    # 액션 시작 메시지 설정 및 출력
+    local config=$(get_action_config "$action" "all")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    # config에서 project_start_msg 추출
+    local start_msg=""
+    for item in $(echo "$config" | tr ';' '\n'); do
+        local key=$(echo "$item" | cut -d':' -f1)
+        local value=$(echo "$item" | cut -d':' -f2-)
+        
+        if [ "$key" = "project_start_msg" ]; then
+            start_msg="$value"
+            break
+        fi
+    done
+    
+    log "INFO" "$start_msg"
+    
+    # 프로젝트 설정 로드
+    if ! load_project_config; then
+        return 1
+    fi
+    
+    # 컨테이너 상태 확인
+    check_project_container_state "$action"
+    local state_check=$?
+    
+    if [ $state_check -eq 1 ] || [ $state_check -eq 2 ] || [ $state_check -eq 3 ]; then
+        return $state_check
+    fi
+    
+    # 액션 메시지 및 명령어 설정
+    local action_msg=""
+    local success_msg=""
+    local fail_msg=""
+    local docker_compose_cmd=""
+    local success_info=""
+    
+    set_action_messages_and_commands "$action" action_msg success_msg fail_msg docker_compose_cmd success_info
+    
+    # 컨테이너 액션 수행
+    # Perform container action
+    log "INFO" "$action_msg"
+    if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" $docker_compose_cmd; then
+        log "SUCCESS" "$success_msg"
+        
+        # 성공 후 추가 정보 출력
+        # Display additional info after success
+        if [ -n "$success_info" ]; then
+            echo -e "$success_info"
+        fi
+        return 0
+    else
+        log "ERROR" "$fail_msg"
+        return 1
+    fi
+}
+
+
+
+# this 인자 처리 함수
+# Handle 'this' argument function
+handle_this_argument() {
+    local action="$1"  # "start" 또는 "stop"
+    
+    # 액션에 따른 메시지 설정
+    local not_project_msg=$(get_action_config "$action" "this_arg")
+    
+    # 현재 디렉토리가 dockit 프로젝트인지 확인
+    # Check if current directory is a dockit project
+    if [ -d ".dockit_project" ]; then
+        perform_current_project_action "$action"
+    else
+        log "WARNING" "$not_project_msg"
+    fi
+}
+
+
 # 숫자 인자 처리 함수
 # Handle numeric arguments function
 handle_numeric_arguments() {
@@ -692,4 +660,45 @@ handle_numeric_arguments() {
     async_tasks "$MSG_TASKS_DONE"
     
     return 0
-} 
+}
+
+# 모든 컨테이너 액션 수행 - 비동기 방식
+# Perform action on all containers - async way
+perform_all_containers_action() {
+    local action="$1"  # "start" 또는 "stop"
+    
+    # 액션별 메시지 설정
+    local start_msg=""
+    local result_msg=""
+    local no_containers_msg=""
+    local spinner_action_text=""
+    
+    if ! set_all_containers_action_messages "$action" start_msg result_msg no_containers_msg spinner_action_text; then
+        return 1
+    fi
+    
+    log "INFO" "$start_msg"
+    
+    # 컨테이너 목록 가져오기
+    local container_ids=$(get_containers_for_action "$action")
+    
+    if [ -z "$container_ids" ]; then
+        log "INFO" "$no_containers_msg"
+        return 0
+    fi
+    
+    # 결과 저장용 임시 파일
+    local temp_result=$(mktemp)
+    echo "0 0" > "$temp_result"  # 성공, 실패 카운트 초기화
+    
+    # 컨테이너 작업 추가
+    add_container_tasks "$action" "$spinner_action_text" "$temp_result" "$container_ids"
+    
+    # 비동기 작업 실행 (메시지 표시 있음)
+    async_tasks "$MSG_TASKS_DONE"
+    
+    # 결과 처리
+    process_action_results "$temp_result" "$result_msg"
+    
+    return 0
+}
