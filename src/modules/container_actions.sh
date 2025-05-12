@@ -249,27 +249,6 @@ perform_container_action() {
 
 
 
-
-# 컨테이너 상태 파라미터 설정 함수
-# Function to set container state parameters
-set_container_state_params() {
-    local action="$1"
-    local -n state_ref="$2"
-    local -n already_msg_ref="$3"
-    local -n not_found_info_ref="$4"
-    
-    local config=$(get_action_config "$action" "state")
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
-    
-    state_ref=$(echo "$config" | cut -d'|' -f1)
-    already_msg_ref=$(echo "$config" | cut -d'|' -f2)
-    not_found_info_ref=$(echo "$config" | cut -d'|' -f3)
-    
-    return 0
-}
-
 # 컨테이너 존재 여부 확인
 # Check if container exists
 check_container_exists() {
@@ -510,12 +489,16 @@ perform_current_project_action() {
     local already_msg=""
     local not_found_info=""
     
-    # 액션에 따른 상태 및 메시지 설정
-    # Set state and messages according to action
-    set_container_state_params "$action" check_state already_msg not_found_info
+    # 상태 관련 설정 가져오기
+    local state_config=$(get_action_config "$action" "state")
     if [ $? -ne 0 ]; then
         return 1
     fi
+    
+    # 설정에서 값 추출
+    check_state=$(echo "$state_config" | cut -d'|' -f1)
+    already_msg=$(echo "$state_config" | cut -d'|' -f2)
+    not_found_info=$(echo "$state_config" | cut -d'|' -f3)
     
     # 컨테이너 존재 여부 확인
     if ! container_exists "$CONTAINER_NAME"; then
