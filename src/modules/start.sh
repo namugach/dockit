@@ -14,7 +14,7 @@ MSG_NO_CONTAINERS="No containers found."
 
 # "this" 인자 처리 (현재 프로젝트 컨테이너 시작)
 # Handle "this" argument (start current project container)
-handle_this_argument_start() {
+handle_this_argument() {
     # -- 1) dockit 프로젝트 디렉터리 확인 ----------------
     if [[ ! -d .dockit_project ]]; then
         log "WARNING" "$MSG_START_NOT_PROJECT"
@@ -57,7 +57,7 @@ handle_this_argument_start() {
 
 # 숫자 인자 처리 (번호로 컨테이너 시작)
 # Handle numeric arguments (start container by number)
-handle_numeric_arguments_start() {
+handle_numeric_arguments() {
     local -a indices=("$@")            # 숫자 인자들만
 
     # 인자 전부 숫자인지 확인
@@ -93,7 +93,7 @@ handle_numeric_arguments_start() {
 
 # 모든 컨테이너 시작
 # Start all containers
-perform_all_containers_action_start() {
+perform_all_containers_action() {
     # -- 1) 메시지 설정 --------------------------------
     local start_msg="$MSG_START_ALL"
     local result_msg="$MSG_START_ALL_RESULT"
@@ -162,15 +162,15 @@ start_main() {
     case "$1" in
         "this")
             # this 인자 처리
-            handle_this_argument_start
+            handle_this_argument
             ;;
         "all")
             # all 인자 처리
-            perform_all_containers_action_start
+            perform_all_containers_action
             ;;
         *)
             # 숫자 인자 처리 시도
-            if handle_numeric_arguments_start "$@"; then
+            if handle_numeric_arguments "$@"; then
                 return 0
             else
                 # 잘못된 인자 처리

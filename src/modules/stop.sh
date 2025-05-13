@@ -11,7 +11,7 @@ source "$MODULES_DIR/container_base.sh"
 
 # "this" 인자 처리 (현재 프로젝트 컨테이너 정지)
 # Handle "this" argument (stop current project container)
-handle_this_argument_stop() {
+handle_this_argument() {
     # -- 1) dockit 프로젝트 디렉터리 확인 ----------------
     if [[ ! -d .dockit_project ]]; then
         log "WARNING" "$MSG_STOP_NOT_PROJECT"
@@ -53,7 +53,7 @@ handle_this_argument_stop() {
 
 # 숫자 인자 처리 (번호로 컨테이너 정지)
 # Handle numeric arguments (stop container by number)
-handle_numeric_arguments_stop() {
+handle_numeric_arguments() {
     local -a indices=("$@")            # 숫자 인자들만
 
     # 인자 전부 숫자인지 확인
@@ -89,7 +89,7 @@ handle_numeric_arguments_stop() {
 
 # 모든 컨테이너 정지
 # Stop all containers
-perform_all_containers_action_stop() {
+perform_all_containers_action() {
     # -- 1) 메시지 설정 --------------------------------
     local start_msg="$MSG_STOP_ALL"
     local result_msg="$MSG_STOP_ALL_RESULT"
@@ -160,15 +160,15 @@ stop_main() {
     case "$1" in
         "this")
             # this 인자 처리
-            handle_this_argument_stop
+            handle_this_argument
             ;;
         "all")
             # all 인자 처리
-            perform_all_containers_action_stop
+            perform_all_containers_action
             ;;
         *)
             # 숫자 인자 처리 시도
-            if handle_numeric_arguments_stop "$@"; then
+            if handle_numeric_arguments "$@"; then
                 return 0
             else
                 # 잘못된 인자 처리
