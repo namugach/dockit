@@ -386,73 +386,6 @@ process_action_results() {
 
 
 
-# 액션에 따른 메시지 설정
-# Set messages according to action  
-set_action_messages() {
-    local action="$1"
-    
-    local config=$(get_action_config "$action" "numeric_args")
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
-    
-    # 전역 associative array 설정
-    declare -gA action_messages
-    action_messages[invalid_number_msg]=$(echo "$config" | cut -d'|' -f1)
-    action_messages[spinner_action_text]=$(echo "$config" | cut -d'|' -f2)
-    
-    return 0
-}
-
-# 모든 인자가 숫자인지 확인
-# Check if all arguments are numeric  
-check_if_all_numeric() {
-    local -a check_args=("$@")
-    for arg in "${check_args[@]}"; do
-        if ! [[ "$arg" =~ ^[0-9]+$ ]]; then
-            echo "false"
-            break
-        fi
-    done
-    echo "true"
-}
-
-# 컨테이너 작업 처리 함수
-# Function to process container tasks
-process_container_tasks() {
-    local action="$1"
-    local spinner_action_text="$2"
-    local invalid_number_msg="$3"
-    shift 3
-    local container_indices=("$@")
-    
-    for container_index in "${container_indices[@]}"; do
-        local container_id=$(get_container_id_by_index "$container_index")
-        if [ -n "$container_id" ]; then
-            local container_short=${container_id:0:12}
-            
-            # 컨테이너 기본 정보 가져오기
-            local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
-            local container_desc="$container_short"
-            if [ -n "$name" ]; then
-                container_desc="$container_desc ($name)"
-            fi
-            
-            # 직접 스피너 텍스트 생성
-            local spinner_text=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "${container_desc}" "${spinner_action_text}")
-            
-            # 작업 추가 - 출력 리다이렉션으로 메시지 숨기기
-            add_task "$spinner_text" "
-                perform_container_action \"$action\" \"$container_id\" \"true\" > /dev/null 2>&1
-            "
-        else
-            log "ERROR" "$(printf "$invalid_number_msg" "$container_index")"
-        fi
-    done
-}
-
-
-
 # this 인자 처리 함수
 # Handle 'this' argument function
 handle_this_argument() {
@@ -574,21 +507,58 @@ handle_numeric_arguments() {
     shift
     local args=("$@")
 
-        # 액션에 따른 메시지 설정
+    # 액션에 따른 메시지 설정 (set_action_messages 함수 내용을 직접 통합)
     # Set messages according to action
-    set_action_messages "$action"
-    local invalid_number_msg=${action_messages[invalid_number_msg]}
-    local spinner_action_text=${action_messages[spinner_action_text]}
-    
-    # 모든 인자가 숫자인지 확인
-    local all_numeric=$(check_if_all_numeric "${args[@]}")
-    
-    if ! $all_numeric; then
+    local config=$(get_action_config "$action" "numeric_args")
+    if [ $? -ne 0 ]; then
         return 1
     fi
     
-    # 컨테이너 작업 처리 함수 호출
-    process_container_tasks "$action" "$spinner_action_text" "$invalid_number_msg" "${args[@]}"
+    # 설정 추출 및 전역 associative array 설정
+    declare -gA action_messages
+    action_messages[invalid_number_msg]=$(echo "$config" | cut -d'|' -f1)
+    action_messages[spinner_action_text]=$(echo "$config" | cut -d'|' -f2)
+    
+    local invalid_number_msg=${action_messages[invalid_number_msg]}
+    local spinner_action_text=${action_messages[spinner_action_text]}
+    
+    # 모든 인자가 숫자인지 확인 (내장 로직)
+    local all_numeric="true"
+    for arg in "${args[@]}"; do
+        if ! [[ "$arg" =~ ^[0-9]+$ ]]; then
+            all_numeric="false"
+            break
+        fi
+    done
+    
+    if [ "$all_numeric" = "false" ]; then
+        return 1
+    fi
+    
+    # 컨테이너 작업 처리 (process_container_tasks 함수 내용을 직접 통합)
+    for container_index in "${args[@]}"; do
+        local container_id=$(get_container_id_by_index "$container_index")
+        if [ -n "$container_id" ]; then
+            local container_short=${container_id:0:12}
+            
+            # 컨테이너 기본 정보 가져오기
+            local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+            local container_desc="$container_short"
+            if [ -n "$name" ]; then
+                container_desc="$container_desc ($name)"
+            fi
+            
+            # 직접 스피너 텍스트 생성
+            local spinner_text=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "${container_desc}" "${spinner_action_text}")
+            
+            # 작업 추가 - 출력 리다이렉션으로 메시지 숨기기
+            add_task "$spinner_text" "
+                perform_container_action \"$action\" \"$container_id\" \"true\" > /dev/null 2>&1
+            "
+        else
+            log "ERROR" "$(printf "$invalid_number_msg" "$container_index")"
+        fi
+    done
     
     # 비동기 작업 실행 (메시지 표시 없음)
     async_tasks "$MSG_TASKS_DONE"
