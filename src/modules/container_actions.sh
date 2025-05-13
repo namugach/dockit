@@ -364,82 +364,46 @@ handle_this_argument() {
 }
 
 
-# 숫자 인자 처리 함수
-# Handle numeric arguments function
+# 숫자 인자 처리
 handle_numeric_arguments() {
-    local action="$1"
-    local args=("${@:2}")   # 두 번째부터 끝까지
+    local action="$1"; shift
+    local -a indices=("$@")            # 숫자 인자들만
 
+    # 메시지 설정 가져오기
+    local config
+    config=$(get_action_config "$action" "numeric_args") || return 1
+    local invalid_msg spinner_tpl
+    IFS='|' read -r invalid_msg spinner_tpl <<<"$config"
 
-    # 액션에 따른 메시지 설정 (set_action_messages 함수 내용을 직접 통합)
-    # Set messages according to action
-    local config=$(get_action_config "$action" "numeric_args")
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
-    
-    # 설정 추출 및 전역 associative array 설정
-    declare -gA action_messages
-    action_messages[invalid_number_msg]=$(echo "$config" | cut -d'|' -f1)
-    action_messages[spinner_action_text]=$(echo "$config" | cut -d'|' -f2)
-    
-    local invalid_number_msg=${action_messages[invalid_number_msg]}
-    local spinner_action_text=${action_messages[spinner_action_text]}
-    
-    # 모든 인자가 숫자인지 확인 (내장 로직)
-    local all_numeric="true"
-    for arg in "${args[@]}"; do
-        if ! [[ "$arg" =~ ^[0-9]+$ ]]; then
-            all_numeric="false"
-            break
-        fi
+    # 인자 전부 숫자인지 확인
+    for idx in "${indices[@]}"; do
+        [[ "$idx" =~ ^[0-9]+$ ]] || { log "ERROR" "$(printf "$invalid_msg" "$idx")"; return 1; }
     done
-    
-    if [ "$all_numeric" = "false" ]; then
-        return 1
-    fi
-    
-    # 모든 컨테이너 ID 목록 가져오기 (한 번만 실행)
-    local all_container_ids=$(docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}")
-    
-    # 컨테이너 작업 처리
-    for container_index in "${args[@]}"; do
-        local container_id=""
-        local i=1
-        for cid in $(echo "$all_container_ids" | tac); do
-            if [ "$i" -eq "$container_index" ]; then
-                container_id="$cid"
-                break
-            fi
-            ((i++))
-        done
-        
-        if [ -n "$container_id" ]; then
-            local container_short=${container_id:0:12}
-            
-            # 컨테이너 기본 정보 가져오기
-            local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
-            local container_desc="$container_short"
-            if [ -n "$name" ]; then
-                container_desc="$container_desc ($name)"
-            fi
-            
-            # 직접 스피너 텍스트 생성
-            local spinner_text=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "${container_desc}" "${spinner_action_text}")
-            
-            # 작업 추가 - 출력 리다이렉션으로 메시지 숨기기
-            add_task "$spinner_text" "
-                perform_container_action \"$action\" \"$container_id\" \"true\" > /dev/null 2>&1
-            "
-        else
-            log "ERROR" "$(printf "$invalid_number_msg" "$container_index")"
+
+    # 컨테이너 ID 목록 (최근 생성 순서 역순)
+    mapfile -t container_ids < <(docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}" | tac)
+
+    # 각 인덱스 처리
+    for idx in "${indices[@]}"; do
+        local array_idx=$((idx-1))                # 인덱스 → 배열 위치
+        local cid=${container_ids[$array_idx]:-}
+
+        if [[ -z "$cid" ]]; then
+            log "ERROR" "$(printf "$invalid_msg" "$idx")"
+            continue
         fi
+
+        local short=${cid:0:12}
+        local name=$(docker inspect --format "{{.Name}}" "$cid" | sed 's/^\///')
+        [[ -n "$name" ]] && short="$short ($name)"
+
+        local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$spinner_tpl")
+
+        add_task "$spinner" \
+            "perform_container_action \"$action\" \"$cid\" true >/dev/null 2>&1"
     done
-    
-    # 비동기 작업 실행 (메시지 표시 없음)
+
     async_tasks "$MSG_TASKS_DONE"
-    
-    return 0
 }
 
 # 모든 컨테이너 액션 수행 - 비동기 방식
