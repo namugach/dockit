@@ -252,114 +252,75 @@ perform_container_action() {
 
 # this 인자 처리 함수
 # Handle 'this' argument function
+# "this" 인자 처리
 handle_this_argument() {
-    local action="$1"  # "start" 또는 "stop"
-    
-    # 액션에 따른 메시지 설정
-    local not_project_msg=$(get_action_config "$action" "this_arg")
-    
-    # 현재 디렉토리가 dockit 프로젝트인지 확인
-    # Check if current directory is a dockit project
-    if [ -d ".dockit_project" ]; then
-        # 액션 시작 메시지 설정 및 출력
-        local config=$(get_action_config "$action" "all")
-        if [ $? -ne 0 ]; then
-            return 1
-        fi
-        
-        # config에서 project_start_msg 추출
-        local start_msg=""
-        for item in $(echo "$config" | tr ';' '\n'); do
-            local key=$(echo "$item" | cut -d':' -f1)
-            local value=$(echo "$item" | cut -d':' -f2-)
-            
-            if [ "$key" = "project_start_msg" ]; then
-                start_msg="$value"
-                break
-            fi
-        done
-        
-        log "INFO" "$start_msg"
-        
-        if [ ! -f "$DOCKER_COMPOSE_FILE" ]; then
-            log "ERROR" "$MSG_COMPOSE_NOT_FOUND"
-            return 1
-        fi
-        
-        # 설정 로드
-        load_env
-        
-        local check_state=""
-        local already_msg=""
-        local not_found_info=""
-        
-        # 상태 관련 설정 가져오기
-        local state_config=$(get_action_config "$action" "state")
-        if [ $? -ne 0 ]; then
-            return 1
-        fi
-        
-        # 설정에서 값 추출
-        check_state=$(echo "$state_config" | cut -d'|' -f1)
-        already_msg=$(echo "$state_config" | cut -d'|' -f2)
-        not_found_info=$(echo "$state_config" | cut -d'|' -f3)
-        
-        # 컨테이너 존재 여부 확인
-        if ! container_exists "$CONTAINER_NAME"; then
-            log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
-            if [ "$action" = "start" ] && [ -n "$not_found_info" ]; then
-                echo -e "\n${YELLOW}$not_found_info${NC}"
-                echo -e "${BLUE}dockit up${NC}"
-                return 1
-            fi
-            return 2
-        fi
-        
-        # 컨테이너가 이미 원하는 상태인지 확인
-        if [ "$check_state" = "true" ] && is_container_running "$CONTAINER_NAME"; then
-            log "WARNING" "$already_msg"
-            return 3
-        elif [ "$check_state" = "false" ] && ! is_container_running "$CONTAINER_NAME"; then
-            log "WARNING" "$already_msg"
-            return 3
-        fi
-        
-        # 액션 메시지 및 명령어 설정
-        local action_msg=""
-        local success_msg=""
-        local fail_msg=""
-        local docker_compose_cmd=""
-        local success_info=""
-        
-        # 메시지 관련 설정 가져오기
-        local messages_config=$(get_action_config "$action" "messages")
-        if [ $? -ne 0 ]; then
-            return 1
-        fi
-        
-        # 설정에서 값 추출
-        action_msg=$(echo "$messages_config" | cut -d'|' -f1)
-        success_msg=$(echo "$messages_config" | cut -d'|' -f2)
-        fail_msg=$(echo "$messages_config" | cut -d'|' -f3) 
-        docker_compose_cmd=$(echo "$messages_config" | cut -d'|' -f4)
-        success_info=$(echo "$messages_config" | cut -d'|' -f5)
-        
-        # 컨테이너 액션 수행
-        log "INFO" "$action_msg"
-        if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" $docker_compose_cmd; then
-            log "SUCCESS" "$success_msg"
-            
-            # 성공 후 추가 정보 출력
-            if [ -n "$success_info" ]; then
-                echo -e "$success_info"
-            fi
-            return 0
-        else
-            log "ERROR" "$fail_msg"
-            return 1
-        fi
-    else
+    local action=$1          # start / stop
+    local not_project_msg
+
+    # -- 0) this_arg 메시지 ------------------------------
+    not_project_msg=$(get_action_config "$action" "this_arg") || return 1
+
+    # -- 1) dockit 프로젝트 디렉터리 확인 ----------------
+    if [[ ! -d .dockit_project ]]; then
         log "WARNING" "$not_project_msg"
+        return 1
+    fi
+
+    # -- 2) 시작 메시지 ----------------------------------
+    local all_cfg project_start_msg
+    all_cfg=$(get_action_config "$action" "all") || return 1
+
+    # all_cfg 형태: key1:val1;key2:val2;...
+    while IFS=':' read -r k v; do
+        [[ $k == project_start_msg ]] && { project_start_msg=$v; break; }
+    done < <(tr ';' '\n' <<<"$all_cfg")
+
+    log "INFO" "$project_start_msg"
+
+    # -- 3) docker-compose 파일 체크 ---------------------
+    [[ -f $DOCKER_COMPOSE_FILE ]] || { log "ERROR" "$MSG_COMPOSE_NOT_FOUND"; return 1; }
+
+    # -- 4) 환경 로드 ------------------------------------
+    load_env
+
+    # -- 5) 상태 설정 가져오기 ----------------------------
+    local state_cfg check_state already_msg not_found_info
+    state_cfg=$(get_action_config "$action" "state") || return 1
+    IFS='|' read -r check_state already_msg not_found_info <<<"$state_cfg"
+
+    # -- 6) 컨테이너 존재 여부 ----------------------------
+    if ! container_exists "$CONTAINER_NAME"; then
+        log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
+        if [[ $action == start && -n $not_found_info ]]; then
+            echo -e "\n${YELLOW}$not_found_info${NC}\n${BLUE}dockit up${NC}"
+        fi
+        return 2
+    fi
+
+    # -- 7) 이미 원하는 상태인지 확인 ---------------------
+    local running
+    is_container_running "$CONTAINER_NAME" && running=true || running=false
+
+    if { [[ $check_state == true  && $running == true  ]] ||
+         [[ $check_state == false && $running == false ]]; }; then
+        log "WARNING" "$already_msg"
+        return 3
+    fi
+
+    # -- 8) 액션별 메시지 / compose 커맨드 ----------------
+    local msg_cfg action_msg success_msg fail_msg compose_cmd success_info
+    msg_cfg=$(get_action_config "$action" "messages") || return 1
+    IFS='|' read -r action_msg success_msg fail_msg compose_cmd success_info <<<"$msg_cfg"
+
+    # -- 9) 실제 액션 수행 --------------------------------
+    log "INFO" "$action_msg"
+    if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" $compose_cmd; then
+        log "SUCCESS" "$success_msg"
+        [[ -n $success_info ]] && echo -e "$success_info"
+        return 0
+    else
+        log "ERROR" "$fail_msg"
+        return 1
     fi
 }
 
