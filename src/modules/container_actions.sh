@@ -249,46 +249,6 @@ perform_container_action() {
 
 
 
-# 컨테이너 존재 여부 확인
-# Check if container exists
-check_container_exists() {
-    local action="$1"
-    local not_found_info="$2"
-    
-    if ! container_exists "$CONTAINER_NAME"; then
-        log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
-        if [ "$action" = "start" ] && [ -n "$not_found_info" ]; then
-            echo -e "\n${YELLOW}$not_found_info${NC}"
-            echo -e "${BLUE}dockit up${NC}"
-            return 1
-        fi
-        return 2
-    fi
-    
-    return 0
-}
-
-
-
-
-# 인덱스로 컨테이너 ID 가져오기
-# Get container ID by index
-get_container_id_by_index() {
-    local index="$1"
-    local container_ids=$(docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}")
-    
-    # 인덱스에 해당하는 컨테이너 ID 가져오기
-    local i=1
-    for container_id in $(echo "$container_ids" | tac); do
-        if [ "$i" -eq "$index" ]; then
-            echo "$container_id"
-            return 0
-        fi
-        ((i++))
-    done
-    
-    return 1
-}
 
 # this 인자 처리 함수
 # Handle 'this' argument function
@@ -407,9 +367,9 @@ handle_this_argument() {
 # 숫자 인자 처리 함수
 # Handle numeric arguments function
 handle_numeric_arguments() {
-    local action="$1"  # "start" 또는 "stop"
-    shift
-    local args=("$@")
+    local action="$1"
+    local args=("${@:2}")   # 두 번째부터 끝까지
+
 
     # 액션에 따른 메시지 설정 (set_action_messages 함수 내용을 직접 통합)
     # Set messages according to action
@@ -439,9 +399,21 @@ handle_numeric_arguments() {
         return 1
     fi
     
-    # 컨테이너 작업 처리 (process_container_tasks 함수 내용을 직접 통합)
+    # 모든 컨테이너 ID 목록 가져오기 (한 번만 실행)
+    local all_container_ids=$(docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}")
+    
+    # 컨테이너 작업 처리
     for container_index in "${args[@]}"; do
-        local container_id=$(get_container_id_by_index "$container_index")
+        local container_id=""
+        local i=1
+        for cid in $(echo "$all_container_ids" | tac); do
+            if [ "$i" -eq "$container_index" ]; then
+                container_id="$cid"
+                break
+            fi
+            ((i++))
+        done
+        
         if [ -n "$container_id" ]; then
             local container_short=${container_id:0:12}
             

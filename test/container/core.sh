@@ -148,8 +148,8 @@ test() {
 
   # 환경 정리
   log_step "환경 정리 (dockit down)"
-  dockit_init_boot_in_path $work_space_a "down"
-  dockit_init_boot_in_path $work_space_b "down"
+  dockit_in_path $work_space_a "down"
+  dockit_in_path $work_space_b "down"
 
   run_bash_command "rm -rf $work_space_group"
 
