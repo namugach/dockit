@@ -290,102 +290,6 @@ get_container_id_by_index() {
     return 1
 }
 
-# 액션 타입에 따른 컨테이너 목록 가져오기
-# Get container list based on action type
-get_containers_for_action() {
-    local action="$1"
-    
-    if [ "$action" = "start" ]; then
-        docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}"
-    else  # stop
-        docker ps -a --filter "label=com.dockit=true" --filter "status=running" --format "{{.ID}}"
-    fi
-}
-
-# 모든 컨테이너 액션용 메시지 설정 함수
-# Function to set messages for all containers action
-set_all_containers_action_messages() {
-    local action="$1"
-    local -n start_msg_ref="$2"
-    local -n result_msg_ref="$3"
-    local -n no_containers_msg_ref="$4"
-    local -n spinner_action_text_ref="$5"
-    
-    local config=$(get_action_config "$action" "all_containers")
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
-    
-    start_msg_ref=$(echo "$config" | cut -d'|' -f1)
-    result_msg_ref=$(echo "$config" | cut -d'|' -f2)
-    no_containers_msg_ref=$(echo "$config" | cut -d'|' -f3)
-    spinner_action_text_ref=$(echo "$config" | cut -d'|' -f4)
-    
-    return 0
-}
-
-# 컨테이너 작업 추가 함수
-# Function to add container tasks
-add_container_tasks() {
-    local action="$1"
-    local spinner_action_text="$2"
-    local temp_result="$3"
-    local container_ids="$4"
-    
-    for container_id in $container_ids; do
-        local container_short=${container_id:0:12}
-        
-        # 컨테이너 기본 정보 가져오기
-        local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
-        local container_desc="$container_short"
-        if [ -n "$name" ]; then
-            container_desc="$container_desc ($name)"
-        fi
-        
-        # 직접 스피너 텍스트 생성
-        local spinner_text=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "${container_desc}" "${spinner_action_text}")
-        
-        # 작업 추가 - 완료 메시지가 출력되지 않도록 수정
-        add_task "$spinner_text" "
-            if perform_container_action \"$action\" \"$container_id\" \"true\" > /dev/null 2>&1; then
-                # 성공 카운트 증가
-                local counts=\$(cat \"$temp_result\")
-                local success=\$(echo \"\$counts\" | cut -d' ' -f1)
-                local fail=\$(echo \"\$counts\" | cut -d' ' -f2)
-                echo \"\$((success+1)) \$fail\" > \"$temp_result\"
-            else
-                # 실패 카운트 증가
-                local counts=\$(cat \"$temp_result\")
-                local success=\$(echo \"\$counts\" | cut -d' ' -f1)
-                local fail=\$(echo \"\$counts\" | cut -d' ' -f2)
-                echo \"\$success \$((fail+1))\" > \"$temp_result\"
-            fi
-        "
-    done
-}
-
-# 결과 처리 함수
-# Function to process results
-process_action_results() {
-    local temp_result="$1"
-    local result_msg="$2"
-    
-    # 결과 읽기
-    local counts=$(cat "$temp_result")
-    local success_count=$(echo "$counts" | cut -d' ' -f1)
-    local fail_count=$(echo "$counts" | cut -d' ' -f2)
-    
-    # 임시 파일 삭제
-    rm -f "$temp_result"
-    
-    # 결과 출력 - 완료 메시지가 이미 표시되었으므로 여기서는 결과 메시지만 조용히 로깅
-    if [ "$fail_count" -gt 0 ]; then
-        log "INFO" "$(printf "$result_msg" "$success_count" "$fail_count")"
-    fi
-}
-
-
-
 # this 인자 처리 함수
 # Handle 'this' argument function
 handle_this_argument() {
@@ -571,20 +475,27 @@ handle_numeric_arguments() {
 perform_all_containers_action() {
     local action="$1"  # "start" 또는 "stop"
     
-    # 액션별 메시지 설정
-    local start_msg=""
-    local result_msg=""
-    local no_containers_msg=""
-    local spinner_action_text=""
-    
-    if ! set_all_containers_action_messages "$action" start_msg result_msg no_containers_msg spinner_action_text; then
+    # 액션별 메시지 설정 (set_all_containers_action_messages 함수 내용을 직접 통합)
+    local config=$(get_action_config "$action" "all_containers")
+    if [ $? -ne 0 ]; then
         return 1
     fi
     
+    # 설정에서 값 추출
+    local start_msg=$(echo "$config" | cut -d'|' -f1)
+    local result_msg=$(echo "$config" | cut -d'|' -f2)
+    local no_containers_msg=$(echo "$config" | cut -d'|' -f3)
+    local spinner_action_text=$(echo "$config" | cut -d'|' -f4)
+    
     log "INFO" "$start_msg"
     
-    # 컨테이너 목록 가져오기
-    local container_ids=$(get_containers_for_action "$action")
+    # 컨테이너 목록 가져오기 (get_containers_for_action 함수 내용을 직접 통합)
+    local container_ids=""
+    if [ "$action" = "start" ]; then
+        container_ids=$(docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}")
+    else  # stop
+        container_ids=$(docker ps -a --filter "label=com.dockit=true" --filter "status=running" --format "{{.ID}}")
+    fi
     
     if [ -z "$container_ids" ]; then
         log "INFO" "$no_containers_msg"
@@ -596,13 +507,53 @@ perform_all_containers_action() {
     echo "0 0" > "$temp_result"  # 성공, 실패 카운트 초기화
     
     # 컨테이너 작업 추가
-    add_container_tasks "$action" "$spinner_action_text" "$temp_result" "$container_ids"
+    for container_id in $container_ids; do
+        local container_short=${container_id:0:12}
+        
+        # 컨테이너 기본 정보 가져오기
+        local name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+        local container_desc="$container_short"
+        if [ -n "$name" ]; then
+            container_desc="$container_desc ($name)"
+        fi
+        
+        # 직접 스피너 텍스트 생성
+        local spinner_text=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "${container_desc}" "${spinner_action_text}")
+        
+        # 작업 추가 - 완료 메시지가 출력되지 않도록 수정
+        add_task "$spinner_text" "
+            if perform_container_action \"$action\" \"$container_id\" \"true\" > /dev/null 2>&1; then
+                # 성공 카운트 증가
+                local counts=\$(cat \"$temp_result\")
+                local success=\$(echo \"\$counts\" | cut -d' ' -f1)
+                local fail=\$(echo \"\$counts\" | cut -d' ' -f2)
+                echo \"\$((success+1)) \$fail\" > \"$temp_result\"
+            else
+                # 실패 카운트 증가
+                local counts=\$(cat \"$temp_result\")
+                local success=\$(echo \"\$counts\" | cut -d' ' -f1)
+                local fail=\$(echo \"\$counts\" | cut -d' ' -f2)
+                echo \"\$success \$((fail+1))\" > \"$temp_result\"
+            fi
+        "
+    done
     
     # 비동기 작업 실행 (메시지 표시 있음)
     async_tasks "$MSG_TASKS_DONE"
     
     # 결과 처리
-    process_action_results "$temp_result" "$result_msg"
+    # 결과 읽기
+    local counts=$(cat "$temp_result")
+    local success_count=$(echo "$counts" | cut -d' ' -f1)
+    local fail_count=$(echo "$counts" | cut -d' ' -f2)
+    
+    # 임시 파일 삭제
+    rm -f "$temp_result"
+    
+    # 결과 출력 - 완료 메시지가 이미 표시되었으므로 여기서는 결과 메시지만 조용히 로깅
+    if [ "$fail_count" -gt 0 ]; then
+        log "INFO" "$(printf "$result_msg" "$success_count" "$fail_count")"
+    fi
     
     return 0
 }

@@ -2,7 +2,7 @@
 
 source ../core.sh
 
-container_index="1 2"
+container_index="all"
 work_space_a="__a"
 work_space_b="__b"
 work_space_group="$work_space_a $work_space_b"

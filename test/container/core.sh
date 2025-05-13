@@ -30,7 +30,7 @@ log_step() {
 }
 
 # 명령어 실행 함수
-run_command() {
+run_bash_command() {
     log_info "실행: $1"
     if eval "$1"; then
         log_success "성공: $1"
@@ -41,6 +41,32 @@ run_command() {
     fi
 }
 
+function run_dockit_command() {
+  local command=$1
+  log_step "컨테이너 명령 실행 (dockit $command)"
+  run_bash_command "dockit $command"
+  run_bash_command "cd -"
+}
+
+function dockit_in_path() {
+  local work_path=$1
+  local command=$2
+  log_step "dockit $command"
+  run_bash_command "cd $work_path"
+
+  run_dockit_command $command
+}
+
+
+function dockit_init_boot_in_path() {
+  local work_path=$1
+  local command=$2
+  log_step "dockit 초기화"
+  run_bash_command "cd $work_path"
+  run_bash_command "echo Y | dockit init"
+
+  run_dockit_command $command
+}
 
 
 function test_dockit_lifecycle() {
@@ -48,33 +74,33 @@ function test_dockit_lifecycle() {
   log_step "테스트 시작: $@ 인자를 사용한 컨테이너 시작/정지 테스트"
   # 1. 기존 환경 정리
   log_step "1. 기존 환경 정리"
-  run_command "dockit down"
-  run_command $RESET_FILE_PATH
-  run_command "rm -rf .dockit_project/"
+  run_bash_command "dockit down"
+  run_bash_command $RESET_FILE_PATH
+  run_bash_command "rm -rf .dockit_project/"
 
   # 2. dockit 초기화
   log_step "2. dockit 초기화"
-  run_command "echo Y | dockit init"
+  run_bash_command "echo Y | dockit init"
 
   # 3. 컨테이너 시작
   log_step "3. 컨테이너 시작 (dockit up)"
-  run_command "dockit up"
+  run_bash_command "dockit up"
 
   # 4. 컨테이너 정지 ($@ 인자 사용)
   log_step "4. 컨테이너 정지 (dockit stop $@)"
-  run_command "dockit stop $@"
+  run_bash_command "dockit stop $@"
 
   # 5. 컨테이너 시작 (@ 인자 사용)
   log_step "5. 컨테이너 재시작 (dockit start $@)"
-  run_command "dockit start $@"
+  run_bash_command "dockit start $@"
 
   # 6. 컨테이너 정지 (재정지 테스트)
   log_step "6. 컨테이너 재정지 (dockit stop $@)"
-  run_command "dockit stop $@"
+  run_bash_command "dockit stop $@"
 
   # 7. 환경 정리
   log_step "7. 환경 정리 (dockit down)"
-  run_command "dockit down"
+  run_bash_command "dockit down"
 
   # 테스트 완료
   log_step "테스트 완료"
@@ -82,5 +108,4 @@ function test_dockit_lifecycle() {
 
   echo "test 완료"
 }
-
 
