@@ -81,54 +81,53 @@ get_container_ids() {
     docker ps -a --filter "label=com.dockit=true" $filter --format "{{.ID}}"
 }
 
-# perform_container_action 함수는 start_container와 stop_container로 분리되어
-# 각각 start.sh와 stop.sh 파일로 이동되었습니다.
+perform_all_containers_action() {
+    # -- 1) 메시지 설정 --------------------------------
+    local start_msg="$1"
+    local result_msg="$2"
+    local empty_msg="$3"
+    local spinner_txt="$4"
+    local -n dockir_cmd="$5"
+    # dockir_cmd 에 들어갈 내용 
+    # docker ps -a --filter label=com.dockit=true \
+    #                   --filter status=running --format '{{.ID}}'
+    log "INFO" "$start_msg"
 
-handle_this_argument() {
-    local docker_cmd=$1
-    local -n MSG=$2  # 객체처럼 넘긴 메시지 구조체
+    # -- 2) 대상 컨테이너 목록 --------------------------
+    # 실행 중인 컨테이너만 대상으로 함
+    mapfile -t cids < <("${docker_cmd[@]}")
 
-    # [[ -d .dockit_project ]] || { log "WARNING" "${MSG[not_project]}"; return 1; }
-    if [[ ! -d .dockit_project ]]; then
-        log "WARNING" "${MSG[not_project]}"
-        return 1
-    fi
+    [[ ${#cids[@]} -eq 0 ]] && { log "INFO" "$empty_msg"; return 0; }
 
-    log "INFO" "${MSG[start]}"
+    # -- 3) 성공/실패 카운트용 임시 파일 ----------------
+    local tmp; tmp=$(mktemp)
+    echo "0 0" > "$tmp"    # success fail
 
-    [[ -f $DOCKER_COMPOSE_FILE ]] || { log "ERROR" "$MSG_COMPOSE_NOT_FOUND"; return 1; }
+    # -- 4) 각 컨테이너 작업 큐에 등록 ------------------
+    for cid in "${cids[@]}"; do
+        local short=${cid:0:12}
+        local name=$(get_container_info "$cid" "name")
+        [[ -n $name ]] && short="$short ($name)"
 
-    load_env
+        local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$spinner_txt")
 
-    if ! container_exists "$CONTAINER_NAME"; then
-        log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
-        echo -e "\n${YELLOW}$MSG_CONTAINER_NOT_FOUND_INFO${NC}\n${BLUE}dockit up${NC}"
-        return 2
-    fi
+        add_task "$spinner" "
+            if container_action '$cid' true >/dev/null 2>&1; then
+                awk '{\$1++}1' $tmp > ${tmp}.n && mv ${tmp}.n $tmp
+            else
+                awk '{\$2++}1' $tmp > ${tmp}.n && mv ${tmp}.n $tmp
+            fi
+        "
+    done
 
-    # 명령어에 따라 다르게 처리
-    if [[ "$docker_cmd" == "start" ]]; then
-        # start 명령어: 이미 실행 중인지 확인
-        if is_container_running "$CONTAINER_NAME"; then
-            log "WARNING" "${MSG[not_active]}"
-            return 3
-        fi
-    elif [[ "$docker_cmd" == "stop" ]]; then
-        # stop 명령어: 이미 정지되었는지 확인
-        if ! is_container_running "$CONTAINER_NAME"; then
-            local container_desc=$(get_container_description "$CONTAINER_NAME")
-            log "WARNING" "$(printf "${MSG[not_active]}" "$container_desc")"
-            return 3
-        fi
-    fi
+    # -- 5) 비동기 작업 실행 ----------------------------
+    async_tasks "$MSG_TASKS_DONE"
 
-    log "INFO" "${MSG[doing]}"
-    if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" "$docker_cmd"; then
-        log "SUCCESS" "${MSG[done]}"
-        echo -e "\n${BLUE}${MSG[info]}${NC}"
-        return 0
-    else
-        log "ERROR" "${MSG[fail]}"
-        return 1
-    fi
+    # -- 6) 결과 집계 & 출력 -----------------------------
+    local ok fail
+    read -r ok fail < "$tmp"
+    rm -f "$tmp"
+
+    (( fail > 0 )) && log "INFO" "$(printf "$result_msg" "$ok" "$fail")"
+    return 0
 }

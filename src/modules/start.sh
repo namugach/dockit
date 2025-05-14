@@ -124,56 +124,6 @@ handle_numeric_arguments() {
     async_tasks "$MSG_TASKS_DONE"
 }
 
-# 모든 컨테이너 시작
-# Start all containers
-perform_all_containers_action() {
-    # -- 1) 메시지 설정 --------------------------------
-    local start_msg="$MSG_START_ALL"
-    local result_msg="$MSG_START_ALL_RESULT"
-    local empty_msg="$MSG_NO_CONTAINERS"
-    local spinner_txt="$MSG_SPINNER_STARTING"
-
-    log "INFO" "$start_msg"
-
-    # -- 2) 대상 컨테이너 목록 --------------------------
-    mapfile -t cids < <(
-        docker ps -a --filter label=com.dockit=true --format '{{.ID}}'
-    )
-
-    [[ ${#cids[@]} -eq 0 ]] && { log "INFO" "$empty_msg"; return 0; }
-
-    # -- 3) 성공/실패 카운트용 임시 파일 ----------------
-    local tmp; tmp=$(mktemp)
-    echo "0 0" > "$tmp"    # success fail
-
-    # -- 4) 각 컨테이너 작업 큐에 등록 ------------------
-    for cid in "${cids[@]}"; do
-        local short=${cid:0:12}
-        local name=$(get_container_info "$cid" "name")
-        [[ -n $name ]] && short="$short ($name)"
-
-        local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$spinner_txt")
-
-        add_task "$spinner" "
-            if container_action '$cid' true >/dev/null 2>&1; then
-                awk '{\$1++}1' $tmp > ${tmp}.n && mv ${tmp}.n $tmp
-            else
-                awk '{\$2++}1' $tmp > ${tmp}.n && mv ${tmp}.n $tmp
-            fi
-        "
-    done
-
-    # -- 5) 비동기 작업 실행 ----------------------------
-    async_tasks "$MSG_TASKS_DONE"
-
-    # -- 6) 결과 집계 & 출력 -----------------------------
-    local ok fail
-    read -r ok fail < "$tmp"
-    rm -f "$tmp"
-
-    (( fail > 0 )) && log "INFO" "$(printf "$result_msg" "$ok" "$fail")"
-    return 0
-}
 
 # Main function
 # 메인 함수
@@ -199,7 +149,14 @@ start_main() {
             ;;
         "all")
             # all 인자 처리
-            perform_all_containers_action
+            # _perform_all_containers_action
+            local docker_cmd=(docker ps -a --filter label=com.dockit=true --format '{{.ID}}')
+            perform_all_containers_action \
+              "$MSG_START_ALL" \
+              "$MSG_START_ALL_RESULT" \
+              "$MSG_NO_CONTAINERS" \
+              "$MSG_SPINNER_STARTING" \
+              docker_cmd
             ;;
         *)
             # 숫자 인자 처리 시도
