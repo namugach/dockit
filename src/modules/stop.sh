@@ -51,6 +51,39 @@ handle_this_argument() {
     fi
 }
 
+# 컨테이너 정지 함수
+# Stop container function
+stop_container() {
+    local container_id="$1"
+    local quiet="${2:-false}"  # 로그 출력 여부 (기본값: 출력함)
+    
+    # 컨테이너 존재 여부 확인
+    # Check if container exists
+    if ! container_exists "$container_id"; then
+        [ "$quiet" != "true" ] && log "ERROR" "$MSG_CONTAINER_NOT_FOUND"
+        return 1
+    fi
+    
+    # 컨테이너 정보 가져오기
+    local container_desc=$(get_container_description "$container_id")
+    
+    # 이미 정지된 상태인지 확인
+    if ! is_container_running "$container_id"; then
+        [ "$quiet" != "true" ] && log "WARNING" "$(printf "$MSG_CONTAINER_ALREADY_STOPPED" "$container_desc")"
+        return 0
+    fi
+    
+    # 컨테이너 정지
+    [ "$quiet" != "true" ] && log "INFO" "$(printf "$MSG_STOPPING_CONTAINER" "$container_desc")"
+    if docker stop "$container_id"; then
+        [ "$quiet" != "true" ] && log "SUCCESS" "$(printf "$MSG_CONTAINER_STOPPED" "$container_desc")"
+        return 0
+    else
+        [ "$quiet" != "true" ] && log "ERROR" "$(printf "$MSG_CONTAINER_STOP_FAILED" "$container_desc")"
+        return 1
+    fi
+}
+
 # 숫자 인자 처리 (번호로 컨테이너 정지)
 # Handle numeric arguments (stop container by number)
 handle_numeric_arguments() {
@@ -81,7 +114,7 @@ handle_numeric_arguments() {
         local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$MSG_SPINNER_STOPPING")
 
         add_task "$spinner" \
-            "perform_container_action 'stop' '$cid' true >/dev/null 2>&1"
+            "stop_container '$cid' true >/dev/null 2>&1"
     done
 
     async_tasks "$MSG_TASKS_DONE"
@@ -120,7 +153,7 @@ perform_all_containers_action() {
         local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$spinner_txt")
 
         add_task "$spinner" "
-            if perform_container_action 'stop' '$cid' true >/dev/null 2>&1; then
+            if stop_container '$cid' true >/dev/null 2>&1; then
                 awk '{\$1++}1' $tmp > ${tmp}.n && mv ${tmp}.n $tmp
             else
                 awk '{\$2++}1' $tmp > ${tmp}.n && mv ${tmp}.n $tmp

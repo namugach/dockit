@@ -48,71 +48,6 @@ get_container_description() {
     echo "$container_desc"
 }
 
-# 컨테이너 액션 수행 함수 (시작 또는 정지)
-# Function to perform action on a container (start or stop)
-perform_container_action() {
-    local action="$1"      # "start" 또는 "stop"
-    local container_id="$2"
-    local quiet="${3:-false}"  # 로그 출력 여부 (기본값: 출력함)
-    
-    # 컨테이너 존재 여부 확인
-    # Check if container exists
-    if ! container_exists "$container_id"; then
-        [ "$quiet" != "true" ] && log "ERROR" "$MSG_CONTAINER_NOT_FOUND"
-        return 1
-    fi
-    
-    # 컨테이너 정보 가져오기
-    local container_desc=$(get_container_description "$container_id")
-    
-    # 액션이 start인 경우
-    if [[ "$action" == "start" ]]; then
-        # 이미 실행 중인지 확인
-        if is_container_running "$container_id"; then
-            [ "$quiet" != "true" ] && log "WARNING" "$(printf "$MSG_CONTAINER_ALREADY_RUNNING" "$container_desc")"
-            return 0
-        fi
-        
-        # 컨테이너 시작
-        [ "$quiet" != "true" ] && log "INFO" "$(printf "$MSG_STARTING_CONTAINER" "$container_desc")"
-        if docker start "$container_id"; then
-            [ "$quiet" != "true" ] && log "SUCCESS" "$(printf "$MSG_CONTAINER_STARTED" "$container_desc")"
-            return 0
-        else
-            [ "$quiet" != "true" ] && log "ERROR" "$(printf "$MSG_CONTAINER_START_FAILED" "$container_desc")"
-            return 1
-        fi
-    # 액션이 stop인 경우
-    elif [[ "$action" == "stop" ]]; then
-        # 이미 정지된 상태인지 확인
-        if ! is_container_running "$container_id"; then
-            [ "$quiet" != "true" ] && log "WARNING" "$(printf "$MSG_CONTAINER_ALREADY_STOPPED" "$container_desc")"
-            return 0
-        fi
-        
-        # 컨테이너 정지
-        [ "$quiet" != "true" ] && log "INFO" "$(printf "$MSG_STOPPING_CONTAINER" "$container_desc")"
-        if docker stop "$container_id"; then
-            [ "$quiet" != "true" ] && log "SUCCESS" "$(printf "$MSG_CONTAINER_STOPPED" "$container_desc")"
-            return 0
-        else
-            [ "$quiet" != "true" ] && log "ERROR" "$(printf "$MSG_CONTAINER_STOP_FAILED" "$container_desc")"
-            return 1
-        fi
-    else
-        log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
-        return 1
-    fi
-}
-
-# 컨테이너 ID 목록 가져오기 (필터 적용)
-# Get container ID list with filter
-get_container_ids() {
-    local filter="$1"  # 필터 (예: 모든 컨테이너, 실행 중인 컨테이너 등)
-    
-    docker ps -a --filter "label=com.dockit=true" $filter --format "{{.ID}}"
-}
-
 # 도커 컨테이너 정보 캐싱
 # Cache docker container info
 get_container_info() {
@@ -136,4 +71,64 @@ get_container_info() {
     esac
     
     return 0
+}
+
+# 컨테이너 ID 목록 가져오기 (필터 적용)
+# Get container ID list with filter
+get_container_ids() {
+    local filter="$1"  # 필터 (예: 모든 컨테이너, 실행 중인 컨테이너 등)
+    
+    docker ps -a --filter "label=com.dockit=true" $filter --format "{{.ID}}"
+}
+
+# perform_container_action 함수는 start_container와 stop_container로 분리되어
+# 각각 start.sh와 stop.sh 파일로 이동되었습니다.
+
+handle_this_argument() {
+    local docker_cmd=$1
+    local -n MSG=$2  # 객체처럼 넘긴 메시지 구조체
+
+    # [[ -d .dockit_project ]] || { log "WARNING" "${MSG[not_project]}"; return 1; }
+    if [[ ! -d .dockit_project ]]; then
+        log "WARNING" "${MSG[not_project]}"
+        return 1
+    fi
+
+    log "INFO" "${MSG[start]}"
+
+    [[ -f $DOCKER_COMPOSE_FILE ]] || { log "ERROR" "$MSG_COMPOSE_NOT_FOUND"; return 1; }
+
+    load_env
+
+    if ! container_exists "$CONTAINER_NAME"; then
+        log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
+        echo -e "\n${YELLOW}$MSG_CONTAINER_NOT_FOUND_INFO${NC}\n${BLUE}dockit up${NC}"
+        return 2
+    fi
+
+    # 명령어에 따라 다르게 처리
+    if [[ "$docker_cmd" == "start" ]]; then
+        # start 명령어: 이미 실행 중인지 확인
+        if is_container_running "$CONTAINER_NAME"; then
+            log "WARNING" "${MSG[not_active]}"
+            return 3
+        fi
+    elif [[ "$docker_cmd" == "stop" ]]; then
+        # stop 명령어: 이미 정지되었는지 확인
+        if ! is_container_running "$CONTAINER_NAME"; then
+            local container_desc=$(get_container_description "$CONTAINER_NAME")
+            log "WARNING" "$(printf "${MSG[not_active]}" "$container_desc")"
+            return 3
+        fi
+    fi
+
+    log "INFO" "${MSG[doing]}"
+    if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" "$docker_cmd"; then
+        log "SUCCESS" "${MSG[done]}"
+        echo -e "\n${BLUE}${MSG[info]}${NC}"
+        return 0
+    else
+        log "ERROR" "${MSG[fail]}"
+        return 1
+    fi
 }
