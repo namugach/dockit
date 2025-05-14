@@ -53,7 +53,7 @@ handle_this_argument() {
 
 # 컨테이너 정지 함수
 # Stop container function
-stop_container() {
+container_action() {
     local container_id="$1"
     local quiet="${2:-false}"  # 로그 출력 여부 (기본값: 출력함)
     
@@ -114,7 +114,7 @@ handle_numeric_arguments() {
         local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$MSG_SPINNER_STOPPING")
 
         add_task "$spinner" \
-            "stop_container '$cid' true >/dev/null 2>&1"
+            "container_action '$cid' true >/dev/null 2>&1"
     done
 
     async_tasks "$MSG_TASKS_DONE"
@@ -153,7 +153,7 @@ perform_all_containers_action() {
         local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$spinner_txt")
 
         add_task "$spinner" "
-            if stop_container '$cid' true >/dev/null 2>&1; then
+            if container_action '$cid' true >/dev/null 2>&1; then
                 awk '{\$1++}1' $tmp > ${tmp}.n && mv ${tmp}.n $tmp
             else
                 awk '{\$2++}1' $tmp > ${tmp}.n && mv ${tmp}.n $tmp
