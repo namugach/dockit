@@ -68,94 +68,57 @@ dockit_init_boot_in_path() {
   run_dockit_command $command
 }
 
-
-test_dockit_lifecycle() {
-  # 테스트 시작
-  log_step "테스트 시작: $@ 인자를 사용한 컨테이너 시작/정지 테스트"
-  # 1. 기존 환경 정리
-  log_step "1. 기존 환경 정리"
-  run_bash_command "dockit down"
-  run_bash_command $RESET_FILE_PATH
-  run_bash_command "rm -rf .dockit_project/"
-
-  # 2. dockit 초기화
-  log_step "2. dockit 초기화"
-  run_bash_command "echo Y | dockit init"
-
-  # 3. 컨테이너 시작
-  log_step "3. 컨테이너 시작 (dockit up)"
-  run_bash_command "dockit up"
-
-  # 4. 컨테이너 정지 ($@ 인자 사용)
-  log_step "4. 컨테이너 정지 (dockit stop $@)"
-  run_bash_command "dockit stop $@"
-
-  # 5. 컨테이너 시작 (@ 인자 사용)
-  log_step "5. 컨테이너 재시작 (dockit start $@)"
-  run_bash_command "dockit start $@"
-
-  # 6. 컨테이너 정지 (재정지 테스트)
-  log_step "6. 컨테이너 재정지 (dockit stop $@)"
-  run_bash_command "dockit stop $@"
-
-  # 7. 환경 정리
-  log_step "7. 환경 정리 (dockit down)"
-  run_bash_command "dockit down"
-
-  # 테스트 완료
-  log_step "테스트 완료"
-  log_success "모든 테스트가 성공적으로 완료되었습니다!"
-
-  echo "test 완료"
+projects_clear() {
+  local -n workspaces=$1
+  for workspace in "${workspaces[@]}"; do
+    dockit_in_path "$workspace" "down";
+    run_bash_command "rm -rf $workspace";
+  done
 }
 
-test() {
-  local index=$1
-  container_index="$index"
-  work_space_a="__a"
-  work_space_b="__b"
-  work_space_group="$work_space_a $work_space_b"
+projects_up() {
+  local -n workspaces=$1
+  for workspace in "${workspaces[@]}"; do
+    dockit_init_boot_in_path "$workspace" 'up'
+  done
+}
 
+# $1 = test_name: 테스트 이름 (기본값: dockit)
+# $2 = workspaces: 작업 공간 배열 참조
+# $3 = action_func: 테스트 액션 함수
+# $4 = reset_file_path: 리셋 파일 경로 (기본값: $RESET_FILE_PATH)
+test_base() {
+    local test_name="${1:-dockit}"
+    local -n workspaces=$2
+    local action_func=$3
+    local reset_file_path="${4:-$RESET_FILE_PATH}"
+    
+    # 테스트 시작
+    log_step "테스트 시작: $test_name 테스트"
 
-  # 테스트 시작
-  log_step "테스트 시작: $container_index 인자를 사용한 컨테이너 시작/정지 테스트"
+    # 기존 환경 정리
+    log_step "기존 환경 정리"
+    projects_clear $2
+    
+    # dockit 재설치
+    run_bash_command "$reset_file_path"
 
-  # 기존 환경 정리
-  log_step "기존 환경 정리"
-  dockit_in_path $work_space_a "down"
-  dockit_in_path $work_space_b "down"
-  run_bash_command $RESET_FILE_PATH
-  run_bash_command "rm -rf $work_space_group"
+    # 작업 디렉토리 생성
+    log_step "작업 디렉토리 생성"
+    run_bash_command "mkdir ${workspaces[*]}"
 
+    projects_up $2
 
-  log_step "작업 디렉토리 생성"
-  run_bash_command "mkdir $work_space_group"
+    # 액션 실행
+    $action_func $2
 
-  dockit_init_boot_in_path $work_space_a "up"
-  dockit_init_boot_in_path $work_space_b "up"
+    # 환경 정리
+    log_step "환경 정리 (dockit down)"
+    projects_clear $2
 
-  # 컨테이너 정지 ($container_index 인자 사용)
-  log_step "컨테이너 정지 (dockit stop $container_index)"
-  run_bash_command "dockit stop $container_index"
+    # 테스트 완료
+    log_step "테스트 완료"
+    log_success "모든 테스트가 성공적으로 완료되었습니다!"
 
-  # 컨테이너 시작 (@ 인자 사용)
-  log_step "컨테이너 재시작 (dockit start $container_index)"
-  run_bash_command "dockit start $container_index"
-
-  # 컨테이너 정지 (재정지 테스트)
-  log_step "컨테이너 재정지 (dockit stop $container_index)"
-  run_bash_command "dockit stop $container_index"
-
-  # 환경 정리
-  log_step "환경 정리 (dockit down)"
-  dockit_in_path $work_space_a "down"
-  dockit_in_path $work_space_b "down"
-
-  run_bash_command "rm -rf $work_space_group"
-
-  # 테스트 완료
-  log_step "테스트 완료"
-  log_success "모든 테스트가 성공적으로 완료되었습니다!"
-
-  echo "test 완료"
+    echo "test 완료"
 }
