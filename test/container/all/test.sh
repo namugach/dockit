@@ -7,7 +7,6 @@ local work_space=("__a" "__b")
 action() {
   local -n ws=$1
   # 컨테이너 정지 (all 인자 사용)
-  echo "path: ${ws[*]}"
   log_step "컨테이너 정지" "dockit stop all"
   run_bash_command "dockit stop all"
 

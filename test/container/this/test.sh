@@ -6,8 +6,6 @@ local work_space=("__a")
 
 action() {
   local -n ws=$1
-  # 컨테이너 정지 (all 인자 사용)
-  echo "path: ${ws[*]}"
   for dir in "${ws[@]}"; do
     run_bash_command "cd $dir"
     log_step "컨테이너 정지 (dockit stop this)"

@@ -110,6 +110,7 @@ test_base() {
     projects_up $2
 
     # 액션 실행
+    log_info "path: ${workspaces[*]}"
     $action_func $2
 
     # 환경 정리
