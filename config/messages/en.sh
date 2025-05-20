@@ -213,8 +213,7 @@ MSG_HELP_MIGRATE="  migrate  - Upgrade to a newer version"
 MSG_HELP_HELP="  help     - Display this help"
 MSG_HELP_VERSION="  version  - Display version information"
 MSG_HELP_PS="  ps       - List all dockit containers"
-
-
+MSG_HELP_LIST="  list     - List all registered projects"
 
 MSG_CONFIG_FILES_HEADER="Configuration Files"
 MSG_CONFIG_FILE_ENV="  .dockit_project/.env                # User settings file"
@@ -603,3 +602,16 @@ MSG_REGISTRY_MANUAL_CLEANUP="Performing manual registry cleanup"
 MSG_REGISTRY_FILE_NOT_FOUND="Registry file not found"
 MSG_REGISTRY_MANUAL_UPDATE="Performing manual state update (less efficient)"
 MSG_REGISTRY_LOADING="Loading registry..."
+
+# Project list related messages
+MSG_PROJECT_LIST_HEADER="Registered Projects (%d)"
+MSG_PROJECT_LIST_ID="ID"
+MSG_PROJECT_LIST_STATUS="STATUS"
+MSG_PROJECT_LIST_LAST_SEEN="LAST SEEN"
+MSG_PROJECT_LIST_PATH="PATH"
+MSG_PROJECT_LIST_NO="NO"
+MSG_PROJECT_LIST_PATH_NOT_FOUND="(path not found)"
+MSG_PROJECT_LIST_UNKNOWN="???"
+MSG_PROJECT_LIST_HINT_PS="📌 To check container status:  dockit ps"
+MSG_PROJECT_LIST_HINT_INIT="📌 To create a new project:    dockit init"
+MSG_PROJECT_LIST_NO_PROJECTS="No registered projects found."

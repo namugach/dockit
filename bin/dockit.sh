@@ -107,6 +107,10 @@ execute_command() {
             source "$MODULES_DIR/join.sh"
             join_main "$@"
             ;;
+        list)
+            source "$MODULES_DIR/list.sh"
+            list_main "$@"
+            ;;
         ps)
             source "$MODULES_DIR/ps.sh"
             list_main "$@"

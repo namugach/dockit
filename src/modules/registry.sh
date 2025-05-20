@@ -264,7 +264,8 @@ update_project_state() {
     if command -v jq &> /dev/null; then
         jq --arg id "$project_id" \
            --arg state "$new_state" \
-           'if has($id) then .[$id].state = $state else . end' \
+           --argjson last_seen "$(date +%s)" \
+           'if has($id) then .[$id].state = $state | .[$id].last_seen = $last_seen else . end' \
            "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
     else
         # jq 없이 처리 (기본 구현)
@@ -277,6 +278,53 @@ update_project_state() {
         # 여기서는 단순화를 위해 생략
         # Omitted here for simplicity
     fi
+}
+
+# Function to handle project ID synchronization
+# 프로젝트 ID 동기화 처리 함수
+handle_project_id_sync() {
+    local project_path="$1"
+    
+    # Check if .dockit_project/id exists
+    if [ ! -f "$project_path/.dockit_project/id" ]; then
+        return 1
+    fi
+    
+    # Read existing project ID
+    local project_id=$(cat "$project_path/.dockit_project/id")
+    
+    # Load registry
+    local registry_json=$(cat "$REGISTRY_FILE")
+    
+    # Check conditions for issuing new ID
+    local needs_new_id=0
+    
+    # Check if ID exists in registry
+    if ! echo "$registry_json" | jq -e --arg id "$project_id" 'has($id)' > /dev/null; then
+        # ID not in registry - project was copied or restored
+        needs_new_id=1
+    else
+        # ID exists in registry - check if path matches
+        local registered_path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
+        if [ "$registered_path" != "$project_path" ]; then
+            # Path mismatch - project was copied
+            needs_new_id=1
+        fi
+    fi
+    
+    # Generate new ID if needed
+    if [ $needs_new_id -eq 1 ]; then
+        # Generate and save new project ID
+        local new_project_id=$(generate_and_save_project_id "$project_path/.dockit_project")
+        
+        # Add project to registry with new ID
+        local current_time=$(date +%s)
+        add_project_to_registry "$new_project_id" "$project_path" "$current_time" "$PROJECT_STATE_NONE"
+        
+        return 0
+    fi
+    
+    return 1
 }
 
 # 레지스트리 초기화 함수
@@ -319,6 +367,9 @@ registry_main() {
             ;;
         update)
             update_project_state "$@"
+            ;;
+        sync)
+            handle_project_id_sync "$@"
             ;;
         *)
             log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
