@@ -2,12 +2,15 @@
 
 source ../core.sh
 
-local work_space=("__a")
+workspaces=("__a" "__b")  # 전역 배열 선언 (local ❌)
 
 action() {
   local -n ws=$1
-  # 컨테이너 정지 (number 인자 사용)
   dockit list
+  # for dir in "${ws[@]}"; do
+    
+  #   # 여기에 실제 테스트 동작 넣어도 돼
+  # done
 }
 
-test_init_run_clear "number" work_space action
+test_reset_run "복수 작업 테스트" workspaces action

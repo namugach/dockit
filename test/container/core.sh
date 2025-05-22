@@ -69,16 +69,16 @@ dockit_init_boot_in_path() {
 }
 
 projects_clear() {
-  local -n workspaces=$1
-  for workspace in "${workspaces[@]}"; do
+  local -n ref_workspaces=$1
+  for workspace in "${ref_workspaces[@]}"; do
     dockit_in_path "$workspace" "down";
     run_bash_command "rm -rf $workspace";
   done
 }
 
 projects_up() {
-  local -n workspaces=$1
-  for workspace in "${workspaces[@]}"; do
+  local -n ref_workspaces=$1
+  for workspace in "${ref_workspaces[@]}"; do
     dockit_init_boot_in_path "$workspace" 'up'
   done
 }
@@ -89,7 +89,7 @@ projects_up() {
 # $4 = reset_file_path: 리셋 파일 경로 (기본값: $RESET_FILE_PATH)
 test_init_run_clear() {
     local test_name="${1:-dockit}"
-    local -n workspaces=$2
+    local -n ref_workspaces=$2
     local action_func=$3
     local reset_file_path="${4:-$RESET_FILE_PATH}"
     
@@ -105,12 +105,12 @@ test_init_run_clear() {
 
     # 작업 디렉토리 생성
     log_step "작업 디렉토리 생성"
-    run_bash_command "mkdir ${workspaces[*]}"
+    run_bash_command "mkdir ${ref_workspaces[*]}"
 
     projects_up $2
 
     # 액션 실행
-    log_info "path: ${workspaces[*]}"
+    log_info "path: ${ref_workspaces[*]}"
     $action_func $2
 
     # 환경 정리
@@ -122,4 +122,53 @@ test_init_run_clear() {
     log_success "모든 테스트가 성공적으로 완료되었습니다!"
 
     echo "test 완료"
+}
+
+
+test_reset_run() {
+    local test_name="${1:-dockit}"
+    local action_func=$2
+    local reset_file_path="${3:-$RESET_FILE_PATH}"
+
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    log_step "테스트 시작 (초기화 및 실행): $test_name"
+    run_bash_command "$reset_file_path"
+    $action_func
+    log_success "test_reset_run ${test_name} 완료"
+}
+
+projects_init() {
+  local -n ref_workspaces=$1
+  for workspace in "${ref_workspaces[@]}"; do
+    run_bash_command "cd $workspace"
+    run_bash_command "echo Y | dockit init"
+    run_bash_command "cd -"
+  done
+}
+
+
+test_reset_run() {
+    local test_name="${1:-dockit}"
+    local -n ref_workspaces=$2
+    local action_func=$3
+    local reset_file_path="${4:-$RESET_FILE_PATH}"
+
+    # 테스트 시작
+    log_step "테스트 시작: $test_name 테스트"
+
+    
+    # dockit 재설치
+    run_bash_command "$reset_file_path"
+
+    # 작업 디렉토리 생성
+    log_step "작업 디렉토리 생성"
+    run_bash_command "mkdir -p ${ref_workspaces[*]}"
+
+    projects_init $2
+    
+    log_info "workspaces: ${ref_workspaces[*]}"
+
+    $action_func $2 
+
+    log_success "test_reset_run ${test_name} 완료"
 }
