@@ -112,10 +112,10 @@ get_status_display() {
             echo -e "${GREEN}running${NC}"
             ;;
         "stopped")
-            echo -e "${YELLOW}down${NC}"
+            echo -e "${YELLOW}stopped${NC}"
             ;;
         "none")
-            echo -e "${YELLOW}down${NC}"
+            echo -e "${YELLOW}none${NC}"
             ;;
         *)
             echo -e "${RED}???${NC}"
