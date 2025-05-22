@@ -368,6 +368,10 @@ MSG_COMPLETION_SETUP="초기화, 빌드, 시작, 접속을 한번에 실행"
 MSG_COMPLETION_RUN="자동 초기화, 빌드, 시작 실행"
 MSG_COMPLETION_JOIN="자동 실행 및 접속을 한번에 실행"
 MSG_COMPLETION_PS="모든 dockit 컨테이너 목록 표시"
+MSG_COMPLETION_LIST="등록된 모든 dockit 프로젝트 목록 표시"
+MSG_LIST_USAGE="등록된 dockit 프로젝트 목록 표시"
+MSG_LIST_USAGE_DETAIL="상태 및 마지막 확인 시간과 함께 모든 등록된 dockit 프로젝트를 보여줍니다"
+
 
 # 공통 모듈 테스트 메시지
 MSG_COMMON_TESTING_FUNCTION="generate_container_name 함수 테스트 중..."

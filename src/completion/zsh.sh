@@ -79,6 +79,7 @@ _dockit() {
         "run:$(dockit_get_message MSG_COMPLETION_RUN)"
         "join:$(dockit_get_message MSG_COMPLETION_JOIN)"
         "ps:$(dockit_get_message MSG_COMPLETION_PS)"
+        "list:$(dockit_get_message MSG_COMPLETION_LIST)"
     )
     
     # 자동완성 설명 표시

@@ -368,6 +368,8 @@ MSG_COMPLETION_SETUP="Run complete environment setup (init, build, up, connect)"
 MSG_COMPLETION_RUN="Run automated initialization, build and up"
 MSG_COMPLETION_JOIN="Run automated execution and connection in one go"
 MSG_COMPLETION_PS="List all dockit containers"
+MSG_COMPLETION_LIST="List all registered dockit projects"
+
 
 # Common module test messages
 MSG_COMMON_TESTING_FUNCTION="Testing generate_container_name function..."
