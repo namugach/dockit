@@ -267,44 +267,36 @@ update_project_status() {
 # 프로젝트 ID 동기화 처리 함수
 handle_project_id_sync() {
     local project_path="$1"
-    local registry_json="$2"
-    
-    # Check if .dockit_project/id exists
+
     if [ ! -f "$project_path/.dockit_project/id" ]; then
         return 1
     fi
-    
-    # Read existing project ID
+
     local project_id=$(cat "$project_path/.dockit_project/id")
-    
-    # Check conditions for issuing new ID
+    local registry_json=$(cat "$REGISTRY_FILE")
+
+    local already_registered=$(echo "$registry_json" | jq -r --arg path "$project_path" 'to_entries[] | select(.value.path == $path) | .key')
+    if [ -n "$already_registered" ]; then
+        return 0
+    fi
+
     local needs_new_id=0
-    
-    # Check if ID exists in registry
     if ! echo "$registry_json" | jq -e --arg id "$project_id" 'has($id)' > /dev/null; then
-        # ID not in registry - project was copied or restored
         needs_new_id=1
     else
-        # ID exists in registry - check if path matches
         local registered_path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
         if [ "$registered_path" != "$project_path" ]; then
-            # Path mismatch - project was copied
             needs_new_id=1
         fi
     fi
-    
-    # Generate new ID if needed
+
     if [ $needs_new_id -eq 1 ]; then
-        # Generate and save new project ID
         local new_project_id=$(generate_and_save_project_id "$project_path/.dockit_project")
-        
-        # Add project to registry with new ID
         local current_time=$(date +%s)
         add_project_to_registry "$new_project_id" "$project_path" "$current_time" "$PROJECT_STATE_NONE"
-        
         return 0
     fi
-    
+
     return 1
 }
 
