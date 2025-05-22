@@ -68,6 +68,15 @@ dockit_init_boot_in_path() {
   run_dockit_command $command
 }
 
+projects_init() {
+  local -n ref_workspaces=$1
+  for workspace in "${ref_workspaces[@]}"; do
+    run_bash_command "cd $workspace"
+    run_bash_command "echo Y | dockit init"
+    run_bash_command "cd -"
+  done
+}
+
 projects_clear() {
   local -n ref_workspaces=$1
   for workspace in "${ref_workspaces[@]}"; do
@@ -137,17 +146,8 @@ test_reset_run() {
     log_success "test_reset_run ${test_name} 완료"
 }
 
-projects_init() {
-  local -n ref_workspaces=$1
-  for workspace in "${ref_workspaces[@]}"; do
-    run_bash_command "cd $workspace"
-    run_bash_command "echo Y | dockit init"
-    run_bash_command "cd -"
-  done
-}
 
-
-test_reset_run() {
+tests_reset_run() {
     local test_name="${1:-dockit}"
     local -n ref_workspaces=$2
     local action_func=$3

@@ -13,4 +13,4 @@ action() {
   # done
 }
 
-test_reset_run "복수 작업 테스트" workspaces action
+tests_reset_run "복수 작업 테스트" workspaces action
