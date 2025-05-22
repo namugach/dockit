@@ -19,4 +19,4 @@ action() {
   run_bash_command "dockit stop all"
 }
 
-test_base "all" work_space action
+test_init_run_clear "all" work_space action

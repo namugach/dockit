@@ -22,4 +22,4 @@ action() {
   done
 }
 
-test_base "this" work_space action
+test_init_run_clear "this" work_space action

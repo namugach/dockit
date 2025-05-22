@@ -19,4 +19,4 @@ action() {
   run_bash_command "dockit stop 1 2"
 }
 
-test_base "number" work_space action
+test_init_run_clear "number" work_space action

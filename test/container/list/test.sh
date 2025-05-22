@@ -2,7 +2,7 @@
 
 source ../core.sh
 
-local work_space=("__a" "__b")
+local work_space=("__a")
 
 action() {
   local -n ws=$1
@@ -10,4 +10,4 @@ action() {
   dockit list
 }
 
-test_base "number" work_space action
+test_init_run_clear "number" work_space action

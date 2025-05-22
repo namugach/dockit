@@ -87,7 +87,7 @@ projects_up() {
 # $2 = workspaces: 작업 공간 배열 참조
 # $3 = action_func: 테스트 액션 함수
 # $4 = reset_file_path: 리셋 파일 경로 (기본값: $RESET_FILE_PATH)
-test_base() {
+test_init_run_clear() {
     local test_name="${1:-dockit}"
     local -n workspaces=$2
     local action_func=$3
