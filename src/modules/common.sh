@@ -429,6 +429,117 @@ update_project_state() {
     fi
 }
 
+# Get project path from container name
+# 컨테이너 이름에서 프로젝트 경로 추출
+get_project_path_from_container() {
+    local container_id="$1"
+    local full_name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+    
+    # 컨테이너 이름에서 'dockit-' 접두사 제거
+    local raw_name=$(echo "$full_name" | sed 's/^dockit-//')
+    
+    # 이름을 경로로 변환 (- 를 / 로 변경)
+    local path_form=$(echo "$raw_name" | tr '-' '/')
+    
+    # 절대 경로로 변환
+    echo "/$path_form"
+}
+
+# Find project info from registry by container
+# 컨테이너로부터 레지스트리에서 프로젝트 정보 찾기
+find_project_info_by_container() {
+    local container_id="$1"
+    local project_path=$(get_project_path_from_container "$container_id")
+    
+    # 레지스트리 로드
+    local registry_file="$HOME/.dockit/registry.json"
+    if [ ! -f "$registry_file" ]; then
+        echo ""
+        return 1
+    fi
+    
+    local registry_json=$(cat "$registry_file")
+    
+    # 경로로 프로젝트 찾기
+    if command -v jq &> /dev/null; then
+        local project_id=$(echo "$registry_json" | jq -r --arg path "$project_path" 'to_entries[] | select(.value.path == $path) | .key')
+        
+        if [ -n "$project_id" ] && [ "$project_id" != "null" ]; then
+            echo "$project_id"
+            return 0
+        fi
+    fi
+    
+    echo ""
+    return 1
+}
+
+# Get containers sorted by project number (same as ps command)
+# ps 명령어와 동일한 순서로 프로젝트 번호별로 정렬된 컨테이너 가져오기
+get_containers_by_project_order() {
+    local container_ids=$(docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}")
+    
+    if [ -z "$container_ids" ]; then
+        return 1
+    fi
+    
+    # 레지스트리 로드
+    local registry_file="$HOME/.dockit/registry.json"
+    if [ ! -f "$registry_file" ]; then
+        # 레지스트리가 없으면 기본 Docker 순서 사용 (역순)
+        echo "$container_ids" | tac
+        return 0
+    fi
+    
+    local registry_json=$(cat "$registry_file")
+    local temp_file=$(mktemp)
+    
+    # 각 컨테이너에 대해 프로젝트 번호 찾기
+    for container_id in $container_ids; do
+        local project_id=""
+        local project_number=""
+        
+        # 컨테이너 이름에서 프로젝트 경로 추출
+        local full_name=$(docker inspect --format "{{.Name}}" "$container_id" 2>/dev/null | sed 's/^\///')
+        if [ -n "$full_name" ]; then
+            local raw_name=$(echo "$full_name" | sed 's/^dockit-//')
+            local path_form=$(echo "$raw_name" | tr '-' '/')
+            local project_path="/$path_form"
+            
+            # 레지스트리에서 프로젝트 찾기
+            if command -v jq &> /dev/null; then
+                project_id=$(echo "$registry_json" | jq -r --arg path "$project_path" 'to_entries[] | select(.value.path == $path) | .key' 2>/dev/null)
+                
+                if [ -n "$project_id" ] && [ "$project_id" != "null" ]; then
+                    # 프로젝트 번호 찾기
+                    local index=1
+                    while IFS= read -r id; do
+                        if [ "$id" = "$project_id" ]; then
+                            project_number="$index"
+                            break
+                        fi
+                        ((index++))
+                    done < <(echo "$registry_json" | jq -r 'keys[]' 2>/dev/null)
+                fi
+            fi
+        fi
+        
+        # 프로젝트 번호가 없으면 999999 사용 (맨 뒤로)
+        if [ -z "$project_number" ]; then
+            project_number="999999"
+        fi
+        
+        # 임시 파일에 저장 (프로젝트 번호:컨테이너 ID)
+        echo "${project_number}:${container_id}" >> "$temp_file"
+    done
+    
+    # 프로젝트 번호로 정렬하고 컨테이너 ID만 출력
+    sort -n "$temp_file" | cut -d':' -f2
+    
+    # 임시 파일 삭제
+    rm -f "$temp_file"
+}
+
 # Initialize with current command
 # 현재 명령어로 초기화
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

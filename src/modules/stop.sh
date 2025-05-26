@@ -68,7 +68,6 @@ container_action() {
     local quiet="${2:-false}"  # 로그 출력 여부 (기본값: 출력함)
     
     # 컨테이너 존재 여부 확인
-    # Check if container exists
     if ! container_exists "$container_id"; then
         [ "$quiet" != "true" ] && log "ERROR" "$MSG_CONTAINER_NOT_FOUND"
         return 1
@@ -76,17 +75,21 @@ container_action() {
     
     # 컨테이너 정보 가져오기
     local container_desc=$(get_container_description "$container_id")
+    local project_id=$(find_project_info_by_container "$container_id")
     
     # 이미 정지된 상태인지 확인
     if ! is_container_running "$container_id"; then
         [ "$quiet" != "true" ] && log "WARNING" "$(printf "$MSG_CONTAINER_ALREADY_STOPPED" "$container_desc")"
+        [ -n "$project_id" ] && update_project_state "$project_id" "$PROJECT_STATE_STOPPED"
         return 0
     fi
     
     # 컨테이너 정지
     [ "$quiet" != "true" ] && log "INFO" "$(printf "$MSG_STOPPING_CONTAINER" "$container_desc")"
+    
     if docker stop "$container_id"; then
         [ "$quiet" != "true" ] && log "SUCCESS" "$(printf "$MSG_CONTAINER_STOPPED" "$container_desc")"
+        [ -n "$project_id" ] && update_project_state "$project_id" "$PROJECT_STATE_STOPPED"
         return 0
     else
         [ "$quiet" != "true" ] && log "ERROR" "$(printf "$MSG_CONTAINER_STOP_FAILED" "$container_desc")"
@@ -104,27 +107,56 @@ handle_numeric_arguments() {
         [[ "$idx" =~ ^[0-9]+$ ]] || { log "ERROR" "$(printf "$MSG_STOP_INVALID_NUMBER" "$idx")"; return 1; }
     done
 
-    # 컨테이너 ID 목록 (최근 생성 순서 역순)
-    mapfile -t container_ids < <(docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}" | tac)
+    # 레지스트리에서 프로젝트 목록 가져오기
+    local registry_file="$HOME/.dockit/registry.json"
+    if [ ! -f "$registry_file" ]; then
+        log "ERROR" "Registry file not found"
+        return 1
+    fi
+    
+    local registry_json=$(cat "$registry_file")
+    local project_ids=()
+    
+    # 프로젝트 ID 배열 생성
+    while IFS= read -r project_id; do
+        project_ids+=("$project_id")
+    done < <(echo "$registry_json" | jq -r 'keys[]')
 
     # 각 인덱스 처리
     for idx in "${indices[@]}"; do
         local array_idx=$((idx-1))                # 인덱스 → 배열 위치
-        local cid=${container_ids[$array_idx]:-}
+        local project_id=${project_ids[$array_idx]:-}
 
-        if [[ -z "$cid" ]]; then
+        if [[ -z "$project_id" ]]; then
             log "ERROR" "$(printf "$MSG_STOP_INVALID_NUMBER" "$idx")"
             continue
         fi
 
-        local short=${cid:0:12}
-        local name=$(get_container_info "$cid" "name")
-        [[ -n "$name" ]] && short="$short ($name)"
+        # 프로젝트 경로 가져오기
+        local project_path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
+        local container_name=$(generate_container_name "$project_path")
+        
+        # 컨테이너 ID 찾기 (정확한 이름 매칭)
+        local cid=$(docker ps -aq --filter "name=^${container_name}$" --filter "label=com.dockit=true" | head -1)
+        
+        if [[ -n "$cid" ]]; then
+            # 컨테이너가 존재하는 경우
+            local short=${cid:0:12}
+            local name=$(get_container_info "$cid" "name")
+            [[ -n "$name" ]] && short="$short ($name)"
 
-        local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$MSG_SPINNER_STOPPING")
+            local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$MSG_SPINNER_STOPPING")
 
-        add_task "$spinner" \
-            "container_action '$cid' true >/dev/null 2>&1"
+            add_task "$spinner" \
+                "container_action '$cid' true >/dev/null 2>&1 && update_project_state '$project_id' '$PROJECT_STATE_STOPPED'"
+        else
+            # 컨테이너가 없는 경우 - 프로젝트 상태만 업데이트
+            local project_name=$(basename "$project_path")
+            local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$project_name" "$MSG_SPINNER_STOPPING")
+            
+            add_task "$spinner" \
+                "update_project_state '$project_id' '$PROJECT_STATE_STOPPED'"
+        fi
     done
 
     async_tasks "$MSG_TASKS_DONE"

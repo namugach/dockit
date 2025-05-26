@@ -55,47 +55,7 @@ get_dockit_containers() {
     docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}"
 }
 
-# Get project path from container name
-# 컨테이너 이름에서 프로젝트 경로 추출
-get_project_path_from_container() {
-    local container_id="$1"
-    local full_name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
-    
-    # 컨테이너 이름에서 'dockit-' 접두사 제거
-    local raw_name=$(echo "$full_name" | sed 's/^dockit-//')
-    
-    # 이름을 경로로 변환 (- 를 / 로 변경)
-    local path_form=$(echo "$raw_name" | tr '-' '/')
-    
-    # 절대 경로로 변환
-    echo "/$path_form"
-}
 
-# Find project info from registry by container
-# 컨테이너로부터 레지스트리에서 프로젝트 정보 찾기
-find_project_info_by_container() {
-    local container_id="$1"
-    local project_path=$(get_project_path_from_container "$container_id")
-    
-    # 레지스트리 로드
-    if [ ! -f "$REGISTRY_FILE" ]; then
-        echo ""
-        return 1
-    fi
-    
-    local registry_json=$(cat "$REGISTRY_FILE")
-    
-    # 경로로 프로젝트 찾기
-    local project_id=$(echo "$registry_json" | jq -r --arg path "$project_path" 'to_entries[] | select(.value.path == $path) | .key')
-    
-    if [ -n "$project_id" ] && [ "$project_id" != "null" ]; then
-        echo "$project_id"
-        return 0
-    fi
-    
-    echo ""
-    return 1
-}
 
 # Get project number from registry
 # 레지스트리에서 프로젝트 번호 가져오기
@@ -299,42 +259,73 @@ collect_container_data() {
     local format="$2"
     local output_file="$3"
     
-    # 컨테이너 ID를 배열로 변환
-    local container_array=()
-    for id in $container_ids; do
-        container_array+=("$id")
-    done
+    # 레지스트리에서 모든 프로젝트 가져오기
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        return 0
+    fi
     
-    # 배열을 역순으로 처리 (최신 컨테이너가 먼저 오도록)
-    local container_count=${#container_array[@]}
+    local registry_json=$(cat "$REGISTRY_FILE")
+    local display_number=1
     
-    for (( i=${container_count}-1; i>=0; i-- )); do
-        local container_id=${container_array[$i]}
+    # 레지스트리의 모든 프로젝트를 순서대로 처리
+    while IFS= read -r project_id; do
+        local project_id_display="${project_id:0:12}"
         
-        # 프로젝트 정보 가져오기
-        local project_id=$(find_project_info_by_container "$container_id")
-        local project_number=""
-        local project_id_display="-"
+        # 해당 프로젝트의 컨테이너 찾기
+        local container_id=""
+        local container_info=""
+        local name="-"
+        local image="-"
+        local created="-"
+        local status="down"
+        local ip_address="-"
+        local ports="-"
         
-        if [ -n "$project_id" ]; then
-            project_number=$(get_project_number "$project_id")
-            project_id_display="${project_id:0:12}"
+        # 프로젝트 경로 가져오기
+        local project_path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
+        
+        # 레지스트리에서 프로젝트 상태 가져오기
+        local registry_state=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].state')
+        
+        # 경로에서 컨테이너 이름 생성
+        local container_name=$(generate_container_name "$project_path")
+        
+        # 컨테이너 ID 찾기 (정확한 이름 매칭)
+        container_id=$(docker ps -aq --filter "name=^${container_name}$" --filter "label=com.dockit=true" | head -1)
+        
+        if [ -n "$container_id" ]; then
+            # 컨테이너가 존재하는 경우
+            container_info=$(get_container_info "$container_id")
+            name=$(echo "$container_info" | cut -d'|' -f1)
+            image=$(echo "$container_info" | cut -d'|' -f2)
+            created=$(echo "$container_info" | cut -d'|' -f3)
+            status=$(echo "$container_info" | cut -d'|' -f4)
+            
+            # 추가 정보 가져오기
+            ip_address=$(get_container_ip "$container_id" "$status")
+            ports=$(get_container_ports "$container_id" "$status")
+            
+            # 컨테이너 ID 표시용
+            local cid_display="${container_id:0:12}"
+        else
+            # 컨테이너가 없는 경우 - 레지스트리 상태 사용
+            local cid_display="-"
+            # 프로젝트 경로에서 이름 추출 (마지막 두 디렉토리를 - 로 연결)
+            local path_parts=$(echo "$project_path" | tr '/' '\n' | tail -2)
+            if [ $(echo "$path_parts" | wc -l) -eq 2 ]; then
+                # 두 부분이 있으면 - 로 연결
+                name=$(echo "$path_parts" | tr '\n' '-' | sed 's/-$//')
+            else
+                # 한 부분만 있으면 그대로 사용
+                name=$(basename "$project_path")
+            fi
+            # 레지스트리 상태가 있으면 사용, 없으면 down
+            if [ -n "$registry_state" ] && [ "$registry_state" != "null" ]; then
+                status="$registry_state"
+            else
+                status="down"
+            fi
         fi
-        
-        if [ -z "$project_number" ]; then
-            project_number="-"
-        fi
-        
-        # 컨테이너 기본 정보 가져오기
-        local container_info=$(get_container_info "$container_id")
-        local name=$(echo "$container_info" | cut -d'|' -f1)
-        local image=$(echo "$container_info" | cut -d'|' -f2)
-        local created=$(echo "$container_info" | cut -d'|' -f3)
-        local status=$(echo "$container_info" | cut -d'|' -f4)
-        
-        # 추가 정보 가져오기
-        local ip_address=$(get_container_ip "$container_id" "$status")
-        local ports=$(get_container_ports "$container_id" "$status")
         
         # 긴 텍스트 필드 잘라내기
         local image_display=$(truncate_text "$image" 20)
@@ -346,16 +337,19 @@ collect_container_data() {
         
         # 로우 데이터를 파일에 저장 (프로젝트 정보 포함)
         printf "$format" \
-            "$project_number" \
+            "$display_number" \
             "$project_id_display" \
-            "${container_id:0:12}" \
+            "$cid_display" \
             "$image_display" \
             "$name_display" \
             "$created" \
             "$status_display" \
             "$ip_address" \
             "$ports_display" >> "$output_file"
-    done
+        
+        # 표시 번호 증가
+        ((display_number++))
+    done < <(echo "$registry_json" | jq -r 'keys[]')
 }
 
 # Main function for listing dockit containers

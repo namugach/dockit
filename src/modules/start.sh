@@ -108,27 +108,53 @@ handle_numeric_arguments() {
         [[ "$idx" =~ ^[0-9]+$ ]] || { log "ERROR" "$(printf "$MSG_START_INVALID_NUMBER" "$idx")"; return 1; }
     done
 
-    # 컨테이너 ID 목록 (최근 생성 순서 역순)
-    mapfile -t container_ids < <(docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}" | tac)
+    # 레지스트리에서 프로젝트 목록 가져오기
+    local registry_file="$HOME/.dockit/registry.json"
+    if [ ! -f "$registry_file" ]; then
+        log "ERROR" "Registry file not found"
+        return 1
+    fi
+    
+    local registry_json=$(cat "$registry_file")
+    local project_ids=()
+    
+    # 프로젝트 ID 배열 생성
+    while IFS= read -r project_id; do
+        project_ids+=("$project_id")
+    done < <(echo "$registry_json" | jq -r 'keys[]')
 
     # 각 인덱스 처리
     for idx in "${indices[@]}"; do
         local array_idx=$((idx-1))                # 인덱스 → 배열 위치
-        local cid=${container_ids[$array_idx]:-}
+        local project_id=${project_ids[$array_idx]:-}
 
-        if [[ -z "$cid" ]]; then
+        if [[ -z "$project_id" ]]; then
             log "ERROR" "$(printf "$MSG_START_INVALID_NUMBER" "$idx")"
             continue
         fi
 
-        local short=${cid:0:12}
-        local name=$(get_container_info "$cid" "name")
-        [[ -n "$name" ]] && short="$short ($name)"
+        # 프로젝트 경로 가져오기
+        local project_path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
+        local container_name=$(generate_container_name "$project_path")
+        
+        # 컨테이너 ID 찾기 (정확한 이름 매칭)
+        local cid=$(docker ps -aq --filter "name=^${container_name}$" --filter "label=com.dockit=true" | head -1)
+        
+        if [[ -n "$cid" ]]; then
+            # 컨테이너가 존재하는 경우
+            local short=${cid:0:12}
+            local name=$(get_container_info "$cid" "name")
+            [[ -n "$name" ]] && short="$short ($name)"
 
-        local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$MSG_SPINNER_STARTING")
+            local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$MSG_SPINNER_STARTING")
 
-        add_task "$spinner" \
-            "container_action '$cid' true >/dev/null 2>&1"
+            add_task "$spinner" \
+                "container_action '$cid' true >/dev/null 2>&1 && update_project_state '$project_id' '$PROJECT_STATE_RUNNING'"
+        else
+            # 컨테이너가 없는 경우 - 에러 메시지
+            local project_name=$(basename "$project_path")
+            log "ERROR" "Container not found for project: $project_name"
+        fi
     done
 
     async_tasks "$MSG_TASKS_DONE"
