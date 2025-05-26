@@ -106,7 +106,7 @@ check_id_collision() {
 # 상태 표시 텍스트를 가져오는 함수
 get_status_display() {
     local status="$1"
-    
+
     case "$status" in
         "running")
             echo -e "${GREEN}running${NC}"
@@ -114,11 +114,11 @@ get_status_display() {
         "stopped")
             echo -e "${YELLOW}stopped${NC}"
             ;;
-        "none")
-            echo -e "${YELLOW}none${NC}"
+        "down")
+            echo -e "${GRAY}down${NC}"
             ;;
         *)
-            echo -e "${RED}???${NC}"
+            echo -e "${PURPLE}???${NC}"
             ;;
     esac
 }
@@ -209,12 +209,7 @@ list_main() {
         fi
         
         # Format last seen time
-        local last_seen_display
-        if [ "$state" = "none" ] || [ -z "$last_seen" ]; then
-            last_seen_display="--"
-        else
-            last_seen_display=$(format_time_elapsed "$last_seen")
-        fi
+        local last_seen_display=$(format_time_elapsed "$last_seen")
         
         # Get status display
         local status_display=$(get_status_display "$state")
@@ -293,7 +288,7 @@ handle_project_id_sync() {
     if [ $needs_new_id -eq 1 ]; then
         local new_project_id=$(generate_and_save_project_id "$project_path/.dockit_project")
         local current_time=$(date +%s)
-        add_project_to_registry "$new_project_id" "$project_path" "$current_time" "$PROJECT_STATE_NONE"
+        add_project_to_registry "$new_project_id" "$project_path" "$current_time" "$PROJECT_STATE_DOWN"
         return 0
     fi
 

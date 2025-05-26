@@ -47,6 +47,16 @@ handle_this_argument() {
     log "INFO" "$MSG_STARTING_CONTAINER"
     if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" start; then
         log "SUCCESS" "$MSG_CONTAINER_STARTED"
+        
+        # 레지스트리 상태 업데이트
+        local project_id
+        if project_id=$(get_current_project_id); then
+            update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+            log "INFO" "Project status updated to running"
+        else
+            log "WARNING" "Could not update project status - project ID not found"
+        fi
+        
         echo -e "\n${BLUE}$MSG_CONNECT_INFO${NC} dockit connect"
         return 0
     else

@@ -6,19 +6,28 @@
 # Load common module
 # 공통 모듈 로드
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/common.sh" "registry"
+source "$SCRIPT_DIR/common.sh"
 
-# 레지스트리 관련 상수 정의
-# Registry related constants
-readonly REGISTRY_DIR="$HOME/.dockit"
-readonly REGISTRY_FILE="$REGISTRY_DIR/registry.json"
+# 레지스트리 관련 상수 정의 (이미 정의되지 않은 경우에만)
+# Registry related constants (only if not already defined)
+if [ -z "$REGISTRY_DIR" ]; then
+    readonly REGISTRY_DIR="$HOME/.dockit"
+fi
+if [ -z "$REGISTRY_FILE" ]; then
+    readonly REGISTRY_FILE="$REGISTRY_DIR/registry.json"
+fi
 
-# 프로젝트 상태 상수 정의
-# Project state constants
-readonly PROJECT_STATE_NONE="none"         # init 후 또는 down 후 상태
-readonly PROJECT_STATE_RUNNING="running"    # up 또는 start 후 상태
-readonly PROJECT_STATE_STOPPED="stopped"    # stop 후 상태
-readonly PROJECT_STATE_UNKNOWN="???"        # 상태를 확인할 수 없는 경우
+# 프로젝트 상태 상수 정의 (이미 정의되지 않은 경우에만)
+# Project state constants (only if not already defined)
+if [ -z "$PROJECT_STATE_RUNNING" ]; then
+    readonly PROJECT_STATE_RUNNING="running"    # up 또는 start 후 상태
+fi
+if [ -z "$PROJECT_STATE_STOPPED" ]; then
+    readonly PROJECT_STATE_STOPPED="stopped"    # stop 후 상태
+fi
+if [ -z "$PROJECT_STATE_UNKNOWN" ]; then
+    readonly PROJECT_STATE_UNKNOWN="???"        # 상태를 확인할 수 없는 경우
+fi
 
 # 프로젝트 ID 생성 함수
 # Function to generate project ID
@@ -185,7 +194,7 @@ add_project_with_jq() {
     local project_id="$1"
     local project_path="$2"
     local created_time="$3"
-    local state="${4:-$PROJECT_STATE_NONE}"
+    local state="${4:-$PROJECT_STATE_DOWN}"
     
     local temp_file=$(mktemp)
     
@@ -193,7 +202,8 @@ add_project_with_jq() {
        --arg path "$project_path" \
        --argjson created "$created_time" \
        --arg state "$state" \
-       '.[$id] = {"path": $path, "created": $created, "state": $state}' \
+       --argjson last_seen "$created_time" \
+       '.[$id] = {"path": $path, "created": $created, "state": $state, "last_seen": $last_seen}' \
        "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
 }
 
@@ -203,7 +213,7 @@ add_project_without_jq() {
     local project_id="$1"
     local project_path="$2"
     local created_time="$3"
-    local state="${4:-$PROJECT_STATE_NONE}"
+    local state="${4:-$PROJECT_STATE_DOWN}"
     
     local registry_content=$(cat "$REGISTRY_FILE")
     
@@ -217,7 +227,7 @@ add_project_without_jq() {
     
     # 새 항목 추가
     # Add new entry
-    registry_content+="\n  \"$project_id\": {\n    \"path\": \"$project_path\",\n    \"created\": $created_time,\n    \"state\": \"$state\"\n  }\n}"
+    registry_content+="\n  \"$project_id\": {\n    \"path\": \"$project_path\",\n    \"created\": $created_time,\n    \"state\": \"$state\",\n    \"last_seen\": $created_time\n  }\n}"
     
     # 업데이트된 내용 저장
     # Save updated content
@@ -230,7 +240,7 @@ add_project_to_registry() {
     local project_id="$1"
     local project_path="$2"
     local created_time="$3"
-    local state="${4:-$PROJECT_STATE_NONE}"
+    local state="${4:-$PROJECT_STATE_DOWN}"
     
     log "INFO" "$MSG_REGISTRY_ADDING_PROJECT"
     
@@ -319,7 +329,7 @@ handle_project_id_sync() {
         
         # Add project to registry with new ID
         local current_time=$(date +%s)
-        add_project_to_registry "$new_project_id" "$project_path" "$current_time" "$PROJECT_STATE_NONE"
+        add_project_to_registry "$new_project_id" "$project_path" "$current_time" "$PROJECT_STATE_DOWN"
         
         return 0
     fi

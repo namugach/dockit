@@ -42,6 +42,12 @@ CONTAINER_WORKDIR="/workspace"
 # Set log file path
 LOG_FILE="${DOCKIT_PROJECT_DIR}/dockit.log"
 
+
+# 프로젝트 상태 상수 정의
+PROJECT_STATE_DOWN="down"
+PROJECT_STATE_RUNNING="running"
+PROJECT_STATE_STOPPED="stopped"
+
 # 유틸리티 모듈 로드
 # Load utility modules
 source "${UTILS_DIR}/utils.sh"
@@ -379,6 +385,48 @@ check_min_version() {
     fi
     
     return 0
+}
+
+# Get current project ID from .dockit_project/id file
+# .dockit_project/id 파일에서 현재 프로젝트 ID 가져오기
+get_current_project_id() {
+    local project_dir="${1:-$(pwd)}"
+    local id_file="$project_dir/.dockit_project/id"
+    
+    if [ -f "$id_file" ]; then
+        cat "$id_file"
+        return 0
+    else
+        log "WARNING" "Project ID file not found: $id_file"
+        return 1
+    fi
+}
+
+# Update project state in registry
+# 레지스트리에서 프로젝트 상태 업데이트
+update_project_state() {
+    local project_id="$1"
+    local new_state="$2"
+    local registry_file="$HOME/.dockit/registry.json"
+    
+    if [ ! -f "$registry_file" ]; then
+        log "WARNING" "Registry file not found: $registry_file"
+        return 1
+    fi
+    
+    # jq를 사용하여 상태 업데이트
+    if command -v jq &> /dev/null; then
+        local temp_file=$(mktemp)
+        jq --arg id "$project_id" \
+           --arg state "$new_state" \
+           --argjson last_seen "$(date +%s)" \
+           'if has($id) then .[$id].state = $state | .[$id].last_seen = $last_seen else . end' \
+           "$registry_file" > "$temp_file" && mv "$temp_file" "$registry_file"
+        return 0
+    else
+        log "WARNING" "jq not found, cannot update project state"
+        return 1
+    fi
 }
 
 # Initialize with current command

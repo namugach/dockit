@@ -8,6 +8,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
+
 # 설정 파일에 컨테이너 사용자 정보 업데이트 함수
 update_container_user_in_config() {
     local config_file="$1"
@@ -246,6 +247,12 @@ up_main() {
     if is_container_already_running; then
         # 컨테이너가 이미 실행 중이더라도 사용자 정보 업데이트
         update_container_user_info
+        
+        # 레지스트리 상태 업데이트 (이미 실행 중인 경우)
+        local project_id
+        if project_id=$(get_current_project_id); then
+            update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+        fi
         exit 0
     fi
     
@@ -257,7 +264,16 @@ up_main() {
     # 4. 컨테이너 사용자 정보 업데이트
     update_container_user_info
     
-    # 5. 컨테이너 상태 출력
+    # 5. 레지스트리 상태 업데이트 (성공적으로 시작된 경우)
+    local project_id
+    if project_id=$(get_current_project_id); then
+        update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+        log "INFO" "Project status updated to running"
+    else
+        log "WARNING" "Could not update project status - project ID not found"
+    fi
+    
+    # 6. 컨테이너 상태 출력
     display_container_status
 }
 
