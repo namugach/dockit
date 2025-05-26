@@ -123,6 +123,37 @@ get_status_display() {
     esac
 }
 
+# Function to get status text length (without color codes)
+# 색상 코드를 제외한 상태 텍스트 길이를 가져오는 함수
+get_status_text_length() {
+    local status="$1"
+    
+    case "$status" in
+        "running"|"stopped")
+            echo 7  # "running" or "stopped" length
+            ;;
+        "down")
+            echo 4  # "down" length
+            ;;
+        *)
+            echo 3  # "???" length
+            ;;
+    esac
+}
+
+# Function to pad status display for proper alignment
+# 상태 표시를 올바른 정렬을 위해 패딩하는 함수
+format_status_display() {
+    local status="$1"
+    local status_display=$(get_status_display "$status")
+    local text_length=$(get_status_text_length "$status")
+    local target_width=8
+    local padding=$((target_width - text_length))
+    
+    # Add padding spaces after the colored text
+    printf "%s%*s" "$status_display" "$padding" ""
+}
+
 # Main function for listing registered projects
 # 등록된 프로젝트 목록 표시를 위한 메인 함수
 list_main() {
@@ -164,8 +195,8 @@ list_main() {
     echo -e "$(printf "$(get_message MSG_PROJECT_LIST_HEADER)" "$project_count")"
     echo ""
     
-    # Format strings
-    local format="%-4s  %-12s  %-10s  %-10s  %s\n"
+    # Format strings - STATUS 컬럼을 더 넓게 설정 (색상 코드 고려)
+    local format="%-4s  %-12s  %-8s  %-11s  %s\n"
     
     # Print header
     printf "$format" \
@@ -211,8 +242,8 @@ list_main() {
         # Format last seen time
         local last_seen_display=$(format_time_elapsed "$last_seen")
         
-        # Get status display
-        local status_display=$(get_status_display "$state")
+        # Get status display with proper formatting
+        local status_display=$(format_status_display "$state")
         
         # Write to temporary file
         printf "$format" \
