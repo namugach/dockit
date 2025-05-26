@@ -38,20 +38,88 @@ check_docker_availability() {
 print_header() {
     local format="$1"
     printf "$format" \
-        "$(get_message MSG_LIST_NUMBER)" \
-        "$(get_message MSG_LIST_ID)" \
-        "$(get_message MSG_LIST_IMAGE)" \
-        "$(get_message MSG_LIST_NAME)" \
-        "$(get_message MSG_LIST_CREATED)" \
-        "$(get_message MSG_LIST_STATUS)" \
-        "$(get_message MSG_LIST_IP)" \
-        "$(get_message MSG_LIST_PORTS)"
+        "PNO" \
+        "PID" \
+        "CID" \
+        "IMAGE" \
+        "NAME" \
+        "CREATED" \
+        "STATUS" \
+        "IP" \
+        "PORTS"
 }
 
 # Get all dockit containers
 # 모든 dockit 컨테이너 가져오기
 get_dockit_containers() {
     docker ps -a --filter "label=com.dockit=true" --format "{{.ID}}"
+}
+
+# Get project path from container name
+# 컨테이너 이름에서 프로젝트 경로 추출
+get_project_path_from_container() {
+    local container_id="$1"
+    local full_name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+    
+    # 컨테이너 이름에서 'dockit-' 접두사 제거
+    local raw_name=$(echo "$full_name" | sed 's/^dockit-//')
+    
+    # 이름을 경로로 변환 (- 를 / 로 변경)
+    local path_form=$(echo "$raw_name" | tr '-' '/')
+    
+    # 절대 경로로 변환
+    echo "/$path_form"
+}
+
+# Find project info from registry by container
+# 컨테이너로부터 레지스트리에서 프로젝트 정보 찾기
+find_project_info_by_container() {
+    local container_id="$1"
+    local project_path=$(get_project_path_from_container "$container_id")
+    
+    # 레지스트리 로드
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        echo ""
+        return 1
+    fi
+    
+    local registry_json=$(cat "$REGISTRY_FILE")
+    
+    # 경로로 프로젝트 찾기
+    local project_id=$(echo "$registry_json" | jq -r --arg path "$project_path" 'to_entries[] | select(.value.path == $path) | .key')
+    
+    if [ -n "$project_id" ] && [ "$project_id" != "null" ]; then
+        echo "$project_id"
+        return 0
+    fi
+    
+    echo ""
+    return 1
+}
+
+# Get project number from registry
+# 레지스트리에서 프로젝트 번호 가져오기
+get_project_number() {
+    local project_id="$1"
+    
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        echo ""
+        return 1
+    fi
+    
+    local registry_json=$(cat "$REGISTRY_FILE")
+    local index=1
+    
+    while IFS= read -r id; do
+        if [ "$id" = "$project_id" ]; then
+            echo "$index"
+            return 0
+        fi
+        ((index++))
+    done < <(echo "$registry_json" | jq -r 'keys[]')
+    
+    echo ""
+    return 1
 }
 
 # Get container basic info
@@ -143,6 +211,20 @@ format_container_info() {
     local container_id="$1"
     local format="$2"
     
+    # 프로젝트 정보 가져오기
+    local project_id=$(find_project_info_by_container "$container_id")
+    local project_number=""
+    local project_id_display="-"
+    
+    if [ -n "$project_id" ]; then
+        project_number=$(get_project_number "$project_id")
+        project_id_display="${project_id:0:12}"
+    fi
+    
+    if [ -z "$project_number" ]; then
+        project_number="-"
+    fi
+    
     # 컨테이너 기본 정보 가져오기
     local container_info=$(get_container_info "$container_id")
     local name=$(echo "$container_info" | cut -d'|' -f1)
@@ -164,6 +246,8 @@ format_container_info() {
     
     # 포맷된 결과 반환
     printf "$format" \
+        "$project_number" \
+        "$project_id_display" \
         "${container_id:0:12}" \
         "$image_display" \
         "$name_display" \
@@ -223,10 +307,23 @@ collect_container_data() {
     
     # 배열을 역순으로 처리 (최신 컨테이너가 먼저 오도록)
     local container_count=${#container_array[@]}
-    local index=1
     
     for (( i=${container_count}-1; i>=0; i-- )); do
         local container_id=${container_array[$i]}
+        
+        # 프로젝트 정보 가져오기
+        local project_id=$(find_project_info_by_container "$container_id")
+        local project_number=""
+        local project_id_display="-"
+        
+        if [ -n "$project_id" ]; then
+            project_number=$(get_project_number "$project_id")
+            project_id_display="${project_id:0:12}"
+        fi
+        
+        if [ -z "$project_number" ]; then
+            project_number="-"
+        fi
         
         # 컨테이너 기본 정보 가져오기
         local container_info=$(get_container_info "$container_id")
@@ -247,9 +344,10 @@ collect_container_data() {
         # 상태 텍스트 가져오기
         local status_display=$(get_status_display "$status")
         
-        # 로우 데이터를 파일에 저장 (인덱스 추가)
+        # 로우 데이터를 파일에 저장 (프로젝트 정보 포함)
         printf "$format" \
-            "$index" \
+            "$project_number" \
+            "$project_id_display" \
             "${container_id:0:12}" \
             "$image_display" \
             "$name_display" \
@@ -257,9 +355,6 @@ collect_container_data() {
             "$status_display" \
             "$ip_address" \
             "$ports_display" >> "$output_file"
-        
-        # 인덱스 증가
-        ((index++))
     done
 }
 
@@ -275,8 +370,8 @@ list_main() {
     # Silently clean up registry (without messages)
     cleanup_registry > /dev/null 2>&1
 
-    # 형식 문자열 정의 (인덱스 칼럼 추가)
-    local format="%-6s  %-13s  %-20s  %-25s  %-25s  %-10s  %-17s  %s\n"
+    # 형식 문자열 정의 (PNO, PID, CID 칼럼 추가)
+    local format="%-4s  %-13s  %-13s  %-20s  %-25s  %-25s  %-10s  %-17s  %s\n"
 
     # 컨테이너 데이터를 파일에 저장
     local temp_file=$(mktemp)

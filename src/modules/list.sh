@@ -10,19 +10,7 @@ source "$SCRIPT_DIR/common.sh"
 source "$UTILS_DIR/async_tasks.sh"
 source "$MODULES_DIR/registry.sh"
 
-# 새로운 list 관련 메시지 상수
-# New list related message constants
-readonly MSG_PROJECT_LIST_HEADER="Registered Projects (%d)"
-readonly MSG_PROJECT_LIST_ID="ID"
-readonly MSG_PROJECT_LIST_STATUS="STATUS"
-readonly MSG_PROJECT_LIST_LAST_SEEN="LAST SEEN"
-readonly MSG_PROJECT_LIST_PATH="PATH"
-readonly MSG_PROJECT_LIST_NO="NO"
-readonly MSG_PROJECT_LIST_PATH_NOT_FOUND="(path not found)"
-readonly MSG_PROJECT_LIST_UNKNOWN="???"
-readonly MSG_PROJECT_LIST_HINT_PS="📌 To check container status:  dockit ps"
-readonly MSG_PROJECT_LIST_HINT_INIT="📌 To create a new project:    dockit init"
-readonly MSG_PROJECT_LIST_NO_PROJECTS="No registered projects found."
+
 
 # Function to format time elapsed since last update
 # 마지막 업데이트 이후 경과 시간을 형식화하는 함수
@@ -200,11 +188,11 @@ list_main() {
     
     # Print header
     printf "$format" \
-        "$(get_message MSG_PROJECT_LIST_NO)" \
-        "$(get_message MSG_PROJECT_LIST_ID)" \
-        "$(get_message MSG_PROJECT_LIST_STATUS)" \
-        "$(get_message MSG_PROJECT_LIST_LAST_SEEN)" \
-        "$(get_message MSG_PROJECT_LIST_PATH)"
+        "NO" \
+        "PID" \
+        "STATUS" \
+        "LAST SEEN" \
+        "PATH"
     
     # Create temporary file for output
     local temp_file=$(mktemp)
