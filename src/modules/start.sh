@@ -184,15 +184,38 @@ start_main() {
             handle_this_argument
             ;;
         "all")
-            # all 인자 처리
-            # _perform_all_containers_action
-            local docker_cmd=(docker ps -a --filter label=com.dockit=true --format '{{.ID}}')
-            perform_all_containers_action \
-              "$MSG_START_ALL" \
-              "$MSG_START_ALL_RESULT" \
-              "$MSG_NO_CONTAINERS" \
-              "$MSG_SPINNER_STARTING" \
-              docker_cmd
+            # all 인자 처리 - 레지스트리 상태 업데이트 포함
+            log "INFO" "$MSG_START_ALL"
+            
+            # 모든 dockit 컨테이너 가져오기
+            mapfile -t cids < <(docker ps -a --filter label=com.dockit=true --format '{{.ID}}')
+            
+            if [[ ${#cids[@]} -eq 0 ]]; then
+                log "INFO" "$MSG_NO_CONTAINERS"
+                return 0
+            fi
+            
+            # 각 컨테이너에 대해 시작 작업 및 레지스트리 업데이트
+            for cid in "${cids[@]}"; do
+                local short=${cid:0:12}
+                local name=$(get_container_info "$cid" "name")
+                [[ -n "$name" ]] && short="$short ($name)"
+                
+                local spinner=$(printf "$MSG_CONTAINER_ACTION_FORMAT" "$short" "$MSG_SPINNER_STARTING")
+                
+                # 컨테이너에서 프로젝트 ID 찾기
+                local project_id=$(find_project_info_by_container "$cid")
+                
+                if [[ -n "$project_id" ]]; then
+                    add_task "$spinner" \
+                        "container_action '$cid' true >/dev/null 2>&1 && update_project_state '$project_id' '$PROJECT_STATE_RUNNING'"
+                else
+                    add_task "$spinner" \
+                        "container_action '$cid' true >/dev/null 2>&1"
+                fi
+            done
+            
+            async_tasks "$MSG_TASKS_DONE"
             ;;
         *)
             # 숫자 인자 처리 시도

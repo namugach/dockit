@@ -265,7 +265,7 @@ collect_container_data() {
     fi
     
     local registry_json=$(cat "$REGISTRY_FILE")
-    local display_number=1
+    local project_number=1  # list의 NO와 동일한 번호 사용
     
     # 레지스트리의 모든 프로젝트를 순서대로 처리
     while IFS= read -r project_id; do
@@ -294,7 +294,7 @@ collect_container_data() {
         container_id=$(docker ps -aq --filter "name=^${container_name}$" --filter "label=com.dockit=true" | head -1)
         
         if [ -n "$container_id" ]; then
-            # 컨테이너가 존재하는 경우
+            # 컨테이너가 존재하는 경우만 처리
             container_info=$(get_container_info "$container_id")
             name=$(echo "$container_info" | cut -d'|' -f1)
             image=$(echo "$container_info" | cut -d'|' -f2)
@@ -307,48 +307,30 @@ collect_container_data() {
             
             # 컨테이너 ID 표시용
             local cid_display="${container_id:0:12}"
-        else
-            # 컨테이너가 없는 경우 - 레지스트리 상태 사용
-            local cid_display="-"
-            # 프로젝트 경로에서 이름 추출 (마지막 두 디렉토리를 - 로 연결)
-            local path_parts=$(echo "$project_path" | tr '/' '\n' | tail -2)
-            if [ $(echo "$path_parts" | wc -l) -eq 2 ]; then
-                # 두 부분이 있으면 - 로 연결
-                name=$(echo "$path_parts" | tr '\n' '-' | sed 's/-$//')
-            else
-                # 한 부분만 있으면 그대로 사용
-                name=$(basename "$project_path")
-            fi
-            # 레지스트리 상태가 있으면 사용, 없으면 down
-            if [ -n "$registry_state" ] && [ "$registry_state" != "null" ]; then
-                status="$registry_state"
-            else
-                status="down"
-            fi
+            
+            # 긴 텍스트 필드 잘라내기
+            local image_display=$(truncate_text "$image" 20)
+            local name_display=$(truncate_text "$name" 20)
+            local ports_display=$(truncate_text "$ports" 20)
+            
+            # 상태 텍스트 가져오기
+            local status_display=$(get_status_display "$status")
+            
+            # 로우 데이터를 파일에 저장 (실제 컨테이너가 있는 경우만)
+            # PNO는 list의 NO와 동일하게 매칭
+            printf "$format" \
+                "$project_number" \
+                "$project_id_display" \
+                "$cid_display" \
+                "$image_display" \
+                "$name_display" \
+                "$created" \
+                "$status_display" \
+                "$ip_address" \
+                "$ports_display" >> "$output_file"
         fi
-        
-        # 긴 텍스트 필드 잘라내기
-        local image_display=$(truncate_text "$image" 20)
-        local name_display=$(truncate_text "$name" 20)
-        local ports_display=$(truncate_text "$ports" 20)
-        
-        # 상태 텍스트 가져오기
-        local status_display=$(get_status_display "$status")
-        
-        # 로우 데이터를 파일에 저장 (프로젝트 정보 포함)
-        printf "$format" \
-            "$display_number" \
-            "$project_id_display" \
-            "$cid_display" \
-            "$image_display" \
-            "$name_display" \
-            "$created" \
-            "$status_display" \
-            "$ip_address" \
-            "$ports_display" >> "$output_file"
-        
-        # 표시 번호 증가
-        ((display_number++))
+        # 컨테이너가 없는 경우는 ps 출력에서 제외하지만 project_number는 증가
+        ((project_number++))
     done < <(echo "$registry_json" | jq -r 'keys[]')
 }
 
