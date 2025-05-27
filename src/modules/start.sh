@@ -12,6 +12,8 @@ source "$MODULES_DIR/container_base.sh"
 # 메시지 선언
 MSG_NO_CONTAINERS="No containers found."
 
+
+
 # "this" 인자 처리 (현재 프로젝트 컨테이너 시작)
 # Handle "this" argument (start current project container)
 handle_this_argument() {
@@ -33,8 +35,28 @@ handle_this_argument() {
     # -- 5) 컨테이너 존재 여부 ----------------------------
     if ! container_exists "$CONTAINER_NAME"; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
-        echo -e "\n${YELLOW}$MSG_CONTAINER_NOT_FOUND_INFO${NC}\n${BLUE}dockit up${NC}"
-        return 2
+        
+        # 컨테이너 생성 여부 확인
+        echo -e "\n${YELLOW}$MSG_START_WANT_CREATE_CONTAINER${NC}"
+        read -p "$MSG_SELECT_CHOICE [Y/n]: " create_container
+        create_container=${create_container:-y}
+        
+        if [[ $create_container == "y" || $create_container == "Y" ]]; then
+            log "INFO" "$MSG_START_CREATING_CONTAINER"
+            
+            # up 명령어 실행 (현재 프로젝트)
+            if dockit up this; then
+                log "SUCCESS" "$MSG_CONTAINER_STARTED"
+                echo -e "\n${BLUE}$MSG_CONNECT_INFO${NC} dockit connect"
+                return 0
+            else
+                log "ERROR" "$MSG_CONTAINER_START_FAILED"
+                return 1
+            fi
+        else
+            log "INFO" "$MSG_START_CREATE_CANCELLED"
+            return 0
+        fi
     fi
 
     # -- 6) 이미 실행 중인지 확인 ------------------------
@@ -151,9 +173,35 @@ handle_numeric_arguments() {
             add_task "$spinner" \
                 "container_action '$cid' true >/dev/null 2>&1 && update_project_state '$project_id' '$PROJECT_STATE_RUNNING'"
         else
-            # 컨테이너가 없는 경우 - 에러 메시지
+            # 컨테이너가 없는 경우 - up 명령어 실행 여부 확인
             local project_name=$(basename "$project_path")
-            log "ERROR" "Container not found for project: $project_name"
+            log "WARNING" "Container not found for project: $project_name"
+            
+            # 컨테이너 생성 여부 확인
+            echo -e "\n${YELLOW}$MSG_START_WANT_CREATE_CONTAINER${NC}"
+            read -p "$MSG_SELECT_CHOICE [Y/n]: " create_container
+            create_container=${create_container:-y}
+            
+            if [[ $create_container == "y" || $create_container == "Y" ]]; then
+                log "INFO" "$MSG_START_CREATING_CONTAINER"
+                
+                # 해당 프로젝트 디렉토리로 이동하여 up 실행
+                local current_dir=$(pwd)
+                cd "$project_path"
+                if dockit up this; then
+                    log "SUCCESS" "$(printf "$MSG_CONTAINER_STARTED" "$project_name")"
+                    # 컨테이너가 생성되었으므로 다시 컨테이너 ID 찾기
+                    local new_cid=$(docker ps -aq --filter "name=^${container_name}$" --filter "label=com.dockit=true" | head -1)
+                    if [[ -n "$new_cid" ]]; then
+                        update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+                    fi
+                else
+                    log "ERROR" "$(printf "$MSG_CONTAINER_START_FAILED" "$project_name")"
+                fi
+                cd "$current_dir"
+            else
+                log "INFO" "$MSG_START_CREATE_CANCELLED"
+            fi
         fi
     done
 
