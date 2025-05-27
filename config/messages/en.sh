@@ -141,6 +141,11 @@ MSG_CONNECT_INVALID_NUMBER="Invalid container number: %s"
 MSG_CONNECT_INVALID_ARGS="Invalid arguments."
 MSG_CONNECT_MULTIPLE_WARNING="connect command can only connect to one container at a time."
 MSG_CONNECT_USING_FIRST="Connecting to first container only: %s"
+MSG_CONNECT_WANT_CREATE_AND_START="Container doesn't exist. Do you want to create, start and connect to the container?"
+MSG_CONNECT_WANT_START="Container is stopped. Do you want to start and connect to the container?"
+MSG_CONNECT_CREATING_AND_STARTING="Creating, starting and connecting to container..."
+MSG_CONNECT_STARTING="Starting and connecting to container..."
+MSG_CONNECT_CREATE_START_CANCELLED="Container creation/start cancelled."
 
 # status module messages
 MSG_STATUS_START="Running status check module..."

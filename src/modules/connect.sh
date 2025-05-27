@@ -44,9 +44,26 @@ handle_this_argument() {
     # Check if container exists
     if ! docker container inspect "$CONTAINER_NAME" &>/dev/null; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
-        echo -e "\n${YELLOW}$MSG_START_CONTAINER_FIRST${NC}"
-        echo -e "${BLUE}dockit start${NC}"
-        return 1
+        
+        # 컨테이너 생성 및 시작 여부 확인
+        echo -e "\n${YELLOW}$MSG_CONNECT_WANT_CREATE_AND_START${NC}"
+        read -p "$MSG_SELECT_CHOICE [Y/n]: " create_and_start
+        create_and_start=${create_and_start:-y}
+        
+        if [[ $create_and_start == "y" || $create_and_start == "Y" ]]; then
+            log "INFO" "$MSG_CONNECT_CREATING_AND_STARTING"
+            
+            # up 명령어 실행 (컨테이너 생성 및 시작)
+            if dockit up this; then
+                log "SUCCESS" "$MSG_CONTAINER_STARTED"
+            else
+                log "ERROR" "$MSG_CONTAINER_START_FAILED"
+                return 1
+            fi
+        else
+            log "INFO" "$MSG_CONNECT_CREATE_START_CANCELLED"
+            return 0
+        fi
     fi
     
     # 컨테이너가 실행 중인지 확인
@@ -56,12 +73,12 @@ handle_this_argument() {
         
         # 컨테이너 시작 여부 확인
         # Ask if container should be started
-        echo -e "\n${YELLOW}$MSG_WANT_START_CONTAINER${NC}"
+        echo -e "\n${YELLOW}$MSG_CONNECT_WANT_START${NC}"
         read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
         start_container=${start_container:-y}
         
         if [[ $start_container == "y" || $start_container == "Y" ]]; then
-            log "INFO" "$MSG_STARTING_CONTAINER"
+            log "INFO" "$MSG_CONNECT_STARTING"
             
             # 컨테이너 시작
             # Start container
@@ -72,7 +89,7 @@ handle_this_argument() {
                 return 1
             fi
         else
-            log "INFO" "$MSG_START_CANCELLED"
+            log "INFO" "$MSG_CONNECT_CREATE_START_CANCELLED"
             return 0
         fi
     fi
@@ -156,9 +173,30 @@ handle_numeric_arguments() {
     # 컨테이너 존재 여부 확인
     if ! docker container inspect "$container_name" &>/dev/null; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
-        echo -e "\n${YELLOW}$MSG_START_CONTAINER_FIRST${NC}"
-        echo -e "${BLUE}dockit start $idx${NC}"
-        return 1
+        
+        # 컨테이너 생성 및 시작 여부 확인
+        echo -e "\n${YELLOW}$MSG_CONNECT_WANT_CREATE_AND_START${NC}"
+        read -p "$MSG_SELECT_CHOICE [Y/n]: " create_and_start
+        create_and_start=${create_and_start:-y}
+        
+        if [[ $create_and_start == "y" || $create_and_start == "Y" ]]; then
+            log "INFO" "$MSG_CONNECT_CREATING_AND_STARTING"
+            
+            # 해당 프로젝트 디렉토리로 이동하여 up 실행
+            local current_dir=$(pwd)
+            cd "$project_path"
+            if dockit up this; then
+                log "SUCCESS" "$MSG_CONTAINER_STARTED"
+                cd "$current_dir"
+            else
+                log "ERROR" "$MSG_CONTAINER_START_FAILED"
+                cd "$current_dir"
+                return 1
+            fi
+        else
+            log "INFO" "$MSG_CONNECT_CREATE_START_CANCELLED"
+            return 0
+        fi
     fi
     
     # 컨테이너가 실행 중인지 확인
@@ -166,12 +204,12 @@ handle_numeric_arguments() {
         log "WARNING" "$MSG_CONTAINER_NOT_RUNNING"
         
         # 컨테이너 시작 여부 확인
-        echo -e "\n${YELLOW}$MSG_WANT_START_CONTAINER${NC}"
+        echo -e "\n${YELLOW}$MSG_CONNECT_WANT_START${NC}"
         read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
         start_container=${start_container:-y}
         
         if [[ $start_container == "y" || $start_container == "Y" ]]; then
-            log "INFO" "$MSG_STARTING_CONTAINER"
+            log "INFO" "$MSG_CONNECT_STARTING"
             
             # 컨테이너 시작 (docker compose 사용)
             local compose_file="$project_path/.dockit_project/docker-compose.yml"
@@ -187,7 +225,7 @@ handle_numeric_arguments() {
                 return 1
             fi
         else
-            log "INFO" "$MSG_START_CANCELLED"
+            log "INFO" "$MSG_CONNECT_CREATE_START_CANCELLED"
             return 0
         fi
     fi

@@ -140,6 +140,11 @@ MSG_CONNECT_INVALID_NUMBER="유효하지 않은 컨테이너 번호입니다: %s
 MSG_CONNECT_INVALID_ARGS="유효하지 않은 인자입니다."
 MSG_CONNECT_MULTIPLE_WARNING="connect 명령어는 한 번에 하나의 컨테이너에만 접속할 수 있습니다."
 MSG_CONNECT_USING_FIRST="첫 번째 컨테이너에만 접속합니다: %s"
+MSG_CONNECT_WANT_CREATE_AND_START="컨테이너가 존재하지 않습니다. 컨테이너를 생성하고 시작한 후 접속하시겠습니까?"
+MSG_CONNECT_WANT_START="컨테이너가 중지되어 있습니다. 컨테이너를 시작한 후 접속하시겠습니까?"
+MSG_CONNECT_CREATING_AND_STARTING="컨테이너를 생성하고 시작한 후 접속 중..."
+MSG_CONNECT_STARTING="컨테이너를 시작한 후 접속 중..."
+MSG_CONNECT_CREATE_START_CANCELLED="컨테이너 생성/시작이 취소되었습니다."
 
 # status 모듈 메시지
 MSG_STATUS_START="상태 확인 모듈 실행 중..."
