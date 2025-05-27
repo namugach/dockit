@@ -56,6 +56,13 @@ handle_this_argument() {
             # up 명령어 실행 (컨테이너 생성 및 시작)
             if dockit up this; then
                 log "SUCCESS" "$MSG_CONTAINER_STARTED"
+                
+                # 레지스트리 상태 업데이트
+                local project_id
+                if project_id=$(get_current_project_id); then
+                    update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+                    log "INFO" "Project status updated to running"
+                fi
             else
                 log "ERROR" "$MSG_CONTAINER_START_FAILED"
                 return 1
@@ -84,6 +91,13 @@ handle_this_argument() {
             # Start container
             if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" start; then
                 log "SUCCESS" "$MSG_CONTAINER_STARTED"
+                
+                # 레지스트리 상태 업데이트
+                local project_id
+                if project_id=$(get_current_project_id); then
+                    update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+                    log "INFO" "Project status updated to running"
+                fi
             else
                 log "ERROR" "$MSG_CONTAINER_START_FAILED"
                 return 1
@@ -187,6 +201,11 @@ handle_numeric_arguments() {
             cd "$project_path"
             if dockit up this; then
                 log "SUCCESS" "$MSG_CONTAINER_STARTED"
+                
+                # 레지스트리 상태 업데이트
+                update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+                log "INFO" "Project status updated to running"
+                
                 cd "$current_dir"
             else
                 log "ERROR" "$MSG_CONTAINER_START_FAILED"
@@ -216,6 +235,10 @@ handle_numeric_arguments() {
             if [ -f "$compose_file" ]; then
                 if docker compose -f "$compose_file" start; then
                     log "SUCCESS" "$MSG_CONTAINER_STARTED"
+                    
+                    # 레지스트리 상태 업데이트
+                    update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+                    log "INFO" "Project status updated to running"
                 else
                     log "ERROR" "$MSG_CONTAINER_START_FAILED"
                     return 1
