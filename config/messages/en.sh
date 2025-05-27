@@ -92,7 +92,17 @@ MSG_BUILD_CTRL_C_HINT="Press Ctrl+C during image building to abort. Created file
 # down module messages
 MSG_DOWN_START="Starting container removal module..."
 MSG_COMPOSE_NOT_FOUND="Docker Compose file not found."
-MSG_CONTAINER_DOWNMSG_CONTAINER_STOP_FAILED="Failed to remove container."
+MSG_CONTAINER_DOWN="Container has been successfully removed."
+MSG_CONTAINER_STOP_FAILED="Failed to remove container."
+MSG_DOWN_USAGE="Usage:"
+MSG_DOWN_USAGE_NO="Remove container with the specified number"
+MSG_DOWN_USAGE_THIS="Remove container for current project"
+MSG_DOWN_USAGE_ALL="Remove all containers"
+MSG_DOWN_NOT_PROJECT="Current directory is not a dockit project."
+MSG_DOWN_INVALID_NUMBER="Invalid container number: %s"
+MSG_DOWN_INVALID_ARGS="Invalid arguments."
+MSG_DOWN_ALL="Removing all dockit containers..."
+MSG_SPINNER_DOWNING="removing"
 
 # stop module messages
 MSG_STOP_START="Container stop module running..."
@@ -206,7 +216,7 @@ MSG_HELP_START="  start    - Start containers (options: number, \"this\", \"all\
 MSG_HELP_BUILD="  build    - Build Docker image for development environment"
 MSG_HELP_UP="  up       - Start container in background (options: number, \"this\", \"all\")"
 MSG_HELP_STOP="  stop     - Stop containers (options: number, \"this\", \"all\")"
-MSG_HELP_DOWN="  down     - Remove container completely"
+MSG_HELP_DOWN="  down     - Remove container completely (options: number, \\\"this\\\", \\\"all\\\")"
 MSG_HELP_CONNECT="  connect  - Connect to container"
 MSG_HELP_STATUS="  status   - Check container status"
 MSG_HELP_MIGRATE="  migrate  - Upgrade to a newer version"
