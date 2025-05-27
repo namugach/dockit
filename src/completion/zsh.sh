@@ -67,6 +67,13 @@ _dockit() {
                 _describe 'down_option' down_options
                 return 0
                 ;;
+            connect)
+                connect_options=(
+                    "this:$(dockit_get_message MSG_CONNECT_USAGE_THIS)"
+                )
+                _describe 'connect_option' connect_options
+                return 0
+                ;;
         esac
         return 0
     fi

@@ -96,6 +96,11 @@ _dockit_completion() {
         # Second argument completion for down command
         COMPREPLY=( $(compgen -W "this all" -- ${cur}) )
         return 0
+    elif [ "$COMP_CWORD" -eq 2 ] && [ "$prev" = "connect" ]; then
+        # connect 명령어의 두 번째 인자 자동완성
+        # Second argument completion for connect command
+        COMPREPLY=( $(compgen -W "this" -- ${cur}) )
+        return 0
     fi
 }
 

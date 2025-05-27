@@ -4,9 +4,7 @@ source ../core.sh
 
 workspaces=("__a" "__b")  # 전역 배열 선언 (local ❌)
 
-cd __a && dockit down && cd -
-cd __b && dockit down && cd -
-dockit down
+dockit down all
 action() {
   local -n ws=$1
   dockit list
