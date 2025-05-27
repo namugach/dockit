@@ -61,12 +61,12 @@ To remove Dockit from your system:
 ## Commands
 
 - `init`: Initialize and configure the development environment
-- `start`: Start containers (options: number, "this",  "all")
+- `start`: Start containers with auto-creation option (options: number, "this",  "all")
 - `build`: Build Docker image for development environment
-- `up`: Start the container in background (no connection prompt)
+- `up`: Start containers in background (options: number, "this", "all")
 - `stop`: Stop containers (options: number, "this",  "all")
-- `down`: Remove the container completely
-- `connect`: Connect to a running container
+- `down`: Remove containers completely (options: number, "this", "all")
+- `connect`: Connect to container with auto-creation and auto-start options
 - `status`: Check container status
 - `migrate`: Upgrade to a newer version
 - `run`: Automatically initialize, build, and start container without interaction

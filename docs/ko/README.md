@@ -52,12 +52,12 @@ Dockit을 시스템에서 제거하려면:
 다음은 Dockit에서 사용할 수 있는 주요 명령어입니다:
 
 - `init`: Docker 개발 환경 초기화
-- `start`: 컨테이너 시작 (옵션: number, "this", "all")
+- `start`: 컨테이너 시작 (자동 생성 옵션 포함, 옵션: number, "this", "all")
 - `build`: Docker 개발 환경 이미지 빌드
-- `up`: 컨테이너 백그라운드에서 시작 (접속 프롬프트 없음)
+- `up`: 컨테이너 백그라운드에서 시작 (옵션: number, "this", "all")
 - `stop`: 컨테이너 정지 (옵션: number, "this", "all")
-- `down`: 컨테이너 완전 제거
-- `connect`: 실행 중인 컨테이너에 접속
+- `down`: 컨테이너 완전 제거 (옵션: number, "this", "all")
+- `connect`: 컨테이너에 접속 (자동 생성 및 자동 시작 옵션 포함)
 - `status`: 컨테이너 상태 확인
 - `setup`: 초기화, 빌드, 시작, 접속을 한번에 실행
 - `run`: 초기화, 빌드, 시작을 자동으로 실행

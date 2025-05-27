@@ -93,7 +93,7 @@ During initialization, you can configure the following information:
 
 ### Start Command
 
-The `start` command allows you to start containers. This is used to start existing containers.
+The `start` command allows you to start containers. If a container doesn't exist, it will offer to create and start it automatically.
 
 Usage:
 ```bash
@@ -106,12 +106,18 @@ Options:
 - `"this"`: Starts the container for the current project directory
 - `"all"`: Starts all dockit containers
 
+**Auto-creation Feature:**
+When a container doesn't exist, the command will ask:
+- "Container doesn't exist. Do you want to create and start the container? (Y/n)"
+- If you choose 'Y', it will automatically run `dockit up` to create and start the container
+- If you choose 'n', the operation will be cancelled
+
 Examples:
 ```bash
 dockit start           # Shows container list
-dockit start 1         # Starts container number 1
+dockit start 1         # Starts container number 1 (creates if doesn't exist)
 dockit start 1 2 3     # Starts containers number 1, 2, and 3
-dockit start this      # Starts container for current project
+dockit start this      # Starts container for current project (creates if doesn't exist)
 dockit start all       # Starts all dockit containers
 ```
 
@@ -129,19 +135,35 @@ This command performs the following tasks:
 - Builds a Docker image with appropriate configurations
 - Useful when you need to rebuild or update the development environment image
 
-### up - Start Container in Background
+### Up Command
 
-Start the container in background without connection prompt.
+Start containers in background without connection prompt.
 
+Usage:
 ```bash
-dockit up
+dockit up [options]
 ```
 
+Options:
+- (no arguments): Shows a list of available containers
+- `number`: Starts the container with the specified number from the list
+- `"this"`: Starts the container for the current project directory
+- `"all"`: Starts all dockit containers
+
 This command performs the following tasks:
-- Starts the container using Docker Compose in detached mode
+- Starts containers using Docker Compose in detached mode
 - Does not ask for container connection
 - Shows the container status information
 - Useful for automated scripts or when you don't need to connect immediately
+
+Examples:
+```bash
+dockit up             # Shows container list
+dockit up 1           # Starts container number 1
+dockit up 1 2 3       # Starts containers number 1, 2, and 3
+dockit up this        # Starts container for current project
+dockit up all         # Starts all dockit containers
+```
 
 ### Stop Command
 
@@ -167,25 +189,69 @@ dockit stop this      # Stops container for current project
 dockit stop all       # Stops all dockit containers
 ```
 
-### down - Remove Container
+### Down Command
 
-Completely remove the container.
+Completely remove containers.
 
+Usage:
 ```bash
-dockit down
+dockit down [options]
 ```
 
-This command stops and removes the container. Be careful as all data stored in the container will be deleted.
+Options:
+- (no arguments): Shows a list of available containers
+- `number`: Removes the container with the specified number from the list
+- `"this"`: Removes the container for the current project directory
+- `"all"`: Removes all dockit containers
 
-### connect - Connect to Container
+This command stops and removes containers. Be careful as all data stored in the containers will be deleted.
 
-Connect to a running container.
-
+Examples:
 ```bash
-dockit connect
+dockit down           # Shows container list
+dockit down 1         # Removes container number 1
+dockit down 1 2 3     # Removes containers number 1, 2, and 3
+dockit down this      # Removes container for current project
+dockit down all       # Removes all dockit containers
 ```
 
-This command connects to a running container through an interactive shell.
+### Connect Command
+
+Connect to a container with automatic creation and start capabilities.
+
+Usage:
+```bash
+dockit connect [options]
+```
+
+Options:
+- (no arguments): Shows usage information
+- `number`: Connects to the container with the specified number from the list
+- `"this"`: Connects to the container for the current project directory
+
+**Auto-creation and Auto-start Features:**
+
+1. **When container doesn't exist:**
+   - "Container doesn't exist. Do you want to create, start and connect to the container? (Y/n)"
+   - If you choose 'Y', it will automatically run `dockit up` to create and start the container, then connect
+   - If you choose 'n', the operation will be cancelled
+
+2. **When container is stopped:**
+   - "Container is stopped. Do you want to start and connect to the container? (Y/n)"
+   - If you choose 'Y', it will start the container and then connect
+   - If you choose 'n', the operation will be cancelled
+
+3. **When container is running:**
+   - Connects immediately to the container
+
+Examples:
+```bash
+dockit connect         # Shows usage information
+dockit connect 1       # Connects to container number 1 (creates/starts if needed)
+dockit connect this    # Connects to current project container (creates/starts if needed)
+```
+
+This command provides a seamless workflow where you can connect to any container with a single command, regardless of its current state.
 
 ### status - Check Status
 
