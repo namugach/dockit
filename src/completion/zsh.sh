@@ -51,6 +51,14 @@ _dockit() {
                 _describe 'stop_option' stop_options
                 return 0
                 ;;
+            up)
+                up_options=(
+                    "this:$(dockit_get_message MSG_UP_USAGE_THIS)"
+                    "all:$(dockit_get_message MSG_UP_USAGE_ALL)"
+                )
+                _describe 'up_option' up_options
+                return 0
+                ;;
         esac
         return 0
     fi

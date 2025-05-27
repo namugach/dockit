@@ -7,6 +7,7 @@
 # 공통 모듈 로드
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
+source "$MODULES_DIR/container_base.sh"
 
 
 # 설정 파일에 컨테이너 사용자 정보 업데이트 함수
@@ -233,14 +234,30 @@ display_container_status() {
     docker ps --filter "name=$CONTAINER_NAME" --format "table {{.ID}}\t{{.Status}}\t{{.Ports}}"
 }
 
-# Main function
-# 메인 함수
-up_main() {
+# 사용법 표시 함수
+# Show usage function
+show_usage() {
+    log "INFO" "$MSG_UP_USAGE"
+    echo -e "  dockit up <no> - $MSG_UP_USAGE_NO"
+    echo -e "  dockit up this - $MSG_UP_USAGE_THIS"
+    echo -e "  dockit up all - $MSG_UP_USAGE_ALL"
+    echo ""
+}
+
+# "this" 인자 처리 (현재 프로젝트 컨테이너를 백그라운드에서 시작)
+# Handle "this" argument (start current project container in background)
+handle_this_argument() {
+    # -- 1) dockit 프로젝트 디렉터리 확인 ----------------
+    if [[ ! -d .dockit_project ]]; then
+        log "WARNING" "$MSG_UP_NOT_PROJECT"
+        return 1
+    fi
+
     log "INFO" "$MSG_UP_START"
     
     # 1. 설정 로드 및 기본 검증
     if ! load_and_validate_config; then
-        exit 1
+        return 1
     fi
     
     # 2. 컨테이너가 이미 실행 중인지 확인
@@ -253,12 +270,12 @@ up_main() {
         if project_id=$(get_current_project_id); then
             update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
         fi
-        exit 0
+        return 0
     fi
     
     # 3. 컨테이너 시작
     if ! start_container; then
-        exit 1
+        return 1
     fi
     
     # 4. 컨테이너 사용자 정보 업데이트
@@ -275,6 +292,222 @@ up_main() {
     
     # 6. 컨테이너 상태 출력
     display_container_status
+    
+    return 0
+}
+
+# 컨테이너 up 액션 함수 (백그라운드에서 시작)
+# Container up action function (start in background)
+container_up_action() {
+    local container_id="$1"
+    local quiet="${2:-false}"  # 로그 출력 여부 (기본값: 출력함)
+    
+    # 컨테이너 존재 여부 확인
+    if ! container_exists "$container_id"; then
+        [ "$quiet" != "true" ] && log "ERROR" "$MSG_CONTAINER_NOT_FOUND"
+        return 1
+    fi
+    
+    # 컨테이너 정보 가져오기
+    local container_desc=$(get_container_description "$container_id")
+    
+    # 이미 실행 중인지 확인
+    if is_container_running "$container_id"; then
+        [ "$quiet" != "true" ] && log "WARNING" "$(printf "$MSG_CONTAINER_ALREADY_RUNNING" "$container_desc")"
+        return 0
+    fi
+    
+    # 컨테이너 시작 (백그라운드)
+    [ "$quiet" != "true" ] && log "INFO" "$(printf "$MSG_STARTING_IN_BACKGROUND" "$container_desc")"
+    if docker start "$container_id"; then
+        [ "$quiet" != "true" ] && log "SUCCESS" "$(printf "$MSG_CONTAINER_STARTED" "$container_desc")"
+        return 0
+    else
+        [ "$quiet" != "true" ] && log "ERROR" "$(printf "$MSG_CONTAINER_START_FAILED" "$container_desc")"
+        return 1
+    fi
+}
+
+# 숫자 인자 처리 (번호로 컨테이너를 백그라운드에서 시작)
+# Handle numeric arguments (start container by number in background)
+handle_numeric_arguments() {
+    local -a indices=("$@")            # 숫자 인자들만
+
+    # 인자 전부 숫자인지 확인
+    for idx in "${indices[@]}"; do
+        [[ "$idx" =~ ^[0-9]+$ ]] || { log "ERROR" "$(printf "$MSG_UP_INVALID_NUMBER" "$idx")"; return 1; }
+    done
+
+    # 레지스트리에서 프로젝트 목록 가져오기
+    local registry_file="$HOME/.dockit/registry.json"
+    if [ ! -f "$registry_file" ]; then
+        log "ERROR" "Registry file not found"
+        return 1
+    fi
+    
+    local registry_json=$(cat "$registry_file")
+    local project_ids=()
+    
+    # 프로젝트 ID 배열 생성
+    while IFS= read -r project_id; do
+        project_ids+=("$project_id")
+    done < <(echo "$registry_json" | jq -r 'keys[]')
+
+    # 각 인덱스 처리
+    for idx in "${indices[@]}"; do
+        local array_idx=$((idx-1))                # 인덱스 → 배열 위치
+        local project_id=${project_ids[$array_idx]:-}
+
+        if [[ -z "$project_id" ]]; then
+            log "ERROR" "$(printf "$MSG_UP_INVALID_NUMBER" "$idx")"
+            continue
+        fi
+
+        # 프로젝트 경로 가져오기
+        local project_path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
+        local project_name=$(basename "$project_path")
+        
+        # 프로젝트 경로 유효성 확인
+        if [ ! -d "$project_path" ] || [ ! -f "$project_path/.dockit_project/docker-compose.yml" ]; then
+            log "ERROR" "Project $idx ($project_name) not found or invalid"
+            continue
+        fi
+        
+        local spinner="Project $idx ($project_name) $MSG_SPINNER_UPPING"
+        
+        # 프로젝트별 up 작업을 백그라운드에서 실행
+        add_task "$spinner" \
+            "project_up_action '$project_path' '$project_id' >/dev/null 2>&1"
+    done
+
+    async_tasks "$MSG_TASKS_DONE"
+}
+
+# 프로젝트별 up 액션 함수
+# Project-specific up action function
+project_up_action() {
+    local project_path="$1"
+    local project_id="$2"
+    
+    # 프로젝트 디렉토리로 이동
+    cd "$project_path" || return 1
+    
+    # 설정 로드
+    if [ -f ".dockit_project/.env" ]; then
+        source ".dockit_project/.env"
+    else
+        return 1
+    fi
+    
+    # Docker Compose 파일 확인
+    local compose_file=".dockit_project/docker-compose.yml"
+    if [ ! -f "$compose_file" ]; then
+        return 1
+    fi
+    
+    # 컨테이너가 이미 실행 중인지 확인
+    if [ -n "$CONTAINER_NAME" ] && docker container inspect "$CONTAINER_NAME" &>/dev/null; then
+        if [ "$(docker container inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" = "true" ]; then
+            # 이미 실행 중인 경우 레지스트리 상태만 업데이트
+            update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+            return 0
+        fi
+    fi
+    
+    # Docker Compose로 컨테이너 시작
+    if docker compose -f "$compose_file" up -d; then
+        # 성공 시 레지스트리 상태 업데이트
+        update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
+        return 0
+    else
+        return 1
+    fi
+}
+
+# "all" 인자 처리 (모든 프로젝트를 백그라운드에서 시작)
+# Handle "all" argument (start all projects in background)
+handle_all_argument() {
+    log "INFO" "$MSG_UP_ALL"
+    
+    # 레지스트리에서 모든 프로젝트 가져오기
+    local registry_file="$HOME/.dockit/registry.json"
+    if [ ! -f "$registry_file" ]; then
+        log "ERROR" "Registry file not found"
+        return 1
+    fi
+    
+    local registry_json=$(cat "$registry_file")
+    local project_ids=()
+    
+    # 프로젝트 ID 배열 생성
+    while IFS= read -r project_id; do
+        project_ids+=("$project_id")
+    done < <(echo "$registry_json" | jq -r 'keys[]')
+
+    if [[ ${#project_ids[@]} -eq 0 ]]; then
+        log "INFO" "$MSG_NO_CONTAINERS"
+        return 0
+    fi
+
+    # 각 프로젝트에 대해 up 작업
+    for project_id in "${project_ids[@]}"; do
+        # 프로젝트 경로 가져오기
+        local project_path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
+        local project_name=$(basename "$project_path")
+        
+        # 프로젝트 경로 유효성 확인
+        if [ ! -d "$project_path" ] || [ ! -f "$project_path/.dockit_project/docker-compose.yml" ]; then
+            log "WARNING" "Project $project_name not found or invalid, skipping..."
+            continue
+        fi
+        
+        local spinner="Project $project_name $MSG_SPINNER_UPPING"
+        
+        add_task "$spinner" \
+            "project_up_action '$project_path' '$project_id' >/dev/null 2>&1"
+    done
+
+    async_tasks "$MSG_TASKS_DONE"
+}
+
+# Main function
+# 메인 함수
+up_main() {
+    # Docker 사용 가능 여부 확인
+    if ! command -v docker &> /dev/null; then
+        log "ERROR" "$MSG_COMMON_DOCKER_NOT_FOUND"
+        return 1
+    fi
+
+    # 인자가 없는 경우 사용법 표시
+    if [ $# -eq 0 ]; then
+        show_usage
+        return 0
+    fi
+    
+    # 첫 번째 인자에 따른 처리
+    case "$1" in
+        "this")
+            # this 인자 처리
+            handle_this_argument
+            ;;
+        "all")
+            # all 인자 처리
+            handle_all_argument
+            ;;
+        *)
+            # 숫자 인자 처리 시도
+            if handle_numeric_arguments "$@"; then
+                return 0
+            else
+                # 잘못된 인자 처리
+                log "ERROR" "$MSG_UP_INVALID_ARGS"
+                show_usage
+            fi
+            ;;
+    esac
+    
+    return 0
 }
 
 # Execute main function if script is run directly
