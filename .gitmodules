@@ -1,0 +1,3 @@
+[submodule "dockit-submodules"]
+	path = dockit-submodules
+	url = git@github.com:namugach/dockit-submodules.git
