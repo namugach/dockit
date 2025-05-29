@@ -74,6 +74,13 @@ _dockit() {
                 _describe 'connect_option' connect_options
                 return 0
                 ;;
+            build)
+                build_options=(
+                    "--no-cache:$(dockit_get_message MSG_BUILD_OPTION_NO_CACHE)"
+                )
+                _describe 'build_option' build_options
+                return 0
+                ;;
         esac
         return 0
     fi

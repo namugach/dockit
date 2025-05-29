@@ -101,6 +101,11 @@ _dockit_completion() {
         # Second argument completion for connect command
         COMPREPLY=( $(compgen -W "this" -- ${cur}) )
         return 0
+    elif [ "$COMP_CWORD" -eq 2 ] && [ "$prev" = "build" ]; then
+        # build 명령어의 두 번째 인자 자동완성
+        # Second argument completion for build command
+        COMPREPLY=( $(compgen -W "--no-cache" -- ${cur}) )
+        return 0
     fi
 }
 

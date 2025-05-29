@@ -42,7 +42,11 @@ To remove Dockit from your system:
 - Container start/stop/remove management
 - Container access and status checking
 - Automatic application of current user settings (UID/GID) to container
+- **UID conflict detection and automatic user handling**
+- **Smart password assignment to actual container users**
 - Host-container volume mount support
+- **User-customizable Dockerfile support**
+- **Docker image caching control with --no-cache option**
 - Modular design for easy extension
 - Clean project structure
 - Multi-language support (English, Korean)
@@ -53,7 +57,7 @@ Dockit provides the following main commands:
 
 - `init`: Initialize and configure the development environment
 - `start`: Start containers with auto-creation option (options: number, "this", "all")
-- `build`: Build Docker image for development environment
+- `build`: Build Docker image for development environment (option: --no-cache)
 - `up`: Start containers in background (options: number, "this", "all")
 - `stop`: Stop containers (options: number, "this", "all")
 - `down`: Remove containers completely (options: number, "this", "all")

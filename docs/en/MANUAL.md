@@ -126,14 +126,37 @@ dockit start all       # Starts all dockit containers
 Build a Docker image for the development environment.
 
 ```bash
-dockit build
+dockit build [options]
+```
+
+#### Options:
+- `--no-cache`: Forces a rebuild of the image without using Docker cache.
+
+#### Usage Examples:
+```bash
+dockit build              # Normal build (uses cache)
+dockit build --no-cache   # Force rebuild without cache
 ```
 
 This command performs the following tasks:
-- Creates a temporary Dockerfile from a template
-- Configures base image and user settings
-- Builds a Docker image with appropriate configurations
-- Useful when you need to rebuild or update the development environment image
+- Builds image using `.dockit_project/Dockerfile`
+- Reflects any changes made to the Dockerfile by the user
+- Resolves Docker caching issues with the `--no-cache` option
+- Performs UID conflict detection and automatic user handling
+
+#### User Dockerfile Customization:
+You can directly modify the `.dockit_project/Dockerfile` created after `dockit init`:
+- Install additional packages
+- Set environment variables
+- Add custom configurations
+- Reflect changes with `dockit build`
+
+#### Automatic UID Conflict Handling:
+When a user with the same UID already exists in the base image:
+- Automatically detects existing users
+- Applies the configured password to that user
+- Automatically grants sudo privileges
+- Provides a smooth working environment without file permission issues
 
 ### Up Command
 
@@ -436,6 +459,16 @@ This file can be manually edited as needed.
 
 **Problem**: The configured username (USERNAME) is different from the container's internal username
 **Solution**:
-- This is normal behavior. The container user information displayed by the `dockit status` command might be different if the base image already has a user with the same UID/GID.
-- What matters is whether the UID and GID match. File system permissions are determined by UID/GID, not by names.
-- If you encounter file permission issues, check with `dockit status` to verify that the container user's UID/GID matches your host system's user UID/GID. 
+- **From v1.2.0, this is automatically handled.** When UID conflict is detected, the password is automatically set for the existing container user.
+- The container user information displayed by the `dockit status` command might be different if the base image already has a user with the same UID/GID.
+- **What matters is whether the UID and GID match.** File system permissions are determined by UID/GID, not by names.
+- **Sudo access**: You can use sudo commands with the password set for the existing user (e.g., ubuntu).
+- If you encounter file permission issues, check with `dockit status` to verify that the container user's UID/GID matches your host system's user UID/GID.
+
+### UID Conflict and Password Issues
+
+**Problem**: Password setting fails when a user with the same UID already exists in the base image
+**Solution**:
+- **From v1.2.0, this is automatically resolved.** The Dockerfile automatically detects UID conflicts and sets passwords for existing users.
+- If changes are not reflected due to Docker caching, use `dockit build --no-cache`.
+- Manual verification: You can check the user account status by examining the `/etc/shadow` file inside the container. 

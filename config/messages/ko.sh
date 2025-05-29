@@ -397,6 +397,8 @@ MSG_COMPLETION_LIST="등록된 모든 dockit 프로젝트 목록 표시"
 MSG_LIST_USAGE="등록된 dockit 프로젝트 목록 표시"
 MSG_LIST_USAGE_DETAIL="상태 및 마지막 확인 시간과 함께 모든 등록된 dockit 프로젝트를 보여줍니다"
 
+# Build 명령어 옵션 메시지  
+MSG_BUILD_OPTION_NO_CACHE="Docker 캐시를 사용하지 않고 강제로 리빌드"
 
 # 공통 모듈 테스트 메시지
 MSG_COMMON_TESTING_FUNCTION="generate_container_name 함수 테스트 중..."

@@ -396,6 +396,8 @@ MSG_COMPLETION_JOIN="Run automated execution and connection in one go"
 MSG_COMPLETION_PS="List all dockit containers"
 MSG_COMPLETION_LIST="List all registered dockit projects"
 
+# Build command option messages  
+MSG_BUILD_OPTION_NO_CACHE="Force rebuild without using Docker cache"
 
 # Common module test messages
 MSG_COMMON_TESTING_FUNCTION="Testing generate_container_name function..."
