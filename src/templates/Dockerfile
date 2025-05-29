@@ -10,14 +10,22 @@ ARG WORKDIR=workspace
 # sudo 설치 및 기타 유틸리티
 RUN apt-get update && apt-get install -y sudo git
 
-# 사용자 그룹 및 사용자 생성 (단순화된 방식)
-RUN (groupadd -g ${USER_GID} ${USERNAME} || true) && \
-    (useradd -m -d /home/${USERNAME} -u ${USER_UID} -g ${USER_GID} ${USERNAME} || true)
-
-# 사용자에게 sudo 권한 부여 및 비밀번호 설정
-RUN (usermod -aG sudo ${USERNAME} || true) && \
-    echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
-    echo "${USERNAME}:${USER_PASSWORD}" | chpasswd || echo "Password will be set later"
+# UID 기반 조건부 사용자 처리 (충돌 감지)
+RUN EXISTING_USER=$(getent passwd ${USER_UID} | cut -d: -f1 || echo "") && \
+    if [ -n "$EXISTING_USER" ]; then \
+        echo "Found existing user: $EXISTING_USER with UID ${USER_UID}" && \
+        usermod -aG sudo "$EXISTING_USER" && \
+        echo "$EXISTING_USER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+        usermod -p $(openssl passwd -1 ${USER_PASSWORD}) "$EXISTING_USER" && \
+        passwd -u "$EXISTING_USER"; \
+    else \
+        echo "Creating new user: ${USERNAME}" && \
+        (groupadd -g ${USER_GID} ${USERNAME} || true) && \
+        (useradd -m -d /home/${USERNAME} -u ${USER_UID} -g ${USER_GID} ${USERNAME} || true) && \
+        usermod -aG sudo ${USERNAME} && \
+        echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+        echo "${USERNAME}:${USER_PASSWORD}" | chpasswd; \
+    fi
 
 # 작업 디렉토리 생성 및 권한 설정
 RUN mkdir -p /workspace && \
