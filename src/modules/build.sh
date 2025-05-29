@@ -19,86 +19,62 @@ check_base_image() {
     log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
 }
 
-# Process template using multilingual settings system
-# 다국어 설정 시스템을 사용하여 템플릿 처리
-process_multilang_template() {
-    local temp_dockerfile="$1"
-    log "INFO" "$MSG_MULTILANG_SETTINGS: BASE_IMAGE=$BASE_IMAGE"
-    process_template_with_base_image "$DOCKERFILE_TEMPLATE" "$temp_dockerfile"
-}
-
-# Process template using traditional method
-# 기존 방식으로 템플릿 처리
-process_traditional_template() {
-    local temp_dockerfile="$1"
-    log "INFO" "$MSG_PROCESSING_TEMPLATE"
+# Build Docker image
+# Docker 이미지 빌드
+build_docker_image() {
+    local cache_option="$1"
+    log "INFO" "$MSG_BUILDING_IMAGE: $IMAGE_NAME"
     
-    # Read and process template content
-    # 템플릿 내용 읽기 및 처리
-    local template_content=$(<"$DOCKERFILE_TEMPLATE")
-    echo "$template_content" | \
-    sed "1s|^FROM .*|FROM $BASE_IMAGE|" | \
-    sed -e "s|\${USERNAME}|${USERNAME}|g" \
-        -e "s|\${USER_UID}|${USER_UID}|g" \
-        -e "s|\${USER_GID}|${USER_GID}|g" \
-        -e "s|\${WORKDIR}|${WORKDIR}|g" \
-        -e "s|\${USER_PASSWORD}|${USER_PASSWORD}|g" \
-    > "$temp_dockerfile"
-}
-
-# Create temporary Dockerfile with proper base image and substitutions
-# 적절한 베이스 이미지와 치환으로 임시 Dockerfile 생성
-create_temp_dockerfile() {
-    local temp_dockerfile="$1"
+    # Use existing Dockerfile from .dockit_project
+    # .dockit_project의 기존 Dockerfile 사용
+    local dockerfile="$DOCKIT_PROJECT_DIR/Dockerfile"
     
-    # Check and set BASE_IMAGE
-    # BASE_IMAGE 확인 및 설정
-    check_base_image
-    
-    # Process template based on available functions
-    # 사용 가능한 함수에 따라 템플릿 처리
-    if [ -f "$PROJECT_ROOT/config/system.sh" ] && type process_template_with_base_image &>/dev/null; then
-        process_multilang_template "$temp_dockerfile"
-    else
-        process_traditional_template "$temp_dockerfile"
+    # Check if Dockerfile exists
+    # Dockerfile 존재 확인
+    if [ ! -f "$dockerfile" ]; then
+        log "ERROR" "Dockerfile not found: $dockerfile"
+        log "INFO" "Run 'dockit init' first to create Dockerfile"
+        return 1
     fi
-}
-
-# Build Docker image from temporary Dockerfile
-# 임시 Dockerfile로 Docker 이미지 빌드
-build_image_from_temp() {
-    local temp_dockerfile="$1"
     
-    if docker build -t "$IMAGE_NAME" -f "$temp_dockerfile" .; then
+    # Build image using existing Dockerfile
+    # 기존 Dockerfile을 사용하여 이미지 빌드
+    local build_cmd="docker build -t $IMAGE_NAME -f $dockerfile"
+    if [ "$cache_option" = "--no-cache" ]; then
+        build_cmd="$build_cmd --no-cache"
+        log "INFO" "캐시 없이 이미지를 빌드합니다..."
+    fi
+    build_cmd="$build_cmd ."
+    
+    if eval "$build_cmd"; then
         log "SUCCESS" "$MSG_IMAGE_BUILT: $IMAGE_NAME"
-        rm -f "$temp_dockerfile"
         return 0
     else
         log "ERROR" "$MSG_IMAGE_BUILD_FAILED"
-        rm -f "$temp_dockerfile"
         return 1
     fi
 }
 
-# Build Docker image
-# Docker 이미지 빌드
-build_docker_image() {
-    log "INFO" "$MSG_BUILDING_IMAGE: $IMAGE_NAME"
-    
-    # Create and process temporary Dockerfile
-    # 임시 Dockerfile 생성 및 처리
-    local temp_dockerfile="$PROJECT_ROOT/.dockerfile.tmp"
-    create_temp_dockerfile "$temp_dockerfile"
-    
-    # Build image using temporary Dockerfile
-    # 임시 Dockerfile을 사용하여 이미지 빌드
-    build_image_from_temp "$temp_dockerfile"
-}
-
-
 # Main function for build module
 # build 모듈의 메인 함수
 build_main() {
+    local cache_option=""
+    
+    # Parse arguments for cache options
+    # 캐시 옵션 인자 파싱
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --no-cache)
+                cache_option="--no-cache"
+                shift
+                ;;
+            *)
+                log "WARNING" "알 수 없는 옵션: $1"
+                shift
+                ;;
+        esac
+    done
+    
     # Log start message
     log "INFO" "$MSG_BUILD_START"
     
@@ -113,7 +89,7 @@ build_main() {
     
     # Trap ctrl-c
     trap 'echo -e "\n${YELLOW}$MSG_PROCESS_CANCELLED_BY_USER${NC}"; exit 1' INT
-    build_docker_image
+    build_docker_image "$cache_option"
 }
 
 # Execute main function if script is run directly
