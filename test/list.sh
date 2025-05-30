@@ -9,15 +9,9 @@ TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$TEST_DIR/.." && pwd)"
 DOCKIT_BIN="$PROJECT_ROOT/bin/dockit.sh"
 
-# ANSI 색상 코드
-# ANSI color codes
-GREEN="\033[0;32m"
-RED="\033[0;31m"
-YELLOW="\033[0;33m"
-BLUE="\033[0;34m"
-PURPLE="\033[0;35m"
-GRAY="\033[1;30m"
-NC="\033[0m" # No Color
+# 색상 정의 로드
+# Load color definitions
+source "$PROJECT_ROOT/src/utils/colors.sh"
 
 # 테스트 결과 카운터
 # Test result counters

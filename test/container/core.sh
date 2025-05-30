@@ -4,14 +4,10 @@ RESET_FILE_PATH="$(pwd)/../../../bin/_reset.sh"
 
 # 컨테이너가 실행 중일 때 실행
 
-# 색상 정의
-GREEN="\033[0;32m"
-RED="\033[0;31m"
-YELLOW="\033[0;33m"
-BLUE="\033[0;34m"
-PURPLE="\033[0;35m"
-GRAY="\033[1;30m"
-NC="\033[0m" # No Color
+# 색상 정의 로드
+# Load color definitions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../src/utils/colors.sh"
 
 # 로그 함수
 log_info() {
