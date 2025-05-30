@@ -154,6 +154,110 @@ format_status_display() {
     printf "%s%*s" "$status_display" "$padding" ""
 }
 
+# Function to get project Docker information (image name, container name)
+# 프로젝트의 Docker 정보 가져오기 (이미지명, 컨테이너명)
+get_project_docker_info() {
+    local project_path="$1"
+    local -n image_ref=$2
+    local -n container_ref=$3
+    
+    local env_file="$project_path/.dockit_project/.env"
+    if [ ! -f "$env_file" ]; then
+        return 1
+    fi
+    
+    # .env 파일에서 IMAGE_NAME과 CONTAINER_NAME 추출
+    image_ref=$(grep "^IMAGE_NAME=" "$env_file" | cut -d'=' -f2 | sed 's/^"\|"$//g')
+    container_ref=$(grep "^CONTAINER_NAME=" "$env_file" | cut -d'=' -f2 | sed 's/^"\|"$//g')
+    
+    if [ -z "$image_ref" ] || [ -z "$container_ref" ]; then
+        return 1
+    fi
+    
+    return 0
+}
+
+# Function to get actual Docker state for a project
+# 프로젝트의 실제 Docker 상태 확인
+get_actual_docker_state() {
+    local image_name="$1"
+    local container_name="$2"
+    
+    # 이미지 존재 여부 확인
+    local image_exists=false
+    if docker image inspect "$image_name" >/dev/null 2>&1; then
+        image_exists=true
+    fi
+    
+    # 컨테이너 존재 여부 및 상태 확인
+    local container_exists=false
+    local container_running=false
+    
+    if docker container inspect "$container_name" >/dev/null 2>&1; then
+        container_exists=true
+        if [ "$(docker container inspect -f '{{.State.Running}}' "$container_name")" = "true" ]; then
+            container_running=true
+        fi
+    fi
+    
+    # 상태 결정 로직
+    if [ "$container_running" = true ]; then
+        echo "running"
+    elif [ "$container_exists" = true ]; then
+        echo "stopped"
+    elif [ "$image_exists" = true ]; then
+        echo "ready"
+    else
+        echo "none"
+    fi
+}
+
+# Function to sync registry state with actual Docker status
+# 레지스트리 상태를 실제 Docker 상태와 동기화
+sync_with_docker_status() {
+    # Docker 사용 가능 여부 확인
+    if ! command -v docker &> /dev/null; then
+        return 0
+    fi
+    
+    # 레지스트리 파일 확인
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        return 0
+    fi
+    
+    local registry_json=$(cat "$REGISTRY_FILE")
+    local updated=false
+    
+    # 각 프로젝트의 실제 Docker 상태 확인 및 업데이트
+    while IFS= read -r project_id; do
+        local path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
+        local current_state=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].state')
+        
+        # 프로젝트 경로가 유효하지 않으면 건너뛰기
+        if [ ! -d "$path" ] || [ ! -f "$path/.dockit_project/.env" ]; then
+            continue
+        fi
+        
+        # .env 파일에서 이미지명과 컨테이너명 로드
+        local image_name container_name
+        if ! get_project_docker_info "$path" image_name container_name; then
+            continue
+        fi
+        
+        # 실제 Docker 상태 확인
+        local actual_state
+        actual_state=$(get_actual_docker_state "$image_name" "$container_name")
+        
+        # 상태가 다르면 업데이트 (error 상태는 수동으로만 변경)
+        if [ "$current_state" != "$actual_state" ] && [ "$current_state" != "error" ]; then
+            update_project_status "$project_id" "$actual_state"
+            updated=true
+        fi
+    done < <(echo "$registry_json" | jq -r 'keys[]')
+    
+    return 0
+}
+
 # Main function for listing registered projects
 # 등록된 프로젝트 목록 표시를 위한 메인 함수
 list_main() {
@@ -171,6 +275,10 @@ list_main() {
     if [ ! -f "$REGISTRY_FILE" ]; then
         echo '{}' > "$REGISTRY_FILE"
     fi
+    
+    # 실시간 Docker 상태와 레지스트리 동기화
+    # Sync registry with real-time Docker status
+    sync_with_docker_status > /dev/null 2>&1
     
     local registry_json=$(cat "$REGISTRY_FILE")
     
