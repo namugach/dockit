@@ -41,23 +41,27 @@ To remove Dockit from your system:
 - Docker development environment installation and configuration
 - Container start/stop/remove management
 - Container access and status checking
+- **🔄 Real-time Docker status synchronization** - Automatic detection and reflection of external Docker changes
+- **♻️ Image reuse functionality** - Reuse images from other projects for maximum resource efficiency
+- **📊 Extended project state system** - Complete lifecycle management with none, ready, error states
 - Automatic application of current user settings (UID/GID) to container
 - **UID conflict detection and automatic user handling**
 - **Smart password assignment to actual container users**
 - Host-container volume mount support
 - **User-customizable Dockerfile support**
 - **Docker image caching control with --no-cache option**
+- **⚡ Parallel build processing** - Support for simultaneous multi-project builds
 - Modular design for easy extension
 - Clean project structure
-- Multi-language support (English, Korean)
+- Multi-language support (English, Korean) and complete message system
 
 ## Commands
 
 Dockit provides the following main commands:
 
-- `init`: Initialize and configure the development environment
+- `init`: Initialize Docker development environment (with image reuse option support)
 - `start`: Start containers with auto-creation option (options: number, "this", "all")
-- `build`: Build Docker image for development environment (option: --no-cache)
+- `build`: Build Docker development environment image (options: number, "this", "all", --no-cache)
 - `up`: Start containers in background (options: number, "this", "all")
 - `stop`: Stop containers (options: number, "this", "all")
 - `down`: Remove containers completely (options: number, "this", "all")
@@ -66,7 +70,7 @@ Dockit provides the following main commands:
 - `setup`: Run initialization, build, start, and connect in one go
 - `run`: Automatically run initialization, build and start
 - `join`: Automatically run initialization, build, start, and connect to container in one command
-- `list`: List all containers created with dockit
+- `list`: List all projects created with dockit (real-time Docker status synchronization)
 - `migrate`: Upgrade to a newer version
 - `help`: Display help information
 
