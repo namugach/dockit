@@ -94,7 +94,7 @@ display_current_settings() {
     echo -e "$MSG_PASSWORD: ${GREEN}${USER_PASSWORD:-$DEFAULT_PASSWORD}${NC}"
     echo -e "$MSG_WORKDIR: ${GREEN}${WORKDIR:-$DEFAULT_WORKDIR}${NC}"
     echo -e "$MSG_BASE_IMAGE: ${GREEN}${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}${NC}"
-    echo -e "$MSG_IMAGE_NAME: ${GREEN}${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}${NC}"
+    echo -e "$MSG_IMAGE_NAME: ${GREEN}${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}${NC}"
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}${CONTAINER_NAME}${NC}"
 }
 
@@ -104,6 +104,7 @@ display_selection_options() {
     echo -e "\n${BLUE}$MSG_SELECT_OPTION:${NC}"
     echo -e "${GREEN}y${NC} - $MSG_USE_DEFAULT"
     echo -e "${YELLOW}n${NC} - $MSG_MODIFY_VALUES"
+    echo -e "${CYAN}l${NC} - 이미지 재사용"
     echo -e "${RED}c${NC} - $MSG_CANCEL"
 }
 
@@ -116,7 +117,7 @@ set_default_values() {
     USER_PASSWORD=${USER_PASSWORD:-$DEFAULT_PASSWORD}
     WORKDIR=${WORKDIR:-$DEFAULT_WORKDIR}
     BASE_IMAGE=${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}
-    IMAGE_NAME=${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}
+    IMAGE_NAME=${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}
     CONTAINER_NAME=${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}
 }
 
@@ -141,11 +142,75 @@ get_custom_values() {
     read -p "$MSG_BASE_IMAGE [${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}]: " input
     BASE_IMAGE=${input:-${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}}
     
-    read -p "$MSG_INPUT_IMAGE_NAME [${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}]: " input
-    IMAGE_NAME=${input:-${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}}
+    read -p "$MSG_INPUT_IMAGE_NAME [${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}]: " input
+    IMAGE_NAME=${input:-${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}}
     
     read -p "$MSG_INPUT_CONTAINER_NAME [${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}]: " input
     CONTAINER_NAME=${input:-${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}}
+}
+
+# Get reuse image values from user input
+# 이미지 재사용을 위한 사용자 입력 받기
+get_reuse_image_values() {
+    echo -e "\n${CYAN}$MSG_IMAGE_REUSE_TITLE${NC}"
+    echo -e "${YELLOW}$MSG_IMAGE_REUSE_INPUT_PATH${NC}"
+    echo -e "${BLUE}$MSG_IMAGE_REUSE_PATH_EXAMPLE${NC}"
+    
+    read -p "$MSG_IMAGE_REUSE_PROJECT_PATH" project_path
+    
+    # 경로가 입력되지 않았으면 취소
+    if [ -z "$project_path" ]; then
+        echo -e "${RED}$MSG_IMAGE_REUSE_PATH_EMPTY${NC}"
+        cleanup_project_dir
+        exit 1
+    fi
+    
+    # 절대 경로인지 확인
+    if [[ ! "$project_path" =~ ^/.* ]]; then
+        echo -e "${RED}$MSG_IMAGE_REUSE_PATH_NOT_ABSOLUTE${NC}"
+        cleanup_project_dir
+        exit 1
+    fi
+    
+    # 해당 경로로 이미지 이름 생성
+    local reuse_image_name=$(generate_dockit_name "$project_path")
+    
+    # Docker 이미지가 존재하는지 확인
+    if ! docker image inspect "$reuse_image_name" &> /dev/null; then
+        echo -e "${RED}$(printf "$MSG_IMAGE_REUSE_IMAGE_NOT_FOUND" "$reuse_image_name")${NC}"
+        echo -e "${YELLOW}$MSG_IMAGE_REUSE_SELECT_OPTION${NC}"
+        echo -e "${GREEN}1${NC} - $MSG_IMAGE_REUSE_OPTION_RETRY"
+        echo -e "${GREEN}2${NC} - $MSG_IMAGE_REUSE_OPTION_DEFAULT"
+        echo -e "${RED}3${NC} - $MSG_IMAGE_REUSE_OPTION_CANCEL"
+        
+        read -p "$MSG_IMAGE_REUSE_SELECT_CHOICE" choice
+        case "$choice" in
+            1)
+                get_reuse_image_values  # 재귀 호출
+                return
+                ;;
+            2)
+                # 기본값 사용
+                set_default_values
+                return
+                ;;
+            3|*)
+                echo -e "${RED}$MSG_IMAGE_REUSE_CANCELLED${NC}"
+                cleanup_project_dir
+                exit 1
+                ;;
+        esac
+    fi
+    
+    echo -e "\n${GREEN}$(printf "$MSG_IMAGE_REUSE_SUCCESS" "$reuse_image_name")${NC}"
+    
+    # 기본값 설정 후 이미지 이름만 변경
+    set_default_values
+    IMAGE_NAME="$reuse_image_name"
+    
+    echo -e "\n${CYAN}$MSG_IMAGE_REUSE_COMPLETE${NC}"
+    echo -e "$MSG_IMAGE_REUSE_TARGET_IMAGE${GREEN}${IMAGE_NAME}${NC}"
+    echo -e "$MSG_IMAGE_REUSE_CURRENT_CONTAINER${GREEN}${CONTAINER_NAME}${NC}"
 }
 
 # Display final configuration settings
@@ -342,7 +407,7 @@ get_user_input() {
     display_current_settings
     display_selection_options
     
-    read -p "$MSG_SELECT_CHOICE [Y/n/c]: " choice
+    read -p "$MSG_SELECT_CHOICE [Y/n/l/c]: " choice
     choice=${choice:-y}
     
     case "$choice" in
@@ -353,6 +418,10 @@ get_user_input() {
         n|N)
             init_dockit_dir
             get_custom_values
+            ;;
+        l|L)
+            init_dockit_dir
+            get_reuse_image_values
             ;;
         c|C)
             log "INFO" "$MSG_INIT_CANCELLED"

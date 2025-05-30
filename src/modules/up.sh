@@ -55,7 +55,7 @@ ensure_container_name() {
         return 1
     fi
     
-    log "INFO" "$(printf "$MSG_UPDATING_CONTAINER_USER_INFO" "$CONTAINER_NAME")"
+    log "INFO" "$(printf "$MSG_CONTAINER_NAME_WITH_FORMAT" "$CONTAINER_NAME")"
     return 0
 }
 
@@ -121,7 +121,7 @@ save_user_info_to_config() {
     local gid="$4"
     
     # .env 파일 업데이트
-    log "INFO" "$MSG_UPDATING_CONFIG_FILE"
+    log "INFO" "$(printf "$MSG_UPDATING_CONTAINER_USER_INFO" "$CONTAINER_NAME")"
     
     # 설정 파일 존재 확인 및 업데이트 실행
     if [ -f "$config_file" ]; then
@@ -182,7 +182,7 @@ load_and_validate_config() {
             log "INFO" "$(printf "$MSG_LOADED_CONTAINER_NAME" "$CONTAINER_NAME")"
         fi
     else
-        log "INFO" "$(printf "$MSG_CONTAINER_NAME" "$CONTAINER_NAME")"
+        log "INFO" "$(printf "$MSG_CONTAINER_NAME_WITH_FORMAT" "$CONTAINER_NAME")"
     fi
     
     # Docker Compose 파일 확인

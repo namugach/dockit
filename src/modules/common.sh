@@ -133,8 +133,6 @@ fi
 # Default settings
 # 기본 설정값
 DEFAULT_BASE_IMAGE="ubuntu:24.04"
-DEFAULT_IMAGE_NAME="my-ubuntu"
-DEFAULT_CONTAINER_NAME="my-container"
 DEFAULT_USERNAME="$(whoami)"
 DEFAULT_UID="$(id -u)"
 DEFAULT_GID="$(id -g)"
@@ -148,22 +146,37 @@ DEFAULT_WORKDIR="work/project"
 # log 함수는 utils/log.sh에서 제공
 # log function is provided by utils/log.sh
 
-# Container name generation function
-# 컨테이너 이름 생성 함수
-generate_container_name() {
+# 공통 경로 변환 함수
+# Common path conversion function
+to_flat_path() {
     local path=$1
-    # Get full path and remove leading slash
-    local full_path=$(cd "$path" && pwd | sed 's|^/||' | tr '/' '-')
-    echo "dockit-${full_path}"
+    
+    # 경로가 존재하는지 확인
+    if [ -d "$path" ]; then
+        # 존재하는 경로는 절대 경로로 변환 후 처리
+        cd "$path" && pwd | sed 's|^/||' | tr '/' '-'
+    else
+        # 존재하지 않는 경로는 그대로 처리 (절대 경로 형태로 가정)
+        echo "$path" | sed 's|^/||' | tr '/' '-'
+    fi
 }
 
-# Test generate_container_name function
-# generate_container_name 함수 테스트
-test_generate_container_name() {
+# dockit 이름 생성 함수
+# dockit name generation function
+generate_dockit_name() {
+    local flat_path=$(to_flat_path "$1")
+    echo "dockit-${flat_path}"
+}
+
+
+
+# dockit 이름 생성 함수 테스트
+# Test generate_dockit_name function
+test_generate_dockit_name() {
     echo "$(get_message MSG_COMMON_TESTING_FUNCTION)"
     echo "$(get_message MSG_COMMON_CURRENT_DIR): $(pwd)"
-    echo "$(get_message MSG_COMMON_GENERATED_NAME): $(generate_container_name "$(pwd)")"
-    echo "$(get_message MSG_COMMON_TESTING_EXPLICIT): $(generate_container_name "/home/hgs/work/dockit/test/c")"
+    echo "$(get_message MSG_COMMON_GENERATED_NAME): $(generate_dockit_name "$(pwd)")"
+    echo "$(get_message MSG_COMMON_TESTING_EXPLICIT): $(generate_dockit_name "/home/hgs/work/dockit/test/c")"
 }
 
 
@@ -278,8 +291,8 @@ load_env() {
 
     # Set default values
     # 기본값 설정
-    export IMAGE_NAME="$DEFAULT_IMAGE_NAME"
-    export CONTAINER_NAME=$(generate_container_name "$(pwd)")
+    export IMAGE_NAME=$(generate_dockit_name "$(pwd)")
+    export CONTAINER_NAME=$(generate_dockit_name "$(pwd)")
     export USERNAME="$DEFAULT_USERNAME"
     export USER_UID="$DEFAULT_UID"
     export USER_GID="$DEFAULT_GID"
@@ -546,6 +559,6 @@ get_containers_by_project_order() {
 # Initialize with current command
 # 현재 명령어로 초기화
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    test_generate_container_name
+    test_generate_dockit_name
     exit 0
 fi 

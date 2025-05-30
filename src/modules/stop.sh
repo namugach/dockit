@@ -134,7 +134,7 @@ handle_numeric_arguments() {
 
         # 프로젝트 경로 가져오기
         local project_path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
-        local container_name=$(generate_container_name "$project_path")
+        local container_name=$(generate_dockit_name "$project_path")
         
         # 컨테이너 ID 찾기 (정확한 이름 매칭)
         local cid=$(docker ps -aq --filter "name=^${container_name}$" --filter "label=com.dockit=true" | head -1)
