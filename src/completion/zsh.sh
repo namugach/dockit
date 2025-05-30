@@ -76,6 +76,8 @@ _dockit() {
                 ;;
             build)
                 build_options=(
+                    "this:$(dockit_get_message MSG_BUILD_USAGE_THIS)"
+                    "all:$(dockit_get_message MSG_BUILD_USAGE_ALL)"
                     "--no-cache:$(dockit_get_message MSG_BUILD_OPTION_NO_CACHE)"
                 )
                 _describe 'build_option' build_options

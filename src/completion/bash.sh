@@ -104,7 +104,7 @@ _dockit_completion() {
     elif [ "$COMP_CWORD" -eq 2 ] && [ "$prev" = "build" ]; then
         # build 명령어의 두 번째 인자 자동완성
         # Second argument completion for build command
-        COMPREPLY=( $(compgen -W "--no-cache" -- ${cur}) )
+        COMPREPLY=( $(compgen -W "this all --no-cache" -- ${cur}) )
         return 0
     fi
 }
