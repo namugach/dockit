@@ -105,6 +105,15 @@ get_status_display() {
         "down")
             echo -e "${GRAY}down${NC}"
             ;;
+        "none")
+            echo -e "${BLUE}none${NC}"
+            ;;
+        "ready")
+            echo -e "${CYAN}ready${NC}"
+            ;;
+        "error")
+            echo -e "${RED}error${NC}"
+            ;;
         *)
             echo -e "${PURPLE}???${NC}"
             ;;
@@ -120,8 +129,11 @@ get_status_text_length() {
         "running"|"stopped")
             echo 7  # "running" or "stopped" length
             ;;
-        "down")
-            echo 4  # "down" length
+        "ready"|"error")
+            echo 5  # "ready" or "error" length
+            ;;
+        "down"|"none")
+            echo 4  # "down" or "none" length
             ;;
         *)
             echo 3  # "???" length

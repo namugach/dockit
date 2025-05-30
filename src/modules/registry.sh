@@ -359,7 +359,7 @@ init_registry() {
     
     # 레지스트리에 프로젝트 추가
     # Add project to registry
-    add_project_to_registry "$project_id" "$project_path" "$created_time"
+    add_project_to_registry "$project_id" "$project_path" "$created_time" "$PROJECT_STATE_NONE"
 }
 
 # 레지스트리 메인 함수

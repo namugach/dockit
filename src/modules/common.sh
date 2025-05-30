@@ -44,9 +44,12 @@ LOG_FILE="${DOCKIT_PROJECT_DIR}/dockit.log"
 
 
 # 프로젝트 상태 상수 정의
+PROJECT_STATE_NONE="none"
+PROJECT_STATE_READY="ready"
 PROJECT_STATE_DOWN="down"
 PROJECT_STATE_RUNNING="running"
 PROJECT_STATE_STOPPED="stopped"
+PROJECT_STATE_ERROR="error"
 
 # 유틸리티 모듈 로드
 # Load utility modules
