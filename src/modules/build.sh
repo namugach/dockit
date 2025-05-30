@@ -34,8 +34,8 @@ build_docker_image() {
     # Check if Dockerfile exists
     # Dockerfile 존재 확인
     if [ ! -f "$dockerfile" ]; then
-        log "ERROR" "Dockerfile not found: $dockerfile"
-        log "INFO" "Run 'dockit init' first to create Dockerfile"
+        log "ERROR" "$MSG_BUILD_DOCKERFILE_NOT_FOUND $dockerfile"
+        log "INFO" "$MSG_BUILD_RUN_INIT_FIRST"
         return 1
     fi
     
@@ -44,7 +44,7 @@ build_docker_image() {
     local build_cmd="docker build -t $IMAGE_NAME -f $dockerfile"
     if [ "$cache_option" = "--no-cache" ]; then
         build_cmd="$build_cmd --no-cache"
-        log "INFO" "캐시 없이 이미지를 빌드합니다..."
+        log "INFO" "$MSG_BUILD_NO_CACHE"
     fi
     build_cmd="$build_cmd ."
     
@@ -94,7 +94,7 @@ build_main() {
                 return 0
             else
                 # 잘못된 인자 처리
-                log "ERROR" "잘못된 인자입니다."
+                log "ERROR" "$MSG_BUILD_INVALID_ARGUMENT"
                 show_usage
             fi
             ;;
@@ -106,10 +106,10 @@ build_main() {
 # Show usage function
 # 사용법 표시 함수
 show_usage() {
-    log "INFO" "사용법:"
-    echo -e "  dockit build <no> - 특정 번호의 프로젝트 빌드"
-    echo -e "  dockit build this - 현재 프로젝트 빌드"
-    echo -e "  dockit build all - 모든 프로젝트 빌드"
+    log "INFO" "$MSG_BUILD_USAGE_TITLE"
+    echo -e "  $MSG_BUILD_USAGE_NUMBER"
+    echo -e "  $MSG_BUILD_USAGE_THIS"
+    echo -e "  $MSG_BUILD_USAGE_ALL"
     echo ""
 }
 
@@ -120,11 +120,11 @@ handle_this_argument() {
     
     # Check if .dockit_project directory exists
     if [[ ! -d .dockit_project ]]; then
-        log "WARNING" "현재 디렉토리는 dockit 프로젝트가 아닙니다."
+        log "WARNING" "$MSG_BUILD_NOT_DOCKIT_PROJECT"
         return 1
     fi
 
-    log "INFO" "현재 프로젝트 빌드를 시작합니다..."
+    log "INFO" "$MSG_BUILD_STARTING_CURRENT"
     
     # Check if project is initialized
     if [ ! -d "$DOCKIT_PROJECT_DIR" ]; then
@@ -138,10 +138,10 @@ handle_this_argument() {
     # Stop and remove existing container if running
     if [ -n "$CONTAINER_NAME" ] && docker container inspect "$CONTAINER_NAME" &>/dev/null; then
         if [ "$(docker container inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" = "true" ]; then
-            log "INFO" "실행 중인 컨테이너를 정지합니다: $CONTAINER_NAME"
+            log "INFO" "$MSG_BUILD_STOPPING_CONTAINER $CONTAINER_NAME"
             docker stop "$CONTAINER_NAME" >/dev/null 2>&1
         fi
-        log "INFO" "기존 컨테이너를 제거합니다: $CONTAINER_NAME"
+        log "INFO" "$MSG_BUILD_REMOVING_CONTAINER $CONTAINER_NAME"
         docker rm "$CONTAINER_NAME" >/dev/null 2>&1
     fi
     
@@ -151,7 +151,7 @@ handle_this_argument() {
         local project_id
         if project_id=$(get_current_project_id); then
             update_project_state "$project_id" "$PROJECT_STATE_READY"
-            log "INFO" "프로젝트 상태가 ready로 업데이트되었습니다"
+            log "INFO" "$MSG_BUILD_STATE_UPDATED_READY"
         fi
         return 0
     else
@@ -159,7 +159,7 @@ handle_this_argument() {
         local project_id
         if project_id=$(get_current_project_id); then
             update_project_state "$project_id" "$PROJECT_STATE_ERROR"
-            log "ERROR" "프로젝트 상태가 error로 업데이트되었습니다"
+            log "ERROR" "$MSG_BUILD_STATE_UPDATED_ERROR"
         fi
         return 1
     fi
@@ -231,7 +231,7 @@ handle_numeric_arguments() {
                 if [[ "$1" =~ ^[0-9]+$ ]]; then
                     indices+=("$1")
                 else
-                    log "ERROR" "잘못된 인자: $1"
+                    log "ERROR" "$MSG_BUILD_INVALID_ARG_VALUE $1"
                     return 1
                 fi
                 shift
@@ -241,14 +241,14 @@ handle_numeric_arguments() {
     
     # Check if any indices provided
     if [ ${#indices[@]} -eq 0 ]; then
-        log "ERROR" "빌드할 프로젝트 번호를 지정해주세요"
+        log "ERROR" "$MSG_BUILD_SPECIFY_PROJECT_NUMBER"
         return 1
     fi
 
     # Get registry
     local registry_file="$HOME/.dockit/registry.json"
     if [ ! -f "$registry_file" ]; then
-        log "ERROR" "Registry file not found"
+        log "ERROR" "$MSG_BUILD_REGISTRY_NOT_FOUND"
         return 1
     fi
     
@@ -266,7 +266,7 @@ handle_numeric_arguments() {
         local project_id=${project_ids[$array_idx]:-}
 
         if [[ -z "$project_id" ]]; then
-            log "ERROR" "잘못된 프로젝트 번호: $idx"
+            log "ERROR" "$MSG_BUILD_INVALID_PROJECT_NUMBER $idx"
             continue
         fi
 
@@ -276,18 +276,18 @@ handle_numeric_arguments() {
         
         # Validate project path
         if [ ! -d "$project_path" ] || [ ! -f "$project_path/.dockit_project/Dockerfile" ]; then
-            log "ERROR" "프로젝트 $idx ($project_name)를 찾을 수 없거나 유효하지 않습니다"
+            log "ERROR" "$(printf "$MSG_BUILD_PROJECT_NOT_FOUND" "$idx" "$project_name")"
             continue
         fi
         
-        local spinner="프로젝트 $idx ($project_name) 빌드 중"
+        local spinner="$(printf "%s %s (%s) %s" "project" "$idx" "$project_name" "$MSG_BUILD_SPINNER_BUILDING")"
         
         # Add build task to background execution
         add_task "$spinner" \
             "project_build_action '$project_path' '$project_id' '$cache_option' >/dev/null 2>&1"
     done
 
-    async_tasks "빌드 작업 완료!"
+    async_tasks "$MSG_BUILD_TASK_COMPLETE"
 }
 
 # Handle "all" argument (build all projects)
@@ -308,12 +308,12 @@ handle_all_argument() {
         esac
     done
     
-    log "INFO" "모든 프로젝트 빌드를 시작합니다..."
+    log "INFO" "$MSG_BUILD_STARTING_ALL"
     
     # Get registry
     local registry_file="$HOME/.dockit/registry.json"
     if [ ! -f "$registry_file" ]; then
-        log "ERROR" "Registry file not found"
+        log "ERROR" "$MSG_BUILD_REGISTRY_NOT_FOUND"
         return 1
     fi
     
@@ -326,7 +326,7 @@ handle_all_argument() {
     done < <(echo "$registry_json" | jq -r 'keys[]')
 
     if [[ ${#project_ids[@]} -eq 0 ]]; then
-        log "INFO" "빌드할 프로젝트가 없습니다"
+        log "INFO" "$MSG_BUILD_NO_PROJECTS"
         return 0
     fi
 
@@ -338,18 +338,18 @@ handle_all_argument() {
         
         # Validate project path
         if [ ! -d "$project_path" ] || [ ! -f "$project_path/.dockit_project/Dockerfile" ]; then
-            log "WARNING" "프로젝트 $project_name을 찾을 수 없거나 유효하지 않습니다. 건너뜁니다..."
+            log "WARNING" "$(printf "$MSG_BUILD_PROJECT_NOT_VALID" "$project_name")"
             continue
         fi
         
-        local spinner="프로젝트 $project_name 빌드 중"
+        local spinner="$(printf "%s %s %s" "project" "$project_name" "$MSG_BUILD_SPINNER_BUILDING")"
         
         # Add build task to background execution
         add_task "$spinner" \
             "project_build_action '$project_path' '$project_id' '$cache_option' >/dev/null 2>&1"
     done
 
-    async_tasks "빌드 작업 완료!"
+    async_tasks "$MSG_BUILD_TASK_COMPLETE"
 }
 
 # Execute main function if script is run directly
