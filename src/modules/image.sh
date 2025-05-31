@@ -16,13 +16,14 @@ show_usage() {
     echo "Commands:"
     echo "  list                - List all dockit images"
     echo "  remove <image>      - Remove specific image by name or number"
-    echo "  clean               - Remove unused images (coming soon)"
-    echo "  prune               - Remove dangling images (coming soon)"
+    echo "  prune               - Remove unused dockit images (not used by containers)"
+    echo "  clean               - Remove all dockit images (coming soon)"
     echo ""
     echo "Examples:"
     echo "  dockit image list"
     echo "  dockit image remove 1                        # Remove by number"
     echo "  dockit image remove dockit-home-user-project # Remove by name"
+    echo "  dockit image prune                           # Remove unused images"
     echo ""
 }
 
@@ -244,8 +245,185 @@ clean_images() {
 # Prune dangling images (placeholder)
 # dangling 이미지 정리 (플레이스홀더)
 prune_images() {
-    log "INFO" "Image pruning feature coming soon..."
-    # TODO: Implement prune logic
+    log "INFO" "Finding unused dockit images..."
+    
+    # Check if Docker is available
+    # Docker 사용 가능 여부 확인
+    if ! command -v docker &> /dev/null; then
+        log "ERROR" "Docker is not installed or not in PATH"
+        return 1
+    fi
+    
+    # Get all dockit images
+    # 모든 dockit 이미지 가져오기
+    local all_dockit_images
+    all_dockit_images=$(docker image ls --filter "reference=dockit-*" --format "{{.Repository}}")
+    
+    if [ -z "$all_dockit_images" ]; then
+        echo "No dockit images found."
+        return 0
+    fi
+    
+    # Find unused images (not used by any containers)
+    # 사용하지 않는 이미지 찾기 (어떤 컨테이너에서도 사용하지 않는 것)
+    local unused_images=()
+    
+    while IFS= read -r image_name; do
+        [ -z "$image_name" ] && continue
+        
+        # Check if image is used by any containers (running or stopped)
+        # 이미지가 컨테이너에서 사용되는지 확인 (실행 중이거나 중지된 것)
+        local containers_using_image
+        containers_using_image=$(docker ps -a --filter "ancestor=$image_name" --quiet)
+        
+        # If no containers use this image, it's unused
+        # 이 이미지를 사용하는 컨테이너가 없으면 사용하지 않는 것
+        if [ -z "$containers_using_image" ]; then
+            unused_images+=("$image_name")
+        fi
+    done <<< "$all_dockit_images"
+    
+    # Check if there are any unused images
+    # 사용하지 않는 이미지가 있는지 확인
+    if [ ${#unused_images[@]} -eq 0 ]; then
+        echo "No unused dockit images found."
+        echo "All dockit images are currently being used by containers."
+        return 0
+    fi
+    
+    # Display unused images
+    # 사용하지 않는 이미지들 표시
+    echo "Found ${#unused_images[@]} unused dockit image(s):"
+    echo ""
+    
+    # Use same format as list command
+    # list 명령어와 같은 포맷 사용
+    local format="%-4s  %-12s  %-13s  %-6s  %s\n"
+    
+    printf "$format" \
+        "NO" \
+        "IMAGE ID" \
+        "CREATED" \
+        "SIZE" \
+        "NAME"
+    
+    local index=1
+    for image_name in "${unused_images[@]}"; do
+        # Get image details
+        # 이미지 상세 정보 가져오기
+        local image_info
+        image_info=$(docker image ls --filter "reference=$image_name" --format "{{.ID}}\t{{.CreatedSince}}\t{{.Size}}")
+        
+        if [ -n "$image_info" ]; then
+            IFS=$'\t' read -r image_id created_since size <<< "$image_info"
+            
+            # Truncate image ID to 12 characters
+            # 이미지 ID를 12자로 자르기
+            local image_id_short="${image_id:0:12}"
+            
+            printf "$format" \
+                "$index" \
+                "$image_id_short" \
+                "$created_since" \
+                "$size" \
+                "$image_name"
+        fi
+        
+        ((index++))
+    done
+    
+    echo ""
+    
+    # Calculate total size for display
+    # 총 크기 계산해서 표시
+    local total_size_info
+    total_size_info=$(docker image ls --filter "reference=dockit-*" --format "{{.Repository}} {{.Size}}" | \
+        awk -v images="$(printf '%s\n' "${unused_images[@]}")" '
+        BEGIN { total = 0; unit = "B" }
+        {
+            # Check if current image is in unused list
+            for (i = 1; i <= split(images, arr, "\n"); i++) {
+                if ($1 == arr[i]) {
+                    # Parse size (e.g., "123MB", "1.2GB")
+                    size = $2
+                    if (match(size, /([0-9.]+)([A-Z]+)/, m)) {
+                        value = m[1]
+                        unit_type = m[2]
+                        
+                        # Convert to MB for calculation
+                        if (unit_type == "GB") value *= 1024
+                        else if (unit_type == "KB") value /= 1024
+                        else if (unit_type == "B") value /= (1024*1024)
+                        
+                        total += value
+                    }
+                    break
+                }
+            }
+        }
+        END { 
+            if (total >= 1024) {
+                printf "%.1fGB", total/1024
+            } else {
+                printf "%.0fMB", total
+            }
+        }')
+    
+    echo "Total space to be freed: $total_size_info"
+    echo ""
+    
+    # Confirmation prompt
+    # 확인 프롬프트
+    echo -n "Do you want to remove these unused images? [y/N]: "
+    read -r confirm
+    
+    # Convert to lowercase for comparison
+    # 소문자로 변환해서 비교
+    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+    
+    # Check confirmation
+    # 확인 검사
+    if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
+        log "INFO" "Image pruning cancelled"
+        return 0
+    fi
+    
+    # Remove unused images
+    # 사용하지 않는 이미지들 제거
+    echo ""
+    log "INFO" "Removing unused dockit images..."
+    
+    local removed_count=0
+    local failed_count=0
+    
+    for image_name in "${unused_images[@]}"; do
+        echo -n "Removing $image_name... "
+        
+        if docker rmi "$image_name" &>/dev/null; then
+            echo "✓"
+            ((removed_count++))
+        else
+            echo "✗"
+            ((failed_count++))
+        fi
+    done
+    
+    echo ""
+    
+    # Show results
+    # 결과 표시
+    if [ $removed_count -gt 0 ]; then
+        log "SUCCESS" "Successfully removed $removed_count unused image(s)"
+    fi
+    
+    if [ $failed_count -gt 0 ]; then
+        log "WARNING" "Failed to remove $failed_count image(s)"
+        echo "Some images might have dependencies or be referenced by other images"
+    fi
+    
+    if [ $removed_count -eq 0 ] && [ $failed_count -eq 0 ]; then
+        log "INFO" "No images were removed"
+    fi
 }
 
 # Main function for image module
