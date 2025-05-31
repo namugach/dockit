@@ -15,13 +15,14 @@ show_usage() {
     echo ""
     echo "Commands:"
     echo "  list                - List all dockit images"
-    echo "  remove <image>      - Remove specific image (coming soon)"
+    echo "  remove <image>      - Remove specific image by name or number"
     echo "  clean               - Remove unused images (coming soon)"
     echo "  prune               - Remove dangling images (coming soon)"
     echo ""
     echo "Examples:"
     echo "  dockit image list"
-    echo "  dockit image remove dockit-home-user-project"
+    echo "  dockit image remove 1                        # Remove by number"
+    echo "  dockit image remove dockit-home-user-project # Remove by name"
     echo ""
 }
 
@@ -101,13 +102,136 @@ list_images() {
     echo "Use 'dockit image remove <name>' to remove specific images"
 }
 
+# Get image name by number from list
+# 번호로 이미지명 가져오기
+get_image_name_by_number() {
+    local number="$1"
+    local images_output
+    images_output=$(get_dockit_images)
+    
+    if [ -z "$images_output" ]; then
+        return 1
+    fi
+    
+    local index=1
+    while IFS=$'\t' read -r repository image_id created_since size; do
+        if [ -z "$repository" ]; then
+            continue
+        fi
+        
+        if [ "$index" -eq "$number" ]; then
+            echo "$repository"
+            return 0
+        fi
+        
+        ((index++))
+    done <<< "$images_output"
+    
+    return 1
+}
+
 # Remove specific image (placeholder)
 # 특정 이미지 제거 (플레이스홀더)
 remove_image() {
-    local image_name="$1"
-    log "INFO" "Image removal feature coming soon..."
-    echo "Will remove image: $image_name"
-    # TODO: Implement image removal logic
+    local input="$1"
+    local image_name=""
+    
+    # Validate input
+    # 입력값 검증
+    if [ -z "$input" ]; then
+        log "ERROR" "Image name or number is required"
+        echo "Usage: dockit image remove <image_name_or_number>"
+        return 1
+    fi
+    
+    # Check if input is a number
+    # 입력값이 숫자인지 확인
+    if [[ "$input" =~ ^[0-9]+$ ]]; then
+        # Handle numeric input
+        # 숫자 입력 처리
+        image_name=$(get_image_name_by_number "$input")
+        
+        if [ -z "$image_name" ]; then
+            log "ERROR" "Invalid image number: $input"
+            echo "Use 'dockit image list' to see available images"
+            return 1
+        fi
+        
+        log "INFO" "Selected image #$input: $image_name"
+    else
+        # Handle string input
+        # 문자열 입력 처리
+        image_name="$input"
+        
+        # Check if it's a dockit image
+        # dockit 이미지인지 확인
+        if [[ ! "$image_name" =~ ^dockit- ]]; then
+            log "ERROR" "Only dockit images (starting with 'dockit-') can be removed"
+            echo "Image name must start with 'dockit-'"
+            return 1
+        fi
+    fi
+    
+    # Check if image exists
+    # 이미지 존재 여부 확인
+    if ! docker image inspect "$image_name" &> /dev/null; then
+        log "ERROR" "Image '$image_name' not found"
+        echo "Use 'dockit image list' to see available images"
+        return 1
+    fi
+    
+    # Check if image is being used by any containers
+    # 이미지를 사용하는 컨테이너가 있는지 확인
+    local containers_using_image
+    containers_using_image=$(docker ps -a --filter "ancestor=$image_name" --format "{{.Names}}" | tr '\n' ' ')
+    
+    if [ -n "$containers_using_image" ]; then
+        log "WARNING" "The following containers are using this image: $containers_using_image"
+        echo "Stop and remove these containers first, or use --force to remove anyway"
+        echo ""
+        echo "To stop containers: dockit stop <container_name>"
+        echo "To remove containers: dockit down <container_name>"
+        return 1
+    fi
+    
+    # Show image information
+    # 이미지 정보 표시
+    echo "Image to be removed:"
+    docker image ls --filter "reference=$image_name" --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.CreatedSince}}\t{{.Size}}"
+    echo ""
+    
+    # Confirmation prompt
+    # 확인 프롬프트
+    echo -n "Do you want to remove this image? [y/N]: "
+    read -r confirm
+    
+    # Convert to lowercase for comparison
+    # 소문자로 변환해서 비교
+    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+    
+    # Check confirmation
+    # 확인 검사
+    if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
+        log "INFO" "Image removal cancelled"
+        return 0
+    fi
+    
+    # Remove the image
+    # 이미지 제거
+    log "INFO" "Removing image '$image_name'..."
+    
+    if docker rmi "$image_name" 2>/dev/null; then
+        log "SUCCESS" "Image '$image_name' has been successfully removed"
+    else
+        log "ERROR" "Failed to remove image '$image_name'"
+        echo "This might happen if:"
+        echo "  - Image is still being used by containers"
+        echo "  - Image has dependent child images"
+        echo "  - Insufficient permissions"
+        echo ""
+        echo "Use 'docker rmi --force $image_name' to force removal (not recommended)"
+        return 1
+    fi
 }
 
 # Clean unused images (placeholder)
@@ -145,7 +269,7 @@ image_main() {
                 remove_image "$2"
             else
                 log "ERROR" "Image name required for remove command"
-                echo "Usage: dockit image remove <image_name>"
+                echo "Usage: dockit image remove <image_name_or_number>"
                 return 1
             fi
             ;;
