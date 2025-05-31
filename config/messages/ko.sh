@@ -395,8 +395,7 @@ MSG_COMPLETION_RUN="자동 초기화, 빌드, 시작 실행"
 MSG_COMPLETION_JOIN="자동 실행 및 접속을 한번에 실행"
 MSG_COMPLETION_PS="모든 dockit 컨테이너 목록 표시"
 MSG_COMPLETION_LIST="등록된 모든 dockit 프로젝트 목록 표시"
-MSG_LIST_USAGE="등록된 dockit 프로젝트 목록 표시"
-MSG_LIST_USAGE_DETAIL="상태 및 마지막 확인 시간과 함께 모든 등록된 dockit 프로젝트를 보여줍니다"
+MSG_COMPLETION_IMAGE="dockit으로 생성된 Docker 이미지 관리"
 
 # Build 명령어 옵션 메시지  
 MSG_BUILD_OPTION_NO_CACHE="Docker 캐시를 사용하지 않고 강제로 리빌드"
@@ -688,3 +687,9 @@ MSG_BUILD_TASK_COMPLETE="빌드 작업 완료!"
 MSG_BUILD_DOCKERFILE_NOT_FOUND="Dockerfile을 찾을 수 없습니다:"
 MSG_BUILD_RUN_INIT_FIRST="Dockerfile을 생성하려면 'dockit init'을 먼저 실행하세요"
 MSG_BUILD_REGISTRY_NOT_FOUND="레지스트리 파일을 찾을 수 없습니다"
+
+# Image 명령어 자동완성 설명
+MSG_IMAGE_COMPLETION_LIST="모든 dockit 이미지 목록 표시"
+MSG_IMAGE_COMPLETION_REMOVE="특정 이미지를 이름 또는 번호로 제거"
+MSG_IMAGE_COMPLETION_PRUNE="사용하지 않는 dockit 이미지 제거 (컨테이너에서 사용하지 않는 것)"
+MSG_IMAGE_COMPLETION_CLEAN="모든 dockit 이미지 제거 (컨테이너 포함)"

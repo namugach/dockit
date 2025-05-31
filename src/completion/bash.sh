@@ -32,7 +32,7 @@ _dockit_completion() {
     
     # 사용 가능한 명령어 목록
     # List of available commands
-    local commands="init start build up stop down connect status help version migrate setup run join ps list"
+    local commands="init start build up stop down connect status help version migrate setup run join ps list image"
     
     # 첫 번째 인자만 자동완성 처리
     # Only handle completion for the first argument
@@ -68,6 +68,7 @@ _dockit_completion() {
                     join) desc="$(dockit_get_message MSG_COMPLETION_JOIN)" ;;
                     ps) desc="$(dockit_get_message MSG_COMPLETION_PS)" ;;
                     list) desc="$(dockit_get_message MSG_COMPLETION_LIST)" ;;
+                    image) desc="$(dockit_get_message MSG_COMPLETION_IMAGE)" ;;
                 esac
                 
                 if [ -n "$desc" ]; then
@@ -105,6 +106,11 @@ _dockit_completion() {
         # build 명령어의 두 번째 인자 자동완성
         # Second argument completion for build command
         COMPREPLY=( $(compgen -W "this all --no-cache" -- ${cur}) )
+        return 0
+    elif [ "$COMP_CWORD" -eq 2 ] && [ "$prev" = "image" ]; then
+        # image 명령어의 두 번째 인자 자동완성
+        # Second argument completion for image command
+        COMPREPLY=( $(compgen -W "list remove prune clean" -- ${cur}) )
         return 0
     fi
 }

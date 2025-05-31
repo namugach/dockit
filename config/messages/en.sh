@@ -396,6 +396,7 @@ MSG_COMPLETION_RUN="Run automated initialization, build and up"
 MSG_COMPLETION_JOIN="Run automated execution and connection in one go"
 MSG_COMPLETION_PS="List all dockit containers"
 MSG_COMPLETION_LIST="List all registered dockit projects"
+MSG_COMPLETION_IMAGE="Manage Docker images created by dockit"
 
 # Build command option messages  
 MSG_BUILD_OPTION_NO_CACHE="Force rebuild without using Docker cache"
@@ -697,4 +698,10 @@ MSG_BUILD_TASK_COMPLETE="Build task completed!"
 MSG_BUILD_DOCKERFILE_NOT_FOUND="Dockerfile not found:"
 MSG_BUILD_RUN_INIT_FIRST="Run 'dockit init' first to create Dockerfile"
 MSG_BUILD_REGISTRY_NOT_FOUND="Registry file not found"
+
+# Image command completion descriptions
+MSG_IMAGE_COMPLETION_LIST="List all dockit images"
+MSG_IMAGE_COMPLETION_REMOVE="Remove specific image by name or number"
+MSG_IMAGE_COMPLETION_PRUNE="Remove unused dockit images (not used by containers)"
+MSG_IMAGE_COMPLETION_CLEAN="Remove ALL dockit images (including containers)"
 

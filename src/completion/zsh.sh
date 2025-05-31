@@ -83,6 +83,16 @@ _dockit() {
                 _describe 'build_option' build_options
                 return 0
                 ;;
+            image)
+                image_options=(
+                    "list:$(dockit_get_message MSG_IMAGE_COMPLETION_LIST)"
+                    "remove:$(dockit_get_message MSG_IMAGE_COMPLETION_REMOVE)"
+                    "prune:$(dockit_get_message MSG_IMAGE_COMPLETION_PRUNE)"
+                    "clean:$(dockit_get_message MSG_IMAGE_COMPLETION_CLEAN)"
+                )
+                _describe 'image_option' image_options
+                return 0
+                ;;
         esac
         return 0
     fi
@@ -112,6 +122,7 @@ _dockit() {
         "join:$(dockit_get_message MSG_COMPLETION_JOIN)"
         "ps:$(dockit_get_message MSG_COMPLETION_PS)"
         "list:$(dockit_get_message MSG_COMPLETION_LIST)"
+        "image:$(dockit_get_message MSG_COMPLETION_IMAGE)"
     )
     
     # 자동완성 설명 표시
