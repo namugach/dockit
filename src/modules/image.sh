@@ -11,20 +11,20 @@ source "$SCRIPT_DIR/common.sh"
 # Show usage function
 # 사용법 표시 함수
 show_usage() {
-    echo "Usage: dockit image <command> [options]"
+    echo "$MSG_IMAGE_MODULE_USAGE_TITLE"
     echo ""
-    echo "Commands:"
-    echo "  list                - List all dockit images"
-    echo "  remove <image>      - Remove specific image by name or number"
-    echo "  prune               - Remove unused dockit images (not used by containers)"
-    echo "  clean               - Remove ALL dockit images (including containers)"
+    echo "$MSG_IMAGE_MODULE_COMMANDS"
+    echo "  $MSG_IMAGE_MODULE_LIST"
+    echo "  $MSG_IMAGE_MODULE_REMOVE"
+    echo "  $MSG_IMAGE_MODULE_PRUNE"
+    echo "  $MSG_IMAGE_MODULE_CLEAN"
     echo ""
-    echo "Examples:"
-    echo "  dockit image list"
-    echo "  dockit image remove 1                        # Remove by number"
-    echo "  dockit image remove dockit-home-user-project # Remove by name"
-    echo "  dockit image prune                           # Remove unused images"
-    echo "  dockit image clean                           # Remove ALL images (DANGER!)"
+    echo "$MSG_IMAGE_MODULE_EXAMPLES"
+    echo "  $MSG_IMAGE_MODULE_EXAMPLE_LIST"
+    echo "  $MSG_IMAGE_MODULE_EXAMPLE_REMOVE_NUM"
+    echo "  $MSG_IMAGE_MODULE_EXAMPLE_REMOVE_NAME"
+    echo "  $MSG_IMAGE_MODULE_EXAMPLE_PRUNE"
+    echo "  $MSG_IMAGE_MODULE_EXAMPLE_CLEAN"
     echo ""
 }
 
@@ -40,12 +40,12 @@ get_dockit_images() {
 # List dockit images
 # dockit 이미지 목록 표시
 list_images() {
-    log "INFO" "Listing dockit images..."
+    log "INFO" "$MSG_IMAGE_LIST_START"
     
     # Check if Docker is available
     # Docker 사용 가능 여부 확인
     if ! command -v docker &> /dev/null; then
-        log "ERROR" "Docker is not installed or not in PATH"
+        log "ERROR" "$MSG_IMAGE_LIST_DOCKER_NOT_FOUND"
         return 1
     fi
     
@@ -55,11 +55,11 @@ list_images() {
     images_output=$(get_dockit_images)
     
     if [ -z "$images_output" ]; then
-        echo "No dockit images found."
+        echo "$MSG_IMAGE_LIST_NO_IMAGES"
         echo ""
-        echo "To create images, run:"
-        echo "  dockit init      # Create new project"
-        echo "  dockit build     # Build project image"
+        echo "$MSG_IMAGE_LIST_CREATE_HINT"
+        echo "  $MSG_IMAGE_LIST_CREATE_INIT"
+        echo "  $MSG_IMAGE_LIST_CREATE_BUILD"
         return 0
     fi
     
@@ -70,11 +70,11 @@ list_images() {
     # Display header
     # 헤더 표시
     printf "$format" \
-        "NO" \
-        "IMAGE ID" \
-        "CREATED" \
-        "SIZE" \
-        "NAME"
+        "$MSG_IMAGE_LIST_HEADER_NO" \
+        "$MSG_IMAGE_LIST_HEADER_ID" \
+        "$MSG_IMAGE_LIST_HEADER_CREATED" \
+        "$MSG_IMAGE_LIST_HEADER_SIZE" \
+        "$MSG_IMAGE_LIST_HEADER_NAME"
     
     # Display each image
     # 각 이미지 표시
@@ -101,7 +101,7 @@ list_images() {
     done <<< "$images_output"
     
     echo ""
-    echo "Use 'dockit image remove <name>' to remove specific images"
+    echo "$MSG_IMAGE_LIST_USAGE_HINT"
 }
 
 # Get image name by number from list
@@ -141,8 +141,8 @@ remove_image() {
     # Validate input
     # 입력값 검증
     if [ -z "$input" ]; then
-        log "ERROR" "Image name or number is required"
-        echo "Usage: dockit image remove <image_name_or_number>"
+        log "ERROR" "$MSG_IMAGE_REMOVE_INPUT_REQUIRED"
+        echo "$MSG_IMAGE_REMOVE_USAGE"
         return 1
     fi
     
@@ -154,12 +154,12 @@ remove_image() {
         image_name=$(get_image_name_by_number "$input")
         
         if [ -z "$image_name" ]; then
-            log "ERROR" "Invalid image number: $input"
-            echo "Use 'dockit image list' to see available images"
+            log "ERROR" "$(printf "$MSG_IMAGE_REMOVE_INVALID_NUMBER" "$input")"
+            echo "$MSG_IMAGE_REMOVE_USE_LIST"
             return 1
         fi
         
-        log "INFO" "Selected image #$input: $image_name"
+        log "INFO" "$(printf "$MSG_IMAGE_REMOVE_SELECTED" "$input" "$image_name")"
     else
         # Handle string input
         # 문자열 입력 처리
@@ -168,8 +168,8 @@ remove_image() {
         # Check if it's a dockit image
         # dockit 이미지인지 확인
         if [[ ! "$image_name" =~ ^dockit- ]]; then
-            log "ERROR" "Only dockit images (starting with 'dockit-') can be removed"
-            echo "Image name must start with 'dockit-'"
+            log "ERROR" "$MSG_IMAGE_REMOVE_ONLY_DOCKIT"
+            echo "$MSG_IMAGE_REMOVE_NAME_PREFIX"
             return 1
         fi
     fi
@@ -177,8 +177,8 @@ remove_image() {
     # Check if image exists
     # 이미지 존재 여부 확인
     if ! docker image inspect "$image_name" &> /dev/null; then
-        log "ERROR" "Image '$image_name' not found"
-        echo "Use 'dockit image list' to see available images"
+        log "ERROR" "$(printf "$MSG_IMAGE_REMOVE_NOT_FOUND" "$image_name")"
+        echo "$MSG_IMAGE_REMOVE_USE_LIST"
         return 1
     fi
     
@@ -188,23 +188,23 @@ remove_image() {
     containers_using_image=$(docker ps -a --filter "ancestor=$image_name" --format "{{.Names}}" | tr '\n' ' ')
     
     if [ -n "$containers_using_image" ]; then
-        log "WARNING" "The following containers are using this image: $containers_using_image"
-        echo "Stop and remove these containers first, or use --force to remove anyway"
+        log "WARNING" "$(printf "$MSG_IMAGE_REMOVE_IN_USE" "$containers_using_image")"
+        echo "$MSG_IMAGE_REMOVE_STOP_FIRST"
         echo ""
-        echo "To stop containers: dockit stop <container_name>"
-        echo "To remove containers: dockit down <container_name>"
+        echo "$MSG_IMAGE_REMOVE_STOP_COMMAND"
+        echo "$MSG_IMAGE_REMOVE_DOWN_COMMAND"
         return 1
     fi
     
     # Show image information
     # 이미지 정보 표시
-    echo "Image to be removed:"
+    echo "$MSG_IMAGE_REMOVE_TO_BE_REMOVED"
     docker image ls --filter "reference=$image_name" --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.CreatedSince}}\t{{.Size}}"
     echo ""
     
     # Confirmation prompt
     # 확인 프롬프트
-    echo -n "Do you want to remove this image? [y/N]: "
+    echo -n "$MSG_IMAGE_REMOVE_CONFIRM"
     read -r confirm
     
     # Convert to lowercase for comparison
@@ -214,24 +214,24 @@ remove_image() {
     # Check confirmation
     # 확인 검사
     if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
-        log "INFO" "Image removal cancelled"
+        log "INFO" "$MSG_IMAGE_REMOVE_CANCELLED"
         return 0
     fi
     
     # Remove the image
     # 이미지 제거
-    log "INFO" "Removing image '$image_name'..."
+    log "INFO" "$(printf "$MSG_IMAGE_REMOVE_REMOVING" "$image_name")"
     
     if docker rmi "$image_name" 2>/dev/null; then
-        log "SUCCESS" "Image '$image_name' has been successfully removed"
+        log "SUCCESS" "$(printf "$MSG_IMAGE_REMOVE_SUCCESS" "$image_name")"
     else
-        log "ERROR" "Failed to remove image '$image_name'"
-        echo "This might happen if:"
-        echo "  - Image is still being used by containers"
-        echo "  - Image has dependent child images"
-        echo "  - Insufficient permissions"
+        log "ERROR" "$(printf "$MSG_IMAGE_REMOVE_FAILED" "$image_name")"
+        echo "$MSG_IMAGE_REMOVE_FAILURE_REASONS"
+        echo "  $MSG_IMAGE_REMOVE_REASON_IN_USE"
+        echo "  $MSG_IMAGE_REMOVE_REASON_CHILDREN"
+        echo "  $MSG_IMAGE_REMOVE_REASON_PERMISSION"
         echo ""
-        echo "Use 'docker rmi --force $image_name' to force removal (not recommended)"
+        echo "$(printf "$MSG_IMAGE_REMOVE_FORCE_HINT" "$image_name")"
         return 1
     fi
 }
@@ -239,12 +239,12 @@ remove_image() {
 # Clean unused images (placeholder)
 # 사용하지 않는 이미지 정리 (플레이스홀더)
 clean_images() {
-    log "INFO" "Preparing to clean ALL dockit images..."
+    log "INFO" "$MSG_IMAGE_CLEAN_PREPARING"
     
     # Check if Docker is available
     # Docker 사용 가능 여부 확인
     if ! command -v docker &> /dev/null; then
-        log "ERROR" "Docker is not installed or not in PATH"
+        log "ERROR" "$MSG_IMAGE_CLEAN_DOCKER_NOT_FOUND"
         return 1
     fi
     
@@ -254,7 +254,7 @@ clean_images() {
     all_dockit_images=$(docker image ls --filter "reference=dockit-*" --format "{{.Repository}}")
     
     if [ -z "$all_dockit_images" ]; then
-        echo "No dockit images found."
+        echo "$MSG_IMAGE_CLEAN_NO_IMAGES"
         return 0
     fi
     
@@ -265,9 +265,9 @@ clean_images() {
     local images_unused=0
     local containers_info=""
     
-    echo "⚠️  WARNING: This will remove ALL dockit images!"
+    echo "$MSG_IMAGE_CLEAN_WARNING"
     echo ""
-    echo "📋 Analysis of dockit images to be removed:"
+    echo "$MSG_IMAGE_CLEAN_ANALYSIS"
     echo ""
     
     # Use same format as list command
@@ -275,12 +275,12 @@ clean_images() {
     local format="%-4s  %-12s  %-13s  %-6s  %-8s  %s\n"
     
     printf "$format" \
-        "NO" \
-        "IMAGE ID" \
-        "CREATED" \
-        "SIZE" \
-        "STATUS" \
-        "NAME"
+        "$MSG_IMAGE_LIST_HEADER_NO" \
+        "$MSG_IMAGE_LIST_HEADER_ID" \
+        "$MSG_IMAGE_LIST_HEADER_CREATED" \
+        "$MSG_IMAGE_LIST_HEADER_SIZE" \
+        "$MSG_IMAGE_CLEAN_HEADER_STATUS" \
+        "$MSG_IMAGE_LIST_HEADER_NAME"
     
     local index=1
     local all_image_names=()
@@ -305,11 +305,11 @@ clean_images() {
             
             local status
             if [ -n "$containers_using_image" ]; then
-                status="IN USE"
+                status="$MSG_IMAGE_CLEAN_STATUS_IN_USE"
                 containers_info+="  🔗 $image_name → containers: $containers_using_image"$'\n'
                 ((images_in_use++))
             else
-                status="UNUSED"
+                status="$MSG_IMAGE_CLEAN_STATUS_UNUSED"
                 ((images_unused++))
             fi
             
@@ -335,7 +335,7 @@ clean_images() {
     # Show container usage information
     # 컨테이너 사용 정보 표시
     if [ $images_in_use -gt 0 ]; then
-        echo "🔗 Container dependencies:"
+        echo "$MSG_IMAGE_CLEAN_CONTAINER_DEPS"
         echo "$containers_info"
     fi
     
@@ -370,25 +370,25 @@ clean_images() {
     
     # Summary
     # 요약 정보
-    echo "📊 Summary:"
-    echo "  • Total images: $total_images"
-    echo "  • Images in use: $images_in_use"
-    echo "  • Unused images: $images_unused"
-    echo "  • Total space to be freed: $total_size_info"
+    echo "$MSG_IMAGE_CLEAN_SUMMARY"
+    echo "  $(printf "$MSG_IMAGE_CLEAN_TOTAL_IMAGES" "$total_images")"
+    echo "  $(printf "$MSG_IMAGE_CLEAN_IMAGES_IN_USE" "$images_in_use")"
+    echo "  $(printf "$MSG_IMAGE_CLEAN_IMAGES_UNUSED" "$images_unused")"
+    echo "  $(printf "$MSG_IMAGE_CLEAN_SPACE_TO_FREE" "$total_size_info")"
     echo ""
     
     if [ $images_in_use -gt 0 ]; then
-        echo "⚠️  WARNING: $images_in_use image(s) are currently being used by containers!"
-        echo "   These containers will be STOPPED and REMOVED automatically."
+        echo "$(printf "$MSG_IMAGE_CLEAN_WARNING_IN_USE" "$images_in_use")"
+        echo "   $MSG_IMAGE_CLEAN_AUTO_REMOVAL"
         echo ""
     fi
     
-    echo "🚨 DANGER ZONE: This action cannot be undone!"
+    echo "$MSG_IMAGE_CLEAN_DANGER_ZONE"
     echo ""
     
     # First confirmation
     # 1차 확인
-    echo -n "Do you really want to remove ALL $total_images dockit images? [y/N]: "
+    echo -n "$(printf "$MSG_IMAGE_CLEAN_FIRST_CONFIRM" "$total_images")"
     read -r confirm1
     
     # Convert to lowercase for comparison
@@ -398,29 +398,29 @@ clean_images() {
     # Check first confirmation
     # 1차 확인 검사
     if [ "$confirm1" != "y" ] && [ "$confirm1" != "yes" ]; then
-        log "INFO" "Image cleanup cancelled"
+        log "INFO" "$MSG_IMAGE_CLEAN_CANCELLED"
         return 0
     fi
     
     # Second confirmation with typing challenge
     # 2차 확인 (타이핑 챌린지)
     echo ""
-    echo "⚠️  FINAL WARNING: This will permanently delete all dockit images!"
-    echo "   Type 'DELETE' (in uppercase) to confirm:"
-    echo -n "Confirmation: "
+    echo "$MSG_IMAGE_CLEAN_FINAL_WARNING"
+    echo "   $MSG_IMAGE_CLEAN_TYPE_DELETE"
+    echo -n "$MSG_IMAGE_CLEAN_CONFIRMATION"
     read -r confirm2
     
     # Check second confirmation
     # 2차 확인 검사
     if [ "$confirm2" != "DELETE" ]; then
-        log "INFO" "Image cleanup cancelled - confirmation failed"
+        log "INFO" "$MSG_IMAGE_CLEAN_CONFIRMATION_FAILED"
         return 0
     fi
     
     # Start cleanup process
     # 정리 프로세스 시작
     echo ""
-    log "INFO" "Starting cleanup of ALL dockit images..."
+    log "INFO" "$MSG_IMAGE_CLEAN_STARTING"
     echo ""
     
     local removed_images=0
@@ -430,7 +430,7 @@ clean_images() {
     # Remove images (with container cleanup if needed)
     # 이미지 제거 (필요시 컨테이너 정리 포함)
     for image_name in "${all_image_names[@]}"; do
-        echo "Processing $image_name..."
+        echo "$(printf "$MSG_IMAGE_CLEAN_PROCESSING" "$image_name")"
         
         # Check for containers using this image
         # 이 이미지를 사용하는 컨테이너 확인
@@ -438,19 +438,19 @@ clean_images() {
         containers=$(docker ps -a --filter "ancestor=$image_name" --format "{{.Names}}" | tr '\n' ' ')
         
         if [ -n "$containers" ]; then
-            echo "  📦 Removing containers: $containers"
+            echo "$(printf "$MSG_IMAGE_CLEAN_REMOVING_CONTAINERS" "$containers")"
             
             # Stop and remove containers
             # 컨테이너 중지 및 제거
             for container in $containers; do
-                echo -n "    Stopping $container... "
+                echo -n "$(printf "$MSG_IMAGE_CLEAN_STOPPING" "$container")"
                 if docker stop "$container" &>/dev/null; then
                     echo "✓"
                 else
                     echo "⚠️"
                 fi
                 
-                echo -n "    Removing $container... "
+                echo -n "$(printf "$MSG_IMAGE_CLEAN_REMOVING" "$container")"
                 if docker rm "$container" &>/dev/null; then
                     echo "✓"
                     ((removed_containers++))
@@ -462,7 +462,7 @@ clean_images() {
         
         # Remove the image
         # 이미지 제거
-        echo -n "  🗑️  Removing image... "
+        echo -n "$MSG_IMAGE_CLEAN_REMOVING_IMAGE"
         if docker rmi "$image_name" &>/dev/null; then
             echo "✓"
             ((removed_images++))
@@ -476,39 +476,39 @@ clean_images() {
     
     # Final results
     # 최종 결과
-    echo "🏁 Cleanup completed!"
+    echo "$MSG_IMAGE_CLEAN_COMPLETED"
     echo ""
     
     if [ $removed_containers -gt 0 ]; then
-        log "INFO" "Removed $removed_containers container(s)"
+        log "INFO" "$(printf "$MSG_IMAGE_CLEAN_REMOVED_CONTAINERS" "$removed_containers")"
     fi
     
     if [ $removed_images -gt 0 ]; then
-        log "SUCCESS" "Successfully removed $removed_images image(s)"
+        log "SUCCESS" "$(printf "$MSG_IMAGE_CLEAN_REMOVED_IMAGES" "$removed_images")"
     fi
     
     if [ $failed_images -gt 0 ]; then
-        log "WARNING" "Failed to remove $failed_images image(s)"
-        echo "Some images might have complex dependencies"
+        log "WARNING" "$(printf "$MSG_IMAGE_CLEAN_FAILED_IMAGES" "$failed_images")"
+        echo "$MSG_IMAGE_CLEAN_COMPLEX_DEPS"
     fi
     
     if [ $removed_images -eq 0 ] && [ $failed_images -eq 0 ]; then
-        log "INFO" "No images were removed"
+        log "INFO" "$MSG_IMAGE_CLEAN_NO_IMAGES_REMOVED"
     fi
     
     echo ""
-    echo "💾 Space freed: $total_size_info"
+    echo "$(printf "$MSG_IMAGE_CLEAN_SPACE_FREED" "$total_size_info")"
 }
 
 # Prune dangling images (placeholder)
 # dangling 이미지 정리 (플레이스홀더)
 prune_images() {
-    log "INFO" "Finding unused dockit images..."
+    log "INFO" "$MSG_IMAGE_PRUNE_FINDING"
     
     # Check if Docker is available
     # Docker 사용 가능 여부 확인
     if ! command -v docker &> /dev/null; then
-        log "ERROR" "Docker is not installed or not in PATH"
+        log "ERROR" "$MSG_IMAGE_PRUNE_DOCKER_NOT_FOUND"
         return 1
     fi
     
@@ -518,7 +518,7 @@ prune_images() {
     all_dockit_images=$(docker image ls --filter "reference=dockit-*" --format "{{.Repository}}")
     
     if [ -z "$all_dockit_images" ]; then
-        echo "No dockit images found."
+        echo "$MSG_IMAGE_PRUNE_NO_IMAGES"
         return 0
     fi
     
@@ -544,14 +544,14 @@ prune_images() {
     # Check if there are any unused images
     # 사용하지 않는 이미지가 있는지 확인
     if [ ${#unused_images[@]} -eq 0 ]; then
-        echo "No unused dockit images found."
-        echo "All dockit images are currently being used by containers."
+        echo "$MSG_IMAGE_PRUNE_NO_UNUSED"
+        echo "$MSG_IMAGE_PRUNE_ALL_IN_USE"
         return 0
     fi
     
     # Display unused images
     # 사용하지 않는 이미지들 표시
-    echo "Found ${#unused_images[@]} unused dockit image(s):"
+    echo "$(printf "$MSG_IMAGE_PRUNE_FOUND" "${#unused_images[@]}")"
     echo ""
     
     # Use same format as list command
@@ -559,11 +559,11 @@ prune_images() {
     local format="%-4s  %-12s  %-13s  %-6s  %s\n"
     
     printf "$format" \
-        "NO" \
-        "IMAGE ID" \
-        "CREATED" \
-        "SIZE" \
-        "NAME"
+        "$MSG_IMAGE_LIST_HEADER_NO" \
+        "$MSG_IMAGE_LIST_HEADER_ID" \
+        "$MSG_IMAGE_LIST_HEADER_CREATED" \
+        "$MSG_IMAGE_LIST_HEADER_SIZE" \
+        "$MSG_IMAGE_LIST_HEADER_NAME"
     
     local index=1
     for image_name in "${unused_images[@]}"; do
@@ -627,12 +627,12 @@ prune_images() {
             }
         }')
     
-    echo "Total space to be freed: $total_size_info"
+    echo "$(printf "$MSG_IMAGE_PRUNE_SPACE_TO_FREE" "$total_size_info")"
     echo ""
     
     # Confirmation prompt
     # 확인 프롬프트
-    echo -n "Do you want to remove these unused images? [y/N]: "
+    echo -n "$MSG_IMAGE_PRUNE_CONFIRM"
     read -r confirm
     
     # Convert to lowercase for comparison
@@ -642,20 +642,20 @@ prune_images() {
     # Check confirmation
     # 확인 검사
     if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
-        log "INFO" "Image pruning cancelled"
+        log "INFO" "$MSG_IMAGE_PRUNE_CANCELLED"
         return 0
     fi
     
     # Remove unused images
     # 사용하지 않는 이미지들 제거
     echo ""
-    log "INFO" "Removing unused dockit images..."
+    log "INFO" "$MSG_IMAGE_PRUNE_REMOVING"
     
     local removed_count=0
     local failed_count=0
     
     for image_name in "${unused_images[@]}"; do
-        echo -n "Removing $image_name... "
+        echo -n "$(printf "$MSG_IMAGE_PRUNE_REMOVING_IMAGE" "$image_name")"
         
         if docker rmi "$image_name" &>/dev/null; then
             echo "✓"
@@ -671,16 +671,16 @@ prune_images() {
     # Show results
     # 결과 표시
     if [ $removed_count -gt 0 ]; then
-        log "SUCCESS" "Successfully removed $removed_count unused image(s)"
+        log "SUCCESS" "$(printf "$MSG_IMAGE_PRUNE_SUCCESS" "$removed_count")"
     fi
     
     if [ $failed_count -gt 0 ]; then
-        log "WARNING" "Failed to remove $failed_count image(s)"
-        echo "Some images might have dependencies or be referenced by other images"
+        log "WARNING" "$(printf "$MSG_IMAGE_PRUNE_FAILED" "$failed_count")"
+        echo "$MSG_IMAGE_PRUNE_DEPENDENCIES"
     fi
     
     if [ $removed_count -eq 0 ] && [ $failed_count -eq 0 ]; then
-        log "INFO" "No images were removed"
+        log "INFO" "$MSG_IMAGE_PRUNE_NO_REMOVED"
     fi
 }
 
@@ -704,8 +704,8 @@ image_main() {
             if [ -n "$2" ]; then
                 remove_image "$2"
             else
-                log "ERROR" "Image name required for remove command"
-                echo "Usage: dockit image remove <image_name_or_number>"
+                log "ERROR" "$MSG_IMAGE_MAIN_NAME_REQUIRED"
+                echo "$MSG_IMAGE_MAIN_REMOVE_USAGE"
                 return 1
             fi
             ;;
@@ -716,7 +716,7 @@ image_main() {
             prune_images
             ;;
         *)
-            log "ERROR" "Unknown command: $1"
+            log "ERROR" "$(printf "$MSG_IMAGE_MAIN_UNKNOWN_COMMAND" "$1")"
             show_usage
             return 1
             ;;
