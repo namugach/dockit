@@ -115,6 +115,10 @@ execute_command() {
             source "$MODULES_DIR/ps.sh"
             list_main "$@"
             ;;
+        image)
+            source "$MODULES_DIR/image.sh"
+            image_main "$@"
+            ;;
         help)
             source "$MODULES_DIR/help.sh"
             show_help
