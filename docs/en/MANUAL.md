@@ -20,6 +20,7 @@ This document explains the detailed usage of Dockit.
     - [connect](#connect---connect-to-container)
     - [status](#status---check-status)
     - [list](#list---project-list)
+    - [image](#image---image-management)
     - [migrate](#migrate---upgrade-version)
     - [setup](#setup---complete-environment-setup)
     - [run](#run---automated-run)
@@ -466,6 +467,91 @@ dockit list
 - Uses `~` shorthand for home directory
 - Shows simplified paths for better readability
 - Marks invalid projects with warning indicators
+
+### image - Image Management
+
+Provides comprehensive functionality for managing Docker images created by dockit.
+
+```bash
+dockit image <command> [options]
+```
+
+#### Subcommands:
+
+**1. list - View image list**
+```bash
+dockit image list
+```
+- Displays all Docker images created by dockit in table format
+- Includes number, image ID, creation date, size, and image name
+- Provides guidance on image creation if no images exist
+
+**2. remove - Remove specific image**
+```bash
+dockit image remove <image_name_or_number>
+```
+- Removes specific image by name or list number
+- Examples:
+  ```bash
+  dockit image remove 1                        # Remove by number
+  dockit image remove dockit-home-user-project # Remove by name
+  ```
+
+**3. prune - Clean unused images**
+```bash
+dockit image prune
+```
+- Finds and removes dockit images not used by any containers
+- Shows image list and estimated space savings before removal
+- Provides safe confirmation prompt
+
+**4. clean - Remove all images**
+```bash
+dockit image clean
+```
+- Completely removes all dockit images and related containers
+- Very powerful feature that cannot be undone
+- 2-stage safety confirmation process:
+  1. First confirmation: Enter 'y' or 'yes'
+  2. Second confirmation: Enter 'DELETE' (uppercase)
+
+#### Key Features:
+
+**Safety Measures**:
+- Targets only dockit images to protect system images
+- Automatically detects and warns about containers using images
+- Provides detailed information before removal (usage status, estimated space savings, etc.)
+
+**Detailed Analysis**:
+- Shows usage status for each image (in use/unused)
+- Provides container dependency information
+- Calculates total images, images in use, and estimated space savings
+
+**Automated Cleanup**:
+- `clean` command automatically stops and removes related containers
+- Visual progress indicators for each step (✓/✗/⚠️)
+
+#### Usage Scenarios:
+
+**Regular Maintenance**:
+```bash
+# Clean only unused images (safe)
+dockit image prune
+
+# Complete development environment reset (caution required)
+dockit image clean
+```
+
+**Specific Image Management**:
+```bash
+# Check image list
+dockit image list
+
+# Remove specific image
+dockit image remove 3
+```
+
+This functionality allows you to effectively manage Docker image usage and optimize system resources.
 
 ### migrate - Upgrade Version
 
