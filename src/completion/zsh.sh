@@ -86,6 +86,7 @@ _dockit() {
             image)
                 image_options=(
                     "list:$(dockit_get_message MSG_IMAGE_COMPLETION_LIST)"
+                    "ls:$(dockit_get_message MSG_IMAGE_COMPLETION_LIST)"
                     "remove:$(dockit_get_message MSG_IMAGE_COMPLETION_REMOVE)"
                     "prune:$(dockit_get_message MSG_IMAGE_COMPLETION_PRUNE)"
                     "clean:$(dockit_get_message MSG_IMAGE_COMPLETION_CLEAN)"
@@ -122,6 +123,7 @@ _dockit() {
         "join:$(dockit_get_message MSG_COMPLETION_JOIN)"
         "ps:$(dockit_get_message MSG_COMPLETION_PS)"
         "list:$(dockit_get_message MSG_COMPLETION_LIST)"
+        "ls:$(dockit_get_message MSG_COMPLETION_LIST)"
         "image:$(dockit_get_message MSG_COMPLETION_IMAGE)"
     )
     

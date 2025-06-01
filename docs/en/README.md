@@ -72,7 +72,8 @@ Dockit provides the following main commands:
 - `run`: Automatically run initialization, build and start
 - `join`: Automatically run initialization, build, start, and connect to container in one command
 - `list`: List all projects created with dockit (real-time Docker status synchronization)
-- `image`: Docker image management (list, remove, prune, clean)
+- `ls`: List all projects created with dockit (alias for list)
+- `image`: Docker image management (list, ls, remove, prune, clean)
 - `migrate`: Upgrade to a newer version
 - `help`: Display help information
 

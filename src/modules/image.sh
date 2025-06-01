@@ -700,6 +700,9 @@ image_main() {
         "list")
             list_images
             ;;
+        "ls")
+            list_images
+            ;;
         "remove")
             if [ -n "$2" ]; then
                 remove_image "$2"

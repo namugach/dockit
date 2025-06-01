@@ -72,7 +72,8 @@ Dockit을 시스템에서 제거하려면:
 - `run`: 초기화, 빌드, 시작을 자동으로 실행
 - `join`: 초기화, 빌드, 시작, 접속을 자동으로 한 번에 실행
 - `list`: dockit으로 생성된 모든 프로젝트 목록 표시 (실시간 Docker 상태 동기화)
-- `image`: Docker 이미지 관리 (list, remove, prune, clean)
+- `ls`: dockit으로 생성된 모든 프로젝트 목록 표시 (list 별칭)
+- `image`: Docker 이미지 관리 (list, ls, remove, prune, clean)
 - `migrate`: 새 버전으로 업그레이드
 - `help`: 도움말 표시
 

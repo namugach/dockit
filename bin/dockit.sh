@@ -111,6 +111,10 @@ execute_command() {
             source "$MODULES_DIR/list.sh"
             list_main "$@"
             ;;
+        ls)
+            source "$MODULES_DIR/list.sh"
+            list_main "$@"
+            ;;
         ps)
             source "$MODULES_DIR/ps.sh"
             list_main "$@"

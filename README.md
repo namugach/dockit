@@ -6,7 +6,7 @@
 
 [English](docs/en/README.md) | [한국어](docs/ko/README.md)
 
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](bin/VERSION)
+[![Version](https://img.shields.io/badge/version-1.4.1-blue.svg)](bin/VERSION)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](docs/meta/LICENSE)
 
 Dockit is a modular shell script tool for quickly setting up and managing development environments using Docker.
@@ -81,7 +81,8 @@ To remove Dockit from your system:
 - `run`: Automatically initialize, build, and start container without interaction
 - `join`: Automatically initialize, build, start, and connect to container in one command
 - `list`: List all projects created with dockit (real-time Docker status synchronization)
-- `image`: Docker image management (list, remove, prune, clean)
+- `ls`: List all projects created with dockit (alias for list)
+- `image`: Docker image management (list, ls, remove, prune, clean)
 - `migrate`: Upgrade to a newer version
 - `help`: Display help information
 

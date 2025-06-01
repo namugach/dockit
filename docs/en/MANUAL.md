@@ -20,6 +20,7 @@ This document explains the detailed usage of Dockit.
     - [connect](#connect---connect-to-container)
     - [status](#status---check-status)
     - [list](#list---project-list)
+    - [ls](#ls---quick-project-list)
     - [image](#image---image-management)
     - [migrate](#migrate---upgrade-version)
     - [setup](#setup---complete-environment-setup)
@@ -468,6 +469,23 @@ dockit list
 - Shows simplified paths for better readability
 - Marks invalid projects with warning indicators
 
+This feature ensures that the actual Docker status and registry information always match when managing multiple projects.
+
+### ls - Quick Project List
+
+List all projects created with dockit (alias for `list` command).
+
+```bash
+dockit ls
+```
+
+This is a convenient short alias for the `list` command, providing the same functionality:
+- Real-time Docker status synchronization
+- Color-coded status display
+- Project information overview
+
+Perfect for quick status checks when you want to type fewer characters. All features of the `list` command are available through this alias.
+
 ### image - Image Management
 
 Provides comprehensive functionality for managing Docker images created by dockit.
@@ -481,10 +499,13 @@ dockit image <command> [options]
 **1. list - View image list**
 ```bash
 dockit image list
+# or
+dockit image ls
 ```
 - Displays all Docker images created by dockit in table format
 - Includes number, image ID, creation date, size, and image name
 - Provides guidance on image creation if no images exist
+- `ls` is a convenient short alias for `list`
 
 **2. remove - Remove specific image**
 ```bash
