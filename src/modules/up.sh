@@ -212,6 +212,37 @@ is_container_already_running() {
 # 컨테이너 시작 함수
 # Start container function
 start_container() {
+    # 이미지 존재 여부 확인
+    if ! docker image inspect "$IMAGE_NAME" &>/dev/null; then
+        log "WARNING" "이미지를 찾을 수 없습니다: $IMAGE_NAME"
+        
+        # 자동 모드 또는 사용자 확인
+        local build_image
+        if [[ "$DOCKIT_AUTO_MODE" == "true" ]]; then
+            # 자동 모드일 때는 자동으로 빌드
+            build_image="y"
+            log "INFO" "Auto mode: Building image automatically..."
+        else
+            echo -e "\n${YELLOW}이미지를 빌드하시겠습니까?${NC}"
+            read -p "선택 [Y/n]: " build_image
+            build_image=${build_image:-y}
+        fi
+        
+        if [[ $build_image == "y" || $build_image == "Y" ]]; then
+            log "INFO" "이미지를 빌드하는 중..."
+            
+            # build 모듈 로드 및 빌드 실행
+            source "$MODULES_DIR/build.sh"
+            if ! build_main "this"; then
+                log "ERROR" "이미지 빌드에 실패했습니다"
+                return 1
+            fi
+        else
+            log "INFO" "이미지 빌드를 취소했습니다"
+            return 1
+        fi
+    fi
+    
     # 컨테이너를 백그라운드에서 시작
     log "INFO" "$MSG_STARTING_IN_BACKGROUND"
     if $DOCKER_COMPOSE_CMD -f "$DOCKER_COMPOSE_FILE" up -d; then
@@ -411,6 +442,18 @@ project_up_action() {
             # 이미 실행 중인 경우 레지스트리 상태만 업데이트
             update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
             return 0
+        fi
+    fi
+    
+    # 이미지 존재 여부 확인
+    if ! docker image inspect "$IMAGE_NAME" &>/dev/null; then
+        # 이미지가 없는 경우 빌드 실행 (백그라운드 작업에서는 자동으로 빌드)
+        # build 모듈 로드 및 빌드 실행
+        source "$MODULES_DIR/build.sh"
+        if ! build_main "this" >/dev/null 2>&1; then
+            # 빌드 실패 시 상태 업데이트
+            update_project_state "$project_id" "$PROJECT_STATE_ERROR"
+            return 1
         fi
     fi
     

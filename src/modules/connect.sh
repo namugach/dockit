@@ -45,10 +45,17 @@ handle_this_argument() {
     if ! docker container inspect "$CONTAINER_NAME" &>/dev/null; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
         
-        # 컨테이너 생성 및 시작 여부 확인
-        echo -e "\n${YELLOW}$MSG_CONNECT_WANT_CREATE_AND_START${NC}"
-        read -p "$MSG_SELECT_CHOICE [Y/n]: " create_and_start
-        create_and_start=${create_and_start:-y}
+        # 자동 모드 또는 사용자 확인
+        local create_and_start
+        if [[ "$DOCKIT_AUTO_MODE" == "true" ]]; then
+            # 자동 모드일 때는 자동으로 y 선택
+            create_and_start="y"
+            log "INFO" "$MSG_CONNECT_AUTO_CREATING"
+        else
+            echo -e "\n${YELLOW}$MSG_CONNECT_WANT_CREATE_AND_START${NC}"
+            read -p "$MSG_SELECT_CHOICE [Y/n]: " create_and_start
+            create_and_start=${create_and_start:-y}
+        fi
         
         if [[ $create_and_start == "y" || $create_and_start == "Y" ]]; then
             log "INFO" "$MSG_CONNECT_CREATING_AND_STARTING"
@@ -80,9 +87,16 @@ handle_this_argument() {
         
         # 컨테이너 시작 여부 확인
         # Ask if container should be started
-        echo -e "\n${YELLOW}$MSG_CONNECT_WANT_START${NC}"
-        read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
-        start_container=${start_container:-y}
+        local start_container
+        if [[ "$DOCKIT_AUTO_MODE" == "true" ]]; then
+            # 자동 모드일 때는 자동으로 y 선택
+            start_container="y"
+            log "INFO" "$MSG_CONNECT_AUTO_STARTING"
+        else
+            echo -e "\n${YELLOW}$MSG_CONNECT_WANT_START${NC}"
+            read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
+            start_container=${start_container:-y}
+        fi
         
         if [[ $start_container == "y" || $start_container == "Y" ]]; then
             log "INFO" "$MSG_CONNECT_STARTING"
@@ -137,7 +151,7 @@ handle_numeric_arguments() {
     # 레지스트리에서 프로젝트 목록 가져오기
     local registry_file="$HOME/.dockit/registry.json"
     if [ ! -f "$registry_file" ]; then
-        log "ERROR" "Registry file not found"
+        log "ERROR" "$MSG_CONNECT_REGISTRY_NOT_FOUND"
         return 1
     fi
     
@@ -163,24 +177,24 @@ handle_numeric_arguments() {
     
     # 프로젝트 경로 유효성 확인
     if [ ! -d "$project_path" ] || [ ! -f "$project_path/.dockit_project/docker-compose.yml" ]; then
-        log "ERROR" "Project $idx ($project_name) not found or invalid"
+        log "ERROR" "$(printf "$MSG_CONNECT_PROJECT_NOT_FOUND" "$idx" "$project_name")"
         return 1
     fi
     
     # 프로젝트 디렉토리로 이동하여 접속
-    log "INFO" "Connecting to project $idx ($project_name)..."
+    log "INFO" "$(printf "$MSG_CONNECT_PROJECT_CONNECTING" "$idx" "$project_name")"
     
     # 프로젝트의 설정 파일에서 컨테이너 이름 가져오기
     local env_file="$project_path/.dockit_project/.env"
     if [ ! -f "$env_file" ]; then
-        log "ERROR" "Project configuration not found: $env_file"
+        log "ERROR" "$(printf "$MSG_CONNECT_PROJECT_CONFIG_NOT_FOUND" "$env_file")"
         return 1
     fi
     
     # 컨테이너 이름 추출
     local container_name=$(grep "^CONTAINER_NAME=" "$env_file" | cut -d'=' -f2 | tr -d '"')
     if [ -z "$container_name" ]; then
-        log "ERROR" "Container name not found in project configuration"
+        log "ERROR" "$MSG_CONNECT_CONTAINER_NAME_NOT_FOUND"
         return 1
     fi
     
@@ -188,10 +202,17 @@ handle_numeric_arguments() {
     if ! docker container inspect "$container_name" &>/dev/null; then
         log "WARNING" "$MSG_CONTAINER_NOT_FOUND"
         
-        # 컨테이너 생성 및 시작 여부 확인
-        echo -e "\n${YELLOW}$MSG_CONNECT_WANT_CREATE_AND_START${NC}"
-        read -p "$MSG_SELECT_CHOICE [Y/n]: " create_and_start
-        create_and_start=${create_and_start:-y}
+        # 자동 모드 또는 사용자 확인
+        local create_and_start
+        if [[ "$DOCKIT_AUTO_MODE" == "true" ]]; then
+            # 자동 모드일 때는 자동으로 y 선택
+            create_and_start="y"
+            log "INFO" "$MSG_CONNECT_AUTO_CREATING"
+        else
+            echo -e "\n${YELLOW}$MSG_CONNECT_WANT_CREATE_AND_START${NC}"
+            read -p "$MSG_SELECT_CHOICE [Y/n]: " create_and_start
+            create_and_start=${create_and_start:-y}
+        fi
         
         if [[ $create_and_start == "y" || $create_and_start == "Y" ]]; then
             log "INFO" "$MSG_CONNECT_CREATING_AND_STARTING"
@@ -223,9 +244,16 @@ handle_numeric_arguments() {
         log "WARNING" "$MSG_CONTAINER_NOT_RUNNING"
         
         # 컨테이너 시작 여부 확인
-        echo -e "\n${YELLOW}$MSG_CONNECT_WANT_START${NC}"
-        read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
-        start_container=${start_container:-y}
+        local start_container
+        if [[ "$DOCKIT_AUTO_MODE" == "true" ]]; then
+            # 자동 모드일 때는 자동으로 y 선택
+            start_container="y"
+            log "INFO" "$MSG_CONNECT_AUTO_STARTING"
+        else
+            echo -e "\n${YELLOW}$MSG_CONNECT_WANT_START${NC}"
+            read -p "$MSG_SELECT_CHOICE [Y/n]: " start_container
+            start_container=${start_container:-y}
+        fi
         
         if [[ $start_container == "y" || $start_container == "Y" ]]; then
             log "INFO" "$MSG_CONNECT_STARTING"
@@ -244,7 +272,7 @@ handle_numeric_arguments() {
                     return 1
                 fi
             else
-                log "ERROR" "Docker Compose file not found: $compose_file"
+                log "ERROR" "$(printf "$MSG_CONNECT_COMPOSE_FILE_NOT_FOUND" "$compose_file")"
                 return 1
             fi
         else

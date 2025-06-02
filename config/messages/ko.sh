@@ -146,6 +146,18 @@ MSG_CONNECT_CREATING_AND_STARTING="컨테이너를 생성하고 시작한 후 �
 MSG_CONNECT_STARTING="컨테이너를 시작한 후 접속 중..."
 MSG_CONNECT_CREATE_START_CANCELLED="컨테이너 생성/시작이 취소되었습니다."
 
+# 자동 모드 관련 메시지
+MSG_CONNECT_AUTO_CREATING="자동 모드: 컨테이너를 자동으로 생성하고 시작합니다..."
+MSG_CONNECT_AUTO_STARTING="자동 모드: 컨테이너를 자동으로 시작합니다..."
+
+# 프로젝트 및 레지스트리 관련 메시지
+MSG_CONNECT_REGISTRY_NOT_FOUND="레지스트리 파일을 찾을 수 없습니다"
+MSG_CONNECT_PROJECT_NOT_FOUND="프로젝트 %s (%s)를 찾을 수 없거나 유효하지 않습니다"
+MSG_CONNECT_PROJECT_CONFIG_NOT_FOUND="프로젝트 설정을 찾을 수 없습니다: %s"
+MSG_CONNECT_CONTAINER_NAME_NOT_FOUND="프로젝트 설정에서 컨테이너 이름을 찾을 수 없습니다"
+MSG_CONNECT_PROJECT_CONNECTING="프로젝트 %s (%s)에 접속 중..."
+MSG_CONNECT_COMPOSE_FILE_NOT_FOUND="Docker Compose 파일을 찾을 수 없습니다: %s"
+
 # status 모듈 메시지
 MSG_STATUS_START="상태 확인 모듈 실행 중..."
 MSG_CONTAINER_STATUS="컨테이너 상태"

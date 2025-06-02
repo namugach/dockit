@@ -147,6 +147,18 @@ MSG_CONNECT_CREATING_AND_STARTING="Creating, starting and connecting to containe
 MSG_CONNECT_STARTING="Starting and connecting to container..."
 MSG_CONNECT_CREATE_START_CANCELLED="Container creation/start cancelled."
 
+# Auto mode related messages
+MSG_CONNECT_AUTO_CREATING="Auto mode: Creating and starting container automatically..."
+MSG_CONNECT_AUTO_STARTING="Auto mode: Starting container automatically..."
+
+# Project and registry related messages
+MSG_CONNECT_REGISTRY_NOT_FOUND="Registry file not found"
+MSG_CONNECT_PROJECT_NOT_FOUND="Project %s (%s) not found or invalid"
+MSG_CONNECT_PROJECT_CONFIG_NOT_FOUND="Project configuration not found: %s"
+MSG_CONNECT_CONTAINER_NAME_NOT_FOUND="Container name not found in project configuration"
+MSG_CONNECT_PROJECT_CONNECTING="Connecting to project %s (%s)..."
+MSG_CONNECT_COMPOSE_FILE_NOT_FOUND="Docker Compose file not found: %s"
+
 # status module messages
 MSG_STATUS_START="Running status check module..."
 MSG_CONTAINER_STATUS="Container Status"

@@ -17,7 +17,7 @@ source "$MODULES_DIR/start.sh"
 run_init() {
     log "INFO" "$MSG_RUN_INIT_START"
     # 1. 초기화 (init)
-    init_main "$@"
+    echo "y" | init_main "$@"
     log "INFO" "$MSG_RUN_INIT_COMPLETE"
 }
 
@@ -26,7 +26,7 @@ run_init() {
 run_build() {
     log "INFO" "$MSG_RUN_BUILD_START"
     # 2. 이미지 빌드 (build)
-    build_main "$@"
+    echo "y" | build_main "this"
     log "INFO" "$MSG_RUN_BUILD_COMPLETE"
 }
 
@@ -35,7 +35,7 @@ run_build() {
 run_up() {
     log "INFO" "$MSG_RUN_UP_START"
     # 3. 컨테이너 백그라운드에서 시작 (up)
-    up_main "$@"
+    echo "y" | up_main "this"
     log "INFO" "$MSG_RUN_UP_COMPLETE"
 }
 

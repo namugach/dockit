@@ -30,20 +30,22 @@ join_run() {
 join_connect() {
     log "INFO" "$MSG_JOIN_CONNECT_START"
     
-    # connect 모듈의 메인 함수 실행
-    # Execute connect module's main function
-    # 사용자 입력 프롬프트가 나타나지 않도록 자동 'y' 입력 시뮬레이션
-    # Simulate automatic 'y' input to avoid user prompts
+    # connect 모듈의 handle_this_argument 함수를 직접 호출
+    # Directly call handle_this_argument function from connect module
+    # 이렇게 하면 read 함수 오버라이드 없이도 자동으로 처리됨
+    # This way it handles automatically without read function override
     
-    # 자동 접속을 위한 입력 오버라이드
-    # Override read command for automated connection
-    function read() {
-        echo "y"
-    }
+    # 환경 변수로 자동 모드 설정
+    # Set auto mode via environment variable
+    export DOCKIT_AUTO_MODE=true
     
-    # connect_main 실행
-    # Execute connect_main
-    connect_main "$@"
+    # handle_this_argument 함수 직접 호출
+    # Direct call to handle_this_argument function
+    handle_this_argument
+    
+    # 환경 변수 정리
+    # Clean up environment variable
+    unset DOCKIT_AUTO_MODE
     
     log "INFO" "$MSG_JOIN_CONNECT_COMPLETE"
 }
