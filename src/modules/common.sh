@@ -308,7 +308,57 @@ load_env() {
         log "WARNING" "$MSG_COMMON_CONFIG_NOT_FOUND"
     fi
 
+    # Detect actual user for volume mounting
+    # 볼륨 마운트를 위한 실제 사용자 검출
+    detect_actual_user
+
     export CONFIG_LOADED=1
+}
+
+# Detect actual user that will be used in container
+# 컨테이너에서 사용될 실제 사용자 검출
+detect_actual_user() {
+    # Only detect if BASE_IMAGE is set
+    # BASE_IMAGE가 설정된 경우에만 검출
+    if [ -z "$BASE_IMAGE" ]; then
+        export ACTUAL_USER="$USERNAME"
+        return 0
+    fi
+
+    # Check if docker is available
+    # Docker 사용 가능 여부 확인
+    if ! command -v docker &> /dev/null; then
+        export ACTUAL_USER="$USERNAME"
+        return 0
+    fi
+
+    log "INFO" "Detecting actual user for volume mounting..."
+    
+    # Try to pull the base image if it doesn't exist
+    # 베이스 이미지가 없으면 풀 시도
+    if ! docker image inspect "$BASE_IMAGE" &>/dev/null; then
+        log "INFO" "Base image not found locally, attempting to pull..."
+        if ! docker pull "$BASE_IMAGE" &>/dev/null; then
+            log "WARNING" "Failed to pull base image, using fallback user: $USERNAME"
+            export ACTUAL_USER="$USERNAME"
+            return 0
+        fi
+    fi
+    
+    # Check if user with UID exists in base image
+    # 베이스 이미지에서 해당 UID의 사용자 존재 확인
+    local existing_user
+    existing_user=$(docker run --rm "$BASE_IMAGE" getent passwd "$USER_UID" 2>/dev/null | cut -d: -f1 || echo "")
+    
+    if [ -n "$existing_user" ]; then
+        log "INFO" "Found existing user '$existing_user' with UID $USER_UID in base image"
+        export ACTUAL_USER="$existing_user"
+    else
+        log "INFO" "No existing user with UID $USER_UID, will use '$USERNAME'"
+        export ACTUAL_USER="$USERNAME"
+    fi
+    
+    log "INFO" "Volume mount target user: $ACTUAL_USER"
 }
 
 # Container status check function

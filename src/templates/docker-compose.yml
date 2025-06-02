@@ -6,8 +6,8 @@ services:
     container_name: ${CONTAINER_NAME}
     volumes:
       - ${PWD}:${CONTAINER_WORKDIR}
-      - ~/.gitconfig:/home/${USERNAME}/.gitconfig
-      - ~/.ssh:/home/${USERNAME}/.ssh
+      - ~/.gitconfig:/home/${ACTUAL_USER}/.gitconfig:ro
+      - ~/.ssh:/home/${ACTUAL_USER}/.ssh:ro
     stdin_open: true
     tty: true
     networks:

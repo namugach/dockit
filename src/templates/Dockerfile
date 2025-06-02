@@ -17,31 +17,36 @@ RUN EXISTING_USER=$(getent passwd ${USER_UID} | cut -d: -f1 || echo "") && \
         usermod -aG sudo "$EXISTING_USER" && \
         echo "$EXISTING_USER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
         usermod -p $(openssl passwd -1 ${USER_PASSWORD}) "$EXISTING_USER" && \
-        passwd -u "$EXISTING_USER"; \
+        passwd -u "$EXISTING_USER" && \
+        echo "$EXISTING_USER" > /tmp/actual_user; \
     else \
         echo "Creating new user: ${USERNAME}" && \
         (groupadd -g ${USER_GID} ${USERNAME} || true) && \
         (useradd -m -d /home/${USERNAME} -u ${USER_UID} -g ${USER_GID} ${USERNAME} || true) && \
         usermod -aG sudo ${USERNAME} && \
         echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
-        echo "${USERNAME}:${USER_PASSWORD}" | chpasswd; \
+        echo "${USERNAME}:${USER_PASSWORD}" | chpasswd && \
+        echo "${USERNAME}" > /tmp/actual_user; \
     fi
 
 # 작업 디렉토리 생성 및 권한 설정
 RUN mkdir -p /workspace && \
     chown -R ${USER_UID}:${USER_GID} /workspace
 
-# SSH 디렉토리 생성
-RUN mkdir -p /home/${USERNAME}/.ssh && \
-    chmod 700 /home/${USERNAME}/.ssh && \
-    chown -R ${USER_UID}:${USER_GID} /home/${USERNAME}/.ssh
+# SSH 디렉토리 생성 (실제 사용자 기준)
+RUN ACTUAL_USER=$(cat /tmp/actual_user) && \
+    mkdir -p /home/$ACTUAL_USER/.ssh && \
+    chmod 700 /home/$ACTUAL_USER/.ssh && \
+    chown -R ${USER_UID}:${USER_GID} /home/$ACTUAL_USER/.ssh
 
-# 한국어 로케일 설정 및 쉘 자동 변경 설정
-RUN echo "export LANG=ko_KR.UTF-8" >> /home/${USERNAME}/.bashrc && \
-    echo "export LC_ALL=ko_KR.UTF-8" >> /home/${USERNAME}/.bashrc && \
-    touch /home/${USERNAME}/.profile && \
-    chown ${USER_UID}:${USER_GID} /home/${USERNAME}/.bashrc && \
-    chown ${USER_UID}:${USER_GID} /home/${USERNAME}/.profile
+# 한국어 로케일 설정 및 쉘 자동 변경 설정 (실제 사용자 기준)
+RUN ACTUAL_USER=$(cat /tmp/actual_user) && \
+    echo "export LANG=ko_KR.UTF-8" >> /home/$ACTUAL_USER/.bashrc && \
+    echo "export LC_ALL=ko_KR.UTF-8" >> /home/$ACTUAL_USER/.bashrc && \
+    touch /home/$ACTUAL_USER/.profile && \
+    chown ${USER_UID}:${USER_GID} /home/$ACTUAL_USER/.bashrc && \
+    chown ${USER_UID}:${USER_GID} /home/$ACTUAL_USER/.profile
+
 
 # 볼륨 마운트 시 권한 문제 해결을 위한 스크립트 추가
 RUN echo '#!/bin/bash\nif [ -d "/workspace" ] && [ "$(stat -c %u "/workspace")" != "$(id -u)" ]; then\n  sudo chown -R $(id -u):$(id -g) "/workspace"\nfi\nexec "$@"' > /usr/local/bin/entrypoint.sh && \
