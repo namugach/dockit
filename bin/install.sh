@@ -190,7 +190,7 @@ check_compose_dependency() {
 # 기본 도구 체크
 # Check basic tools
 check_basic_tools() {
-    local required_tools=("git" "curl" "sed" "grep")
+    local required_tools=("docker" "git" "curl" "sed" "grep" "jq")
     for tool in "${required_tools[@]}"; do
         if ! check_command_exists "$tool"; then
             log_error "$(printf "$(get_message MSG_INSTALL_TOOL_MISSING)" "$tool" "$tool")"
