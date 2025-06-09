@@ -65,6 +65,13 @@ init_project() {
         exit 0
     fi
     
+    # 디렉토리 이름 검증 및 변경 제안
+    # Validate directory name and suggest changes
+    if ! validate_and_suggest_directory_name; then
+        echo -e "${RED}초기화가 취소되었습니다.${NC}"
+        exit 1
+    fi
+    
     # 기존 설정 백업
     # Backup existing settings
     if [ -d ".dockit_project" ]; then

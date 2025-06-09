@@ -168,7 +168,103 @@ generate_dockit_name() {
     echo "dockit-${flat_path}"
 }
 
+# 디렉토리 이름에 대문자가 포함되어 있는지 확인
+# Check if directory name contains uppercase letters
+has_uppercase_letters() {
+    local dir_name="$1"
+    [[ "$dir_name" =~ [A-Z] ]]
+}
 
+# 카멜케이스를 스네이크케이스로 변환
+# Convert camelCase to snake_case
+convert_to_snake_case() {
+    local input="$1"
+    # 대문자 앞에 언더스코어 추가 후 전체를 소문자로 변환
+    echo "$input" | sed 's/\([A-Z]\)/_\1/g' | sed 's/^_//' | tr '[:upper:]' '[:lower:]'
+}
+
+# 디렉토리 이름 변경 제안 및 실행
+# Suggest directory name change and execute
+suggest_directory_rename() {
+    local current_dir="$1"
+    local current_name=$(basename "$current_dir")
+    local suggested_name=$(convert_to_snake_case "$current_name")
+    local parent_dir=$(dirname "$current_dir")
+    local new_path="$parent_dir/$suggested_name"
+    
+    # 제안된 이름이 현재 이름과 같으면 변경 불필요
+    if [ "$current_name" = "$suggested_name" ]; then
+        return 0
+    fi
+    
+    echo ""
+    log "WARNING" "현재 디렉토리 이름에 대문자가 포함되어 있습니다."
+    echo ""
+    echo "Docker 이미지 이름 규칙상 소문자만 허용됩니다."
+    echo "디렉토리 이름을 변경하는 것을 권장합니다."
+    echo ""
+    echo "현재: $current_dir"  
+    echo "제안: $new_path"
+    echo ""
+    
+    # 제안된 디렉토리가 이미 존재하는지 확인
+    if [ -d "$new_path" ]; then
+        log "ERROR" "제안된 디렉토리 '$new_path'가 이미 존재합니다."
+        echo "다른 이름을 사용하거나 기존 디렉토리를 정리해주세요."
+        return 1
+    fi
+    
+    echo -n "디렉토리 이름을 변경하시겠습니까? [Y/n]: "
+    read -r confirm
+    
+    # 소문자로 변환해서 비교 (기본값은 Y)
+    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+    
+    if [ "$confirm" = "n" ] || [ "$confirm" = "no" ]; then
+        log "INFO" "디렉토리 이름 변경이 취소되었습니다."
+        echo ""
+        echo "계속 진행하려면 현재 이름을 그대로 사용하거나,"
+        echo "수동으로 디렉토리 이름을 변경한 후 다시 실행해주세요."
+        echo ""
+        return 1
+    else
+        log "INFO" "디렉토리 이름을 변경 중..."
+        
+        if mv "$current_dir" "$new_path"; then
+            log "SUCCESS" "디렉토리 이름이 성공적으로 변경되었습니다."
+            echo "새 위치: $new_path"
+            echo ""
+            echo "새 디렉토리에서 쉘을 시작합니다."
+            echo "다시 'dockit init'을 실행해주세요."
+            echo ""
+            
+            # 새 디렉토리로 이동
+            cd "$new_path"
+            
+            # 사용자 쉘로 새로고침
+            local user_shell="${SHELL:-/bin/bash}"
+            exec "$user_shell"
+        else
+            log "ERROR" "디렉토리 이름 변경에 실패했습니다."
+            return 1
+        fi
+    fi
+}
+
+# 디렉토리 이름 검증 및 변경 제안
+# Validate directory name and suggest changes
+validate_and_suggest_directory_name() {
+    local current_dir="$(pwd)"
+    local dir_name=$(basename "$current_dir")
+    
+    # 대문자가 포함되어 있는지 확인
+    if has_uppercase_letters "$dir_name"; then
+        suggest_directory_rename "$current_dir"
+        return $?
+    fi
+    
+    return 0
+}
 
 # dockit 이름 생성 함수 테스트
 # Test generate_dockit_name function
