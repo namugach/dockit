@@ -65,10 +65,10 @@ init_project() {
         exit 0
     fi
     
-    # 디렉토리 이름 검증 및 변경 제안
-    # Validate directory name and suggest changes
+    # 맨 처음에 디렉토리 이름 검증 (파일 생성 전)
+    # Validate directory name first, before creating any files
     if ! validate_and_suggest_directory_name; then
-        echo -e "${RED}초기화가 취소되었습니다.${NC}"
+        echo -e "${RED}$MSG_INIT_CANCELLED${NC}"
         exit 1
     fi
     
@@ -111,7 +111,7 @@ display_selection_options() {
     echo -e "\n${BLUE}$MSG_SELECT_OPTION:${NC}"
     echo -e "${GREEN}y${NC} - $MSG_USE_DEFAULT"
     echo -e "${YELLOW}n${NC} - $MSG_MODIFY_VALUES"
-    echo -e "${CYAN}l${NC} - 이미지 재사용"
+    echo -e "${CYAN}l${NC} - $MSG_IMAGE_REUSE_MENU_OPTION"
     echo -e "${RED}c${NC} - $MSG_CANCEL"
 }
 

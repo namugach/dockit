@@ -198,43 +198,43 @@ suggest_directory_rename() {
     fi
     
     echo ""
-    log "WARNING" "현재 디렉토리 이름에 대문자가 포함되어 있습니다."
+    log "WARNING" "$MSG_DIR_NAME_UPPERCASE_WARNING"
     echo ""
-    echo "Docker 이미지 이름 규칙상 소문자만 허용됩니다."
-    echo "디렉토리 이름을 변경하는 것을 권장합니다."
+    echo "$MSG_DIR_NAME_DOCKER_RULE"
+    echo "$MSG_DIR_NAME_CHANGE_RECOMMENDED"
     echo ""
-    echo "현재: $current_dir"  
-    echo "제안: $new_path"
+    printf "$MSG_DIR_NAME_CURRENT\n" "$current_dir"
+    printf "$MSG_DIR_NAME_SUGGESTED\n" "$new_path"
     echo ""
     
     # 제안된 디렉토리가 이미 존재하는지 확인
     if [ -d "$new_path" ]; then
-        log "ERROR" "제안된 디렉토리 '$new_path'가 이미 존재합니다."
-        echo "다른 이름을 사용하거나 기존 디렉토리를 정리해주세요."
+        log "ERROR" "$(printf "$MSG_DIR_NAME_ALREADY_EXISTS" "$new_path")"
+        echo "$MSG_DIR_NAME_CLEANUP_HINT"
         return 1
     fi
     
-    echo -n "디렉토리 이름을 변경하시겠습니까? [Y/n]: "
+    echo -n "$MSG_DIR_NAME_CHANGE_CONFIRM"
     read -r confirm
     
     # 소문자로 변환해서 비교 (기본값은 Y)
     confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
     
     if [ "$confirm" = "n" ] || [ "$confirm" = "no" ]; then
-        log "INFO" "디렉토리 이름 변경이 취소되었습니다."
+        log "INFO" "$MSG_DIR_NAME_CHANGE_CANCELLED"
         echo ""
-        echo "계속 진행하려면 현재 이름을 그대로 사용하거나,"
-        echo "수동으로 디렉토리 이름을 변경한 후 다시 실행해주세요."
+        echo "$MSG_DIR_NAME_CONTINUE_HINT"
+        echo "$MSG_DIR_NAME_MANUAL_CHANGE"
         echo ""
         return 1
     else
-        log "INFO" "디렉토리 이름을 변경 중..."
+        log "INFO" "$MSG_DIR_NAME_CHANGING"
         
         if mv "$current_dir" "$new_path"; then
-            log "SUCCESS" "디렉토리 이름이 성공적으로 변경되었습니다."
-            echo "새 위치: $new_path"
+            log "SUCCESS" "$MSG_DIR_NAME_CHANGE_SUCCESS"
+            printf "$MSG_DIR_NAME_NEW_LOCATION\n" "$new_path"
             echo ""
-            echo "새 디렉토리에서 쉘을 시작합니다."
+            echo "$MSG_DIR_NAME_STARTING_SHELL"
             echo ""
             
             # 새 디렉토리로 이동
@@ -244,7 +244,7 @@ suggest_directory_rename() {
             local user_shell="${SHELL:-/bin/bash}"
             exec "$user_shell" -c "dockit init; exec $user_shell"
         else
-            log "ERROR" "디렉토리 이름 변경에 실패했습니다."
+            log "ERROR" "$MSG_DIR_NAME_CHANGE_FAILED"
             return 1
         fi
     fi
