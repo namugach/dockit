@@ -235,7 +235,6 @@ suggest_directory_rename() {
             echo "새 위치: $new_path"
             echo ""
             echo "새 디렉토리에서 쉘을 시작합니다."
-            echo "다시 'dockit init'을 실행해주세요."
             echo ""
             
             # 새 디렉토리로 이동
@@ -243,7 +242,7 @@ suggest_directory_rename() {
             
             # 사용자 쉘로 새로고침
             local user_shell="${SHELL:-/bin/bash}"
-            exec "$user_shell"
+            exec "$user_shell" -c "dockit init; exec $user_shell"
         else
             log "ERROR" "디렉토리 이름 변경에 실패했습니다."
             return 1
