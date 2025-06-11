@@ -828,4 +828,4 @@ MSG_DIR_NAME_CHANGE_SUCCESS="디렉토리 이름이 성공적으로 변경되었
 MSG_DIR_NAME_NEW_LOCATION="새 위치: %s"
 MSG_DIR_NAME_STARTING_SHELL="새 디렉토리에서 쉘을 시작합니다."
 MSG_DIR_NAME_CHANGE_FAILED="디렉토리 이름 변경에 실패했습니다."
-MSG_INIT_CANCELLED="초기화가 취소되었습니다."
+MSG_DIR_NAME_INIT_INSTRUCTION="이제 'dockit init'을 실행하여 초기화를 진행하세요."

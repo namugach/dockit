@@ -236,13 +236,15 @@ suggest_directory_rename() {
             echo ""
             echo "$MSG_DIR_NAME_STARTING_SHELL"
             echo ""
+            echo "$MSG_DIR_NAME_INIT_INSTRUCTION"
+            echo ""
             
             # 새 디렉토리로 이동
             cd "$new_path"
             
-            # 사용자 쉘로 새로고침
+            # 사용자 쉘로 새로고침 (자동 실행 없이)
             local user_shell="${SHELL:-/bin/bash}"
-            exec "$user_shell" -c "dockit init; exec $user_shell"
+            exec "$user_shell"
         else
             log "ERROR" "$MSG_DIR_NAME_CHANGE_FAILED"
             return 1
