@@ -596,10 +596,12 @@ MSG_SETUP_CONNECT_COMPLETE="Automated connect module completed."
 MSG_SETUP_HELP="  setup    - Run complete project setup (init, build, up, connect)"
 MSG_EXAMPLE_SETUP="  dockit setup   # Complete project setup (init, build, up, connect)"
 MSG_COMPLETION_SETUP="Run complete environment setup (init, build, up, connect)"
+MSG_SETUP_DIR_NAME_INSTRUCTION="Setup command has been aborted. Please run 'dockit setup' again in the new directory."
 
 # run module messages
 MSG_RUN_START="Starting automated run process..."
 MSG_RUN_COMPLETE="Automated run process has been completed."
+MSG_RUN_DIR_NAME_INSTRUCTION="Run command has been aborted. Please run 'dockit run' again in the new directory."
 MSG_RUN_INIT_START="Starting initialization..."
 MSG_RUN_INIT_COMPLETE="Initialization completed."
 MSG_RUN_BUILD_START="Starting Docker image build..."

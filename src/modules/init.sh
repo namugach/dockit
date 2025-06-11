@@ -67,7 +67,7 @@ init_project() {
     
     # 맨 처음에 디렉토리 이름 검증 (파일 생성 전)
     # Validate directory name first, before creating any files
-    if ! validate_and_suggest_directory_name; then
+    if ! validate_and_suggest_directory_name "$MSG_DIR_NAME_INIT_INSTRUCTION"; then
         echo -e "${RED}$MSG_INIT_CANCELLED${NC}"
         exit 1
     fi

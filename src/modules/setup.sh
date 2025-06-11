@@ -55,6 +55,11 @@ setup_connect() {
 setup_main() {
     log "INFO" "$MSG_SETUP_START"
     
+    # 디렉토리 이름 검증 (setup 명령어 실행 전 필수 조건)
+    if ! validate_and_suggest_directory_name "$MSG_SETUP_DIR_NAME_INSTRUCTION"; then
+        return 1
+    fi
+    
     # 1. 자동 실행 (run)
     setup_run "$@"
     

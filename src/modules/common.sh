@@ -187,6 +187,7 @@ convert_to_snake_case() {
 # Suggest directory name change and execute
 suggest_directory_rename() {
     local current_dir="$1"
+    local instruction_message="$2"
     local current_name=$(basename "$current_dir")
     local suggested_name=$(convert_to_snake_case "$current_name")
     local parent_dir=$(dirname "$current_dir")
@@ -236,7 +237,7 @@ suggest_directory_rename() {
             echo ""
             echo "$MSG_DIR_NAME_STARTING_SHELL"
             echo ""
-            echo "$MSG_DIR_NAME_INIT_INSTRUCTION"
+            echo "$instruction_message"
             echo ""
             
             # 새 디렉토리로 이동
@@ -255,12 +256,13 @@ suggest_directory_rename() {
 # 디렉토리 이름 검증 및 변경 제안
 # Validate directory name and suggest changes
 validate_and_suggest_directory_name() {
+    local instruction_message="$1"
     local current_dir="$(pwd)"
     local dir_name=$(basename "$current_dir")
     
     # 대문자가 포함되어 있는지 확인
     if has_uppercase_letters "$dir_name"; then
-        suggest_directory_rename "$current_dir"
+        suggest_directory_rename "$current_dir" "$instruction_message"
         return $?
     fi
     

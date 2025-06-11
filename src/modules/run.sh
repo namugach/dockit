@@ -45,6 +45,11 @@ run_up() {
 run_main() {
     log "INFO" "$MSG_RUN_START"
     
+    # 디렉토리 이름 검증 (run 명령어 실행 전 필수 조건)
+    if ! validate_and_suggest_directory_name "$MSG_RUN_DIR_NAME_INSTRUCTION"; then
+        return 1
+    fi
+    
     # 1. 초기화 실행
     run_init "$@"
     
