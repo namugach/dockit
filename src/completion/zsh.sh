@@ -120,7 +120,6 @@ _dockit() {
         "migrate:$(dockit_get_message MSG_COMPLETION_MIGRATE)"
         "setup:$(dockit_get_message MSG_COMPLETION_SETUP)"
         "run:$(dockit_get_message MSG_COMPLETION_RUN)"
-        "join:$(dockit_get_message MSG_COMPLETION_JOIN)"
         "ps:$(dockit_get_message MSG_COMPLETION_PS)"
         "list:$(dockit_get_message MSG_COMPLETION_LIST)"
         "ls:$(dockit_get_message MSG_COMPLETION_LIST)"

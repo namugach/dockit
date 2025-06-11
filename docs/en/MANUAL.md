@@ -25,7 +25,6 @@ This document explains the detailed usage of Dockit.
     - [migrate](#migrate---upgrade-version)
     - [setup](#setup---complete-environment-setup)
     - [run](#run---automated-run)
-    - [join](#join---automated-run-and-connect)
     - [ps](#ps---list-containers)
     - [help](#help---display-help)
 5. [Configuration File](#configuration-file)
@@ -170,6 +169,37 @@ This command performs the following tasks:
 - Collects user configuration information
 - Builds a Docker image or reuses an existing image
 - Creates a docker-compose.yml file
+
+#### Directory Name Validation and Auto-rename:
+
+Before starting initialization, the system automatically validates whether the current directory name complies with Docker image naming rules.
+
+**Key Features:**
+- **Uppercase Detection**: Automatically checks if the directory name contains uppercase letters
+- **Auto Conversion**: Converts camelCase to snake_case (e.g., `MyProject` → `my_project`)
+- **Safe Changes**: Verifies target directory existence and prevents conflicts
+- **Auto Restart**: Automatically restarts initialization in the new location after directory change
+
+**Usage Example:**
+```bash
+# Current directory: /home/user/MyProject
+dockit init
+
+# Warning message displayed:
+# "Current directory name contains uppercase letters."
+# "Docker image names only allow lowercase letters."
+# 
+# Current: /home/user/MyProject
+# Suggested: /home/user/my_project
+# 
+# Do you want to change the directory name? [Y/n]: Y
+
+# Auto change and restart initialization in new directory
+```
+
+**User Options:**
+- **Y (default)**: Change to suggested name and continue initialization
+- **n**: Cancel change, use current name as-is or recommend manual change
 
 #### Initialization Options:
 
@@ -620,22 +650,6 @@ This command performs the following tasks without user confirmation prompts:
 - Starts the container in background (equivalent to `up`)
 
 Unlike the `setup` command which prompts for confirmation at each step, the `run` command executes all operations automatically in sequence. This is ideal for scripts or situations where you want to perform all operations without interruption.
-
-### join - Automated Run and Connect
-
-Automatically run initialization, build, start and connect to container in one command.
-
-```bash
-dockit join
-```
-
-This command performs the following tasks:
-- Initializes the Docker development environment (equivalent to `init`)
-- Builds the Docker image (equivalent to `build`)
-- Starts the container (equivalent to `up`)
-- Connects to the container immediately (equivalent to `connect`)
-
-The `join` command combines the functionality of both `run` and `connect` commands, providing a complete end-to-end workflow from initialization to interactive shell. This is perfect for when you want to start working in your development environment with a single command.
 
 ### ps - List Containers
 

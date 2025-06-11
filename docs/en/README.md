@@ -45,6 +45,7 @@ To remove Dockit from your system:
 - **♻️ Image reuse functionality** - Reuse images from other projects for maximum resource efficiency
 - **🗂️ Comprehensive image management** - Complete image management with list, remove, prune, clean commands
 - **📊 Extended project state system** - Complete lifecycle management with none, ready, error states
+- **📁 Directory name validation and auto-rename** - Automatic detection and conversion of uppercase directory names to Docker-compliant lowercase format
 - Automatic application of current user settings (UID/GID) to container
 - **UID conflict detection and automatic user handling**
 - **Smart password assignment to actual container users**
@@ -69,8 +70,7 @@ Dockit provides the following main commands:
 - `connect`: Connect to container with auto-creation and auto-start options
 - `status`: Check container status
 - `setup`: Run initialization, build, start, and connect in one go
-- `run`: Automatically run initialization, build and start
-- `join`: Automatically run initialization, build, start, and connect to container in one command
+- `run`: Automatically initialize, build, and start container without interaction
 - `list`: List all projects created with dockit (real-time Docker status synchronization)
 - `ls`: List all projects created with dockit (alias for list)
 - `image`: Docker image management (list, ls, remove, prune, clean)

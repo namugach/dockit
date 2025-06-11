@@ -1,98 +1,71 @@
 #!/bin/bash
 
-# Load common module
+# setup 모듈 - 완전한 프로젝트 설정 (init, build, up, connect)
+# setup module - Complete project setup (init, build, up, connect)
+
 # 공통 모듈 로드
+# Load common module
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh" "setup"
 
-# Load modules
 # 모듈 로드
-source "$MODULES_DIR/init.sh"
-source "$MODULES_DIR/build.sh"
-source "$MODULES_DIR/up.sh"
+# Load modules
+source "$MODULES_DIR/run.sh"
 source "$MODULES_DIR/connect.sh"
 
-# 초기화 함수
-# Initialization function
-run_init() {
-    # 1. 초기화 (init)
-    init_main "$@"
-}
-
-# 이미지 빌드 함수
-# Image build function
-run_build() {
-    # 2. 이미지 빌드 (build)
-    echo -e "\n${YELLOW}$MSG_SETUP_BUILD_PROMPT${NC}"
-    read -p "$MSG_SELECT_CHOICE [Y/n]: " build_choice
-    build_choice=${build_choice:-y}
+# 자동 실행 함수
+# Automated run function
+setup_run() {
+    log "INFO" "$MSG_SETUP_RUN_START"
     
-    if [[ $build_choice == "y" || $build_choice == "Y" ]]; then
-        build_main "$@"
-        return 0
-    else
-        log "INFO" "$MSG_SETUP_TERMINATED"
-        exit 1
-    fi
-}
-
-# 컨테이너 시작 함수
-# Container start function
-run_up() {
-    # 3. 컨테이너 시작 (up)
-    echo -e "\n${YELLOW}$MSG_START_CONTAINER_NOW${NC}"
-    read -p "$MSG_SELECT_CHOICE [Y/n]: " up_choice
-    up_choice=${up_choice:-y}
+    # run 모듈의 메인 함수 실행
+    # Execute run module's main function
+    run_main "$@"
     
-    if [[ $up_choice == "y" || $up_choice == "Y" ]]; then
-        up_main "$@"
-        return 0
-    else
-        log "INFO" "$MSG_SETUP_TERMINATED"
-        exit 1
-    fi
+    log "INFO" "$MSG_SETUP_RUN_COMPLETE"
 }
 
-# 컨테이너 접속 함수
-# Container connect function
-run_connect() {
-    # 4. 컨테이너 접속 (connect)
-    echo -e "\n${YELLOW}$MSG_CONNECT_CONTAINER_NOW${NC}"
-    read -p "$MSG_SELECT_CHOICE [Y/n]: " connect_choice
-    connect_choice=${connect_choice:-y}
+# 자동 접속 함수
+# Automated connect function
+setup_connect() {
+    log "INFO" "$MSG_SETUP_CONNECT_START"
     
-    if [[ $connect_choice == "y" || $connect_choice == "Y" ]]; then
-        connect_main "$@"
-        return 0
-    else
-        log "INFO" "$MSG_SETUP_TERMINATED"
-        exit 1
-    fi
+    # connect 모듈의 handle_this_argument 함수를 직접 호출
+    # Directly call handle_this_argument function from connect module
+    # 이렇게 하면 read 함수 오버라이드 없이도 자동으로 처리됨
+    # This way it handles automatically without read function override
+    
+    # 환경 변수로 자동 모드 설정
+    # Set auto mode via environment variable
+    export DOCKIT_AUTO_MODE=true
+    
+    # handle_this_argument 함수 직접 호출
+    # Direct call to handle_this_argument function
+    handle_this_argument
+    
+    # 환경 변수 정리
+    # Clean up environment variable
+    unset DOCKIT_AUTO_MODE
+    
+    log "INFO" "$MSG_SETUP_CONNECT_COMPLETE"
 }
 
-# Setup main function
-# 설정 메인 함수
+# setup 메인 함수
+# setup main function
 setup_main() {
     log "INFO" "$MSG_SETUP_START"
     
-    # 1. 초기화 실행
-    run_init "$@"
+    # 1. 자동 실행 (run)
+    setup_run "$@"
     
-    # 2. 이미지 빌드 실행
-    run_build "$@"
-    
-    # 3. 컨테이너 시작 실행
-    run_up "$@"
-    
-    # 4. 컨테이너 접속 실행
-    run_connect "$@"
-
+    # 2. 자동 접속 (connect)
+    setup_connect "$@"
     
     log "SUCCESS" "$MSG_SETUP_COMPLETE"
 }
 
-# Execute main function if script is run directly
 # 스크립트가 직접 실행되면 메인 함수 실행
+# Execute main function if script is run directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     setup_main "$@"
-fi
+fi 
