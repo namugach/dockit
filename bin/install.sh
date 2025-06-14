@@ -145,13 +145,9 @@ restore_messages() {
 copy_language_files() {
     create_dir_if_not_exists "$PROJECT_DIR/config/messages"
     
-    if check_file_exists "$PROJECT_ROOT/config/settings.env"; then
-        cp "$PROJECT_ROOT/config/settings.env" "$PROJECT_DIR/config/"
-        log_info "$(get_message MSG_INSTALL_SETTINGS_COPIED)"
-    else
-        echo "LANGUAGE=\"en\"" > "$PROJECT_DIR/config/settings.env"
-        log_info "$(get_message MSG_INSTALL_DEFAULT_SETTINGS_CREATED)"
-    fi
+    # settings.env 파일 복사
+    cp "$PROJECT_ROOT/config/settings.env" "$PROJECT_DIR/config/"
+    log_info "$(get_message MSG_INSTALL_SETTINGS_COPIED)"
     
     # Copy defaults.sh if it exists
     if check_file_exists "$PROJECT_ROOT/config/defaults.sh"; then
@@ -770,15 +766,16 @@ prepare_timezone_setting() {
 # Apply language settings (call only during actual installation)
 apply_language_settings() {
     if [ -n "$selected_lang" ]; then
-        echo "LANGUAGE=\"$selected_lang\"" > "$PROJECT_DIR/config/settings.env"
+        # 기존 settings.env 파일을 임시 파일로 복사
+        cp "$PROJECT_DIR/config/settings.env" "$PROJECT_DIR/config/settings.env.tmp"
         
-        if [ -n "$locale" ]; then
-            echo "LOCALE=\"$locale\"" >> "$PROJECT_DIR/config/settings.env"
-        fi
+        # 언어 관련 설정만 업데이트
+        sed -i "s/^LANGUAGE=.*/LANGUAGE=\"$selected_lang\"/" "$PROJECT_DIR/config/settings.env.tmp"
+        sed -i "s/^LOCALE=.*/LOCALE=\"$locale\"/" "$PROJECT_DIR/config/settings.env.tmp"
+        sed -i "s/^TIMEZONE=.*/TIMEZONE=\"$timezone\"/" "$PROJECT_DIR/config/settings.env.tmp"
         
-        if [ -n "$timezone" ]; then
-            echo "TIMEZONE=\"$timezone\"" >> "$PROJECT_DIR/config/settings.env"
-        fi
+        # 임시 파일을 원래 파일로 이동
+        mv "$PROJECT_DIR/config/settings.env.tmp" "$PROJECT_DIR/config/settings.env"
     fi
 }
 
@@ -842,22 +839,6 @@ install_project_preserving_lang() {
     
     log_info "$(printf "$(get_message MSG_INSTALL_PATH)" "$PROJECT_DIR")"
     return 0
-}
-
-# 언어 설정 적용 (실제 설치 단계에서만 호출)
-# Apply language settings (call only during actual installation)
-apply_language_settings() {
-    if [ -n "$selected_lang" ]; then
-        echo "LANGUAGE=\"$selected_lang\"" > "$PROJECT_DIR/config/settings.env"
-        
-        if [ -n "$locale" ]; then
-            echo "LOCALE=\"$locale\"" >> "$PROJECT_DIR/config/settings.env"
-        fi
-        
-        if [ -n "$timezone" ]; then
-            echo "TIMEZONE=\"$timezone\"" >> "$PROJECT_DIR/config/settings.env"
-        fi
-    fi
 }
 
 # 초기 체크 수행 (파일 시스템 변경 없음)

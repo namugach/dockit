@@ -130,14 +130,35 @@ else
     DOCKER_COMPOSE_CMD="docker compose"
 fi
 
+# Load settings from settings.env
+# settings.env에서 설정 로드
+load_settings() {
+    local settings_file="${EXEC_DIR}/.dockit_project/config/settings.env"
+    local global_settings="${PROJECT_ROOT}/config/settings.env"
+    local installed_settings="/home/${USER}/.dockit/config/settings.env"
+    
+    # 설정 파일 우선순위에 따라 로드
+    if [ -f "$settings_file" ]; then
+        source "$settings_file"
+    elif [ -f "$global_settings" ]; then
+        source "$global_settings"
+    elif [ -f "$installed_settings" ]; then
+        source "$installed_settings"
+    fi
+}
+
+# Load settings before setting defaults
+# 기본값 설정 전에 설정 로드
+load_settings
+
 # Default settings
 # 기본 설정값
 DEFAULT_BASE_IMAGE="ubuntu:24.04"
 DEFAULT_USERNAME="$(whoami)"
 DEFAULT_UID="$(id -u)"
 DEFAULT_GID="$(id -g)"
-DEFAULT_PASSWORD="1234"
-DEFAULT_WORKDIR="work/project"
+DEFAULT_PASSWORD="${DEFAULT_PASSWORD:-1234}"  # settings.env에서 가져온 값이 없으면 기본값 사용
+DEFAULT_WORKDIR="${DEFAULT_WORKDIR:-work/project}"  # settings.env에서 가져온 값이 없으면 기본값 사용
 
 # 이 변수들은 utils/log.sh에서 제공
 # These variables are provided by utils/log.sh
