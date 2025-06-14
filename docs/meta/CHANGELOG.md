@@ -2,6 +2,59 @@
 
 모든 주요 변경 사항이 이 파일에 기록됩니다.
 
+## [1.5.0] - 2025-01-11
+
+### 주요 아키텍처 개선
+- **설정 관리 구조 완전 개편**
+  - 이중 설정 관리 문제 해결: `defaults.sh`와 `settings.env` 간 일관성 확보
+  - 모든 설정 변수가 동일한 패턴으로 작동하도록 통합
+  - 설치 시점에 `defaults.sh` → `settings.env` 자동 설정 방식으로 표준화
+
+### 변수명 단순화 및 일관성 확보
+- **직관적인 변수명 체계 도입**
+  - `DEFAULT_PASSWORD` → `PASSWORD` 변수명 단순화
+  - `DEFAULT_WORKDIR` → `WORKDIR` 변수명 단순화  
+  - `CUSTOM_BASE_IMAGE` → `BASE_IMAGE` 변수명 단순화
+  - 모든 변수가 `settings.env`에서 직관적인 이름으로 관리됨
+
+- **하위 호환성 보장**
+  - 기존 변수명도 fallback으로 지원하여 기존 설치에 영향 없음
+  - `${PASSWORD:-${DEFAULT_PASSWORD:-1234}}` 형태의 안전한 fallback 구현
+  - 점진적 마이그레이션 지원으로 사용자 편의성 확보
+
+### 설치 과정 자동화 강화
+- **일관된 설치 패턴 구현**
+  - `LOCALE`, `TIMEZONE`, `BASE_IMAGE`와 동일하게 `PASSWORD`, `WORKDIR`도 설치 시 자동 설정
+  - `prepare_password_workdir_setting()` 함수 추가로 설치 로직 모듈화
+  - 언어별 기본값 자동 적용 시스템 완성
+
+- **사용자 경험 개선**
+  - 설치 시 "비밀번호가 설정됩니다: 1234" 메시지 추가
+  - 설치 시 "작업 디렉토리가 설정됩니다: work/project" 메시지 추가
+  - 설정 과정의 투명성 및 예측 가능성 향상
+
+### 코드 구조 정리
+- **복잡한 fallback 로직 단순화**
+  - `src/modules/common.sh`에서 변수 설정 로직 간소화
+  - `src/modules/init.sh`에서 불필요한 중첩 fallback 제거
+  - `config/system.sh`에서 일관된 변수 처리 방식 적용
+
+- **메시지 시스템 확장**
+  - `MSG_INSTALL_PASSWORD_SET`, `MSG_INSTALL_WORKDIR_SET` 메시지 추가
+  - 한국어/영어 완전 다국어화 지원
+  - 설치 과정의 모든 단계에 대한 명확한 피드백 제공
+
+### 기술적 향상
+- **설정 파일 구조 최적화**
+  - `config/settings.env`에서 모든 변수가 "설치 시 자동 설정" 주석과 함께 관리
+  - 개발자용 상수(`defaults.sh`)와 사용자 설정(`settings.env`) 역할 명확히 분리
+  - 설정 변경 시 단일 파일(`settings.env`)만 수정하면 되는 직관적 구조
+
+- **테스트 및 검증 완료**
+  - 전체 설치 과정(`auto_reset.sh`) 테스트 통과
+  - 프로젝트 초기화(`dockit init`) 정상 작동 확인
+  - 모든 변수가 올바른 값으로 설정되고 표시됨을 검증
+
 ## [1.4.6] - 2025-01-10
 
 ### 수정됨
