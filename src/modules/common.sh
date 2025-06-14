@@ -158,9 +158,9 @@ DEFAULT_USERNAME="$(whoami)"
 DEFAULT_UID="$(id -u)"
 DEFAULT_GID="$(id -g)"
 # 하위 호환성을 위해 PASSWORD -> DEFAULT_PASSWORD -> 기본값 순으로 fallback
-DEFAULT_PASSWORD="${PASSWORD:-${DEFAULT_PASSWORD:-1234}}"
+PASSWORD="${PASSWORD:-${DEFAULT_PASSWORD:-1234}}"
 # 하위 호환성을 위해 WORKDIR -> DEFAULT_WORKDIR -> 기본값 순으로 fallback  
-DEFAULT_WORKDIR="${WORKDIR:-${DEFAULT_WORKDIR:-work/project}}"
+WORKDIR="${WORKDIR:-${DEFAULT_WORKDIR:-work/project}}"
 
 # 이 변수들은 utils/log.sh에서 제공
 # These variables are provided by utils/log.sh
@@ -419,8 +419,8 @@ load_env() {
     export USER_UID="$DEFAULT_UID"
     export USER_GID="$DEFAULT_GID"
     # 새로운 변수명 우선 사용, 하위 호환성을 위해 DEFAULT_ 변수도 fallback으로 제공
-    export USER_PASSWORD="${PASSWORD:-$DEFAULT_PASSWORD}"
-    export WORKDIR="${WORKDIR:-$DEFAULT_WORKDIR}"
+    export USER_PASSWORD="$PASSWORD"
+    export WORKDIR="$WORKDIR"
 
     # Load configuration file if it exists
     # 설정 파일이 있으면 로드

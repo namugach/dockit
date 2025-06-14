@@ -736,6 +736,7 @@ prepare_language_settings() {
         prepare_locale_setting "$lang_file"
         prepare_timezone_setting "$lang_file"
         prepare_base_image_setting "$selected_lang"
+        prepare_password_workdir_setting
     fi
 }
 
@@ -784,6 +785,26 @@ prepare_base_image_setting() {
     fi
 }
 
+# 비밀번호와 작업 디렉토리 설정 준비 (메모리에만 저장)
+# Prepare password and workdir setting (in memory only)
+prepare_password_workdir_setting() {
+    # defaults.sh에서 기본 비밀번호와 작업 디렉토리 가져오기
+    source "$PROJECT_ROOT/config/defaults.sh"
+    
+    password="$DEFAULT_PASSWORD"
+    workdir="$DEFAULT_WORKDIR"
+    
+    if [ -n "$password" ]; then
+        export PASSWORD="$password"
+        log_info "$(printf "$(get_message MSG_INSTALL_PASSWORD_SET)" "$password")"
+    fi
+    
+    if [ -n "$workdir" ]; then
+        export WORKDIR="$workdir"
+        log_info "$(printf "$(get_message MSG_INSTALL_WORKDIR_SET)" "$workdir")"
+    fi
+}
+
 # 언어 설정 적용 (실제 설치 단계에서만 호출)
 # Apply language settings (call only during actual installation)
 apply_language_settings() {
@@ -814,6 +835,8 @@ apply_language_settings() {
         sed -i "s|^LOCALE=.*|LOCALE=\"$locale\"|" "$PROJECT_DIR/config/settings.env.tmp"
         sed -i "s|^TIMEZONE=.*|TIMEZONE=\"$timezone\"|" "$PROJECT_DIR/config/settings.env.tmp"
         sed -i "s|^BASE_IMAGE=.*|BASE_IMAGE=\"$base_image\"|" "$PROJECT_DIR/config/settings.env.tmp"
+        sed -i "s|^PASSWORD=.*|PASSWORD=\"$password\"|" "$PROJECT_DIR/config/settings.env.tmp"
+        sed -i "s|^WORKDIR=.*|WORKDIR=\"$workdir\"|" "$PROJECT_DIR/config/settings.env.tmp"
         
         # 임시 파일을 원래 파일로 이동
         mv "$PROJECT_DIR/config/settings.env.tmp" "$PROJECT_DIR/config/settings.env"
