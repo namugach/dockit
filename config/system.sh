@@ -8,12 +8,6 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# Load defaults.sh first
-# 먼저 defaults.sh 로드
-if [ -f "$SCRIPT_DIR/defaults.sh" ]; then
-    source "$SCRIPT_DIR/defaults.sh"
-fi
-
 # Load common functions
 # 공통 함수 로드
 source "$SCRIPT_DIR/../src/modules/common.sh"

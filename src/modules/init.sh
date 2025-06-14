@@ -8,11 +8,6 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh" "init"
 
-# Load defaults module
-# 기본값 모듈 로드
-CONFIG_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")/config"
-source "$CONFIG_DIR/defaults.sh"
-
 # Load modules
 # 모듈 로드
 source "$MODULES_DIR/build.sh"
