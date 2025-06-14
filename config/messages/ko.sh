@@ -532,6 +532,7 @@ MSG_INSTALL_DEFAULTS_COPIED="기본 상수 파일 복사됨: defaults.sh"
 MSG_INSTALL_MESSAGES_COPIED="메시지 파일 복사됨"
 MSG_INSTALL_MESSAGES_DIR_NOT_FOUND="메시지 디렉토리를 찾을 수 없음: %s"
 MSG_INSTALL_SCRIPT_NOT_FOUND="dockit 스크립트를 찾을 수 없거나 실행 권한이 없습니다: %s"
+MSG_INSTALL_BASE_IMAGE_SET="베이스 이미지가 설정됩니다: %s"
 
 # up 모듈 메시지
 MSG_UP_START="백그라운드에서 컨테이너 시작 모듈 실행 중..."

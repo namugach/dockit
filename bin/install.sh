@@ -735,6 +735,7 @@ prepare_language_settings() {
     if check_file_exists "$lang_file"; then
         prepare_locale_setting "$lang_file"
         prepare_timezone_setting "$lang_file"
+        prepare_base_image_setting "$selected_lang"
     fi
 }
 
@@ -762,6 +763,27 @@ prepare_timezone_setting() {
     fi
 }
 
+# 베이스 이미지 설정 준비 (메모리에만 저장)
+# Prepare base image setting (in memory only)
+prepare_base_image_setting() {
+    local selected_lang="$1"
+    
+    # defaults.sh에서 언어별 기본 이미지 가져오기
+    source "$PROJECT_ROOT/config/defaults.sh"
+    
+    # 지원하지 않는 언어인 경우 en(영어)을 기본값으로 사용
+    if [[ -z "${DEFAULT_IMAGES[$selected_lang]}" ]]; then
+        selected_lang="en"
+    fi
+    
+    base_image="${DEFAULT_IMAGES[$selected_lang]}"
+    
+    if [ -n "$base_image" ]; then
+        export BASE_IMAGE="$base_image"
+        log_info "$(printf "$(get_message MSG_INSTALL_BASE_IMAGE_SET)" "$base_image")"
+    fi
+}
+
 # 언어 설정 적용 (실제 설치 단계에서만 호출)
 # Apply language settings (call only during actual installation)
 apply_language_settings() {
@@ -774,6 +796,16 @@ apply_language_settings() {
             fi
         fi
         
+        # base_image가 비어있으면 다시 설정
+        if [ -z "$base_image" ]; then
+            source "$PROJECT_ROOT/config/defaults.sh"
+            local lang_for_image="$selected_lang"
+            if [[ -z "${DEFAULT_IMAGES[$selected_lang]}" ]]; then
+                lang_for_image="en"
+            fi
+            base_image="${DEFAULT_IMAGES[$lang_for_image]}"
+        fi
+        
         # 기존 settings.env 파일을 임시 파일로 복사
         cp "$PROJECT_DIR/config/settings.env" "$PROJECT_DIR/config/settings.env.tmp"
         
@@ -781,6 +813,7 @@ apply_language_settings() {
         sed -i "s|^LANGUAGE=.*|LANGUAGE=\"$selected_lang\"|" "$PROJECT_DIR/config/settings.env.tmp"
         sed -i "s|^LOCALE=.*|LOCALE=\"$locale\"|" "$PROJECT_DIR/config/settings.env.tmp"
         sed -i "s|^TIMEZONE=.*|TIMEZONE=\"$timezone\"|" "$PROJECT_DIR/config/settings.env.tmp"
+        sed -i "s|^BASE_IMAGE=.*|BASE_IMAGE=\"$base_image\"|" "$PROJECT_DIR/config/settings.env.tmp"
         
         # 임시 파일을 원래 파일로 이동
         mv "$PROJECT_DIR/config/settings.env.tmp" "$PROJECT_DIR/config/settings.env"
