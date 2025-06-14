@@ -766,13 +766,21 @@ prepare_timezone_setting() {
 # Apply language settings (call only during actual installation)
 apply_language_settings() {
     if [ -n "$selected_lang" ]; then
+        # timezone이 비어있으면 다시 설정
+        if [ -z "$timezone" ]; then
+            local lang_file="$PROJECT_ROOT/config/messages/$selected_lang.sh"
+            if [ -f "$lang_file" ]; then
+                timezone=$(grep "^LANG_TIMEZONE=" "$lang_file" | cut -d'"' -f2)
+            fi
+        fi
+        
         # 기존 settings.env 파일을 임시 파일로 복사
         cp "$PROJECT_DIR/config/settings.env" "$PROJECT_DIR/config/settings.env.tmp"
         
-        # 언어 관련 설정만 업데이트
-        sed -i "s/^LANGUAGE=.*/LANGUAGE=\"$selected_lang\"/" "$PROJECT_DIR/config/settings.env.tmp"
-        sed -i "s/^LOCALE=.*/LOCALE=\"$locale\"/" "$PROJECT_DIR/config/settings.env.tmp"
-        sed -i "s/^TIMEZONE=.*/TIMEZONE=\"$timezone\"/" "$PROJECT_DIR/config/settings.env.tmp"
+        # 언어 관련 설정만 업데이트 (구분자를 |로 변경)
+        sed -i "s|^LANGUAGE=.*|LANGUAGE=\"$selected_lang\"|" "$PROJECT_DIR/config/settings.env.tmp"
+        sed -i "s|^LOCALE=.*|LOCALE=\"$locale\"|" "$PROJECT_DIR/config/settings.env.tmp"
+        sed -i "s|^TIMEZONE=.*|TIMEZONE=\"$timezone\"|" "$PROJECT_DIR/config/settings.env.tmp"
         
         # 임시 파일을 원래 파일로 이동
         mv "$PROJECT_DIR/config/settings.env.tmp" "$PROJECT_DIR/config/settings.env"
