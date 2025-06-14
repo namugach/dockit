@@ -176,8 +176,10 @@ print_debug_language_settings() {
 # Set default values
 # 기본값 설정
 TIMEZONE=${TIMEZONE:-UTC}
-DEFAULT_PASSWORD=${DEFAULT_PASSWORD:-1234}
-DEFAULT_WORKDIR=${DEFAULT_WORKDIR:-work/project}
+# 하위 호환성을 위해 PASSWORD -> DEFAULT_PASSWORD -> 기본값 순으로 fallback
+DEFAULT_PASSWORD=${PASSWORD:-${DEFAULT_PASSWORD:-1234}}
+# 하위 호환성을 위해 WORKDIR -> DEFAULT_WORKDIR -> 기본값 순으로 fallback
+DEFAULT_WORKDIR=${WORKDIR:-${DEFAULT_WORKDIR:-work/project}}
 DEBUG=${DEBUG:-false}
 
 # 메시지 파일 로드 함수
@@ -272,7 +274,7 @@ print_debug_info() {
         printf "$MSG_SYSTEM_DEBUG_BASE_IMAGE\n" "$BASE_IMAGE"
         printf "$MSG_SYSTEM_DEBUG_LOCALE\n" "$LOCALE_SETTING" 
         printf "$MSG_SYSTEM_DEBUG_TIMEZONE\n" "$TIMEZONE"
-        printf "$MSG_SYSTEM_DEBUG_WORKDIR\n" "$DEFAULT_WORKDIR"
+        printf "$MSG_SYSTEM_DEBUG_WORKDIR\n" "${WORKDIR:-$DEFAULT_WORKDIR}"
         printf "$MSG_SYSTEM_DEBUG_TEMPLATE_DIR\n" "$TEMPLATES_DIR"
         printf "$MSG_SYSTEM_DEBUG_DOCKERFILE\n" "$DOCKERFILE_TEMPLATE"
         echo "$MSG_SYSTEM_DEBUG_END"

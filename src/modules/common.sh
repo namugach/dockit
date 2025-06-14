@@ -157,8 +157,10 @@ DEFAULT_BASE_IMAGE="ubuntu:24.04"
 DEFAULT_USERNAME="$(whoami)"
 DEFAULT_UID="$(id -u)"
 DEFAULT_GID="$(id -g)"
-DEFAULT_PASSWORD="${DEFAULT_PASSWORD:-1234}"  # settings.env에서 가져온 값이 없으면 기본값 사용
-DEFAULT_WORKDIR="${DEFAULT_WORKDIR:-work/project}"  # settings.env에서 가져온 값이 없으면 기본값 사용
+# 하위 호환성을 위해 PASSWORD -> DEFAULT_PASSWORD -> 기본값 순으로 fallback
+DEFAULT_PASSWORD="${PASSWORD:-${DEFAULT_PASSWORD:-1234}}"
+# 하위 호환성을 위해 WORKDIR -> DEFAULT_WORKDIR -> 기본값 순으로 fallback  
+DEFAULT_WORKDIR="${WORKDIR:-${DEFAULT_WORKDIR:-work/project}}"
 
 # 이 변수들은 utils/log.sh에서 제공
 # These variables are provided by utils/log.sh
@@ -416,8 +418,9 @@ load_env() {
     export USERNAME="$DEFAULT_USERNAME"
     export USER_UID="$DEFAULT_UID"
     export USER_GID="$DEFAULT_GID"
-    export USER_PASSWORD="$DEFAULT_PASSWORD"
-    export WORKDIR="$DEFAULT_WORKDIR"
+    # 새로운 변수명 우선 사용, 하위 호환성을 위해 DEFAULT_ 변수도 fallback으로 제공
+    export USER_PASSWORD="${PASSWORD:-$DEFAULT_PASSWORD}"
+    export WORKDIR="${WORKDIR:-$DEFAULT_WORKDIR}"
 
     # Load configuration file if it exists
     # 설정 파일이 있으면 로드
