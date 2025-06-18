@@ -878,19 +878,25 @@ MSG_BASE_SET_SUCCESS="Base image set to '%s'."
 MSG_BASE_SET_ERROR_NO_IMAGE="Please specify a base image to set."
 MSG_BASE_SET_ERROR_NOT_FOUND="Base image '%s' not found in available list."
 MSG_BASE_SET_USAGE="Usage: dockit base set <image>"
+MSG_BASE_SET_ERROR_INVALID_NUMBER="Invalid number '%s'."
+MSG_BASE_SET_USAGE_NUMBER="Usage: dockit base set <image> or dockit base set <number>"
+MSG_BASE_SET_SELECTED_NUMBER="Selected number %s: %s"
 
 # Base add messages
-MSG_BASE_ADD_SUCCESS="Base image '%s' added to the list."
+MSG_BASE_ADD_SUCCESS="Base image '%s' added to list."
 MSG_BASE_ADD_ERROR_NO_IMAGE="Please specify a base image to add."
-MSG_BASE_ADD_ERROR_EXISTS="Base image '%s' already exists in the list."
+MSG_BASE_ADD_ERROR_DUPLICATE="Base image '%s' already exists in list."
 MSG_BASE_ADD_USAGE="Usage: dockit base add <image>"
 
 # Base remove messages
-MSG_BASE_REMOVE_SUCCESS="Base image '%s' removed from the list."
+MSG_BASE_REMOVE_SUCCESS="Base image '%s' removed from list."
 MSG_BASE_REMOVE_ERROR_NO_IMAGE="Please specify a base image to remove."
-MSG_BASE_REMOVE_ERROR_NOT_FOUND="Base image '%s' not found in the list."
-MSG_BASE_REMOVE_ERROR_CURRENT="Cannot remove the currently selected base image."
+MSG_BASE_REMOVE_ERROR_NOT_FOUND="Base image '%s' not found in list."
+MSG_BASE_REMOVE_ERROR_CURRENT="Cannot remove currently selected base image '%s'."
 MSG_BASE_REMOVE_USAGE="Usage: dockit base remove <image>"
+MSG_BASE_REMOVE_ERROR_INVALID_NUMBER="Invalid number '%s'."
+MSG_BASE_REMOVE_USAGE_NUMBER="Usage: dockit base remove <image> or dockit base remove <number>"
+MSG_BASE_REMOVE_SELECTED_NUMBER="Selected number %s: %s"
 
 # Base validate messages
 MSG_BASE_VALIDATE_START="Checking base image availability..."

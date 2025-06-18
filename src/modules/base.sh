@@ -55,6 +55,35 @@ get_current_base_image() {
     fi
 }
 
+# Convert number to image name
+# 번호를 이미지 이름으로 변환
+get_image_by_number() {
+    local number="$1"
+    
+    if [ ! -f "$BASE_IMAGE_LIST_FILE" ]; then
+        return 1
+    fi
+    
+    # Check if input is a number
+    if ! [[ "$number" =~ ^[0-9]+$ ]]; then
+        echo "$number"  # Return as is if not a number
+        return 0
+    fi
+    
+    local count=0
+    while IFS= read -r image; do
+        [ -z "$image" ] && continue
+        count=$((count + 1))
+        
+        if [ "$count" -eq "$number" ]; then
+            echo "$image"
+            return 0
+        fi
+    done < "$BASE_IMAGE_LIST_FILE"
+    
+    return 1  # Number not found
+}
+
 # List all available base images
 list_base_images() {
     echo -e "${CYAN}$MSG_BASE_LIST_TITLE${NC}"
@@ -74,9 +103,9 @@ list_base_images() {
         count=$((count + 1))
         
         if [ "$image" = "$current_image" ]; then
-            echo -e "  ${GREEN}* $image${NC} ${CYAN}$MSG_BASE_LIST_CURRENT_MARKER${NC}"
+            printf "  ${GREEN}%2d. * %s${NC} ${CYAN}%s${NC}\n" "$count" "$image" "$MSG_BASE_LIST_CURRENT_MARKER"
         else
-            echo -e "    $image"
+            printf "  %2d.   %s\n" "$count" "$image"
         fi
     done < "$BASE_IMAGE_LIST_FILE"
     
@@ -87,12 +116,26 @@ list_base_images() {
 
 # Set base image
 set_base_image() {
-    local new_image="$1"
+    local input="$1"
     
-    if [ -z "$new_image" ]; then
+    if [ -z "$input" ]; then
         echo -e "${RED}$MSG_BASE_SET_ERROR_NO_IMAGE${NC}"
         echo -e "${YELLOW}$MSG_BASE_SET_USAGE${NC}"
         return 1
+    fi
+    
+    # Convert number to image name if needed
+    local new_image
+    if [[ "$input" =~ ^[0-9]+$ ]]; then
+        new_image=$(get_image_by_number "$input")
+        if [ $? -ne 0 ] || [ -z "$new_image" ]; then
+            echo -e "${RED}$(printf "$MSG_BASE_SET_ERROR_INVALID_NUMBER" "$input")${NC}"
+            echo -e "${YELLOW}$MSG_BASE_SET_USAGE_NUMBER${NC}"
+            return 1
+        fi
+        echo -e "${CYAN}$(printf "$MSG_BASE_SET_SELECTED_NUMBER" "$input" "$new_image")${NC}"
+    else
+        new_image="$input"
     fi
     
     # Check if image exists in list
@@ -118,7 +161,7 @@ add_base_image() {
     
     # Check if image already exists
     if grep -Fxq "$new_image" "$BASE_IMAGE_LIST_FILE" 2>/dev/null; then
-        echo -e "${RED}$(printf "$MSG_BASE_ADD_ERROR_EXISTS" "$new_image")${NC}"
+        echo -e "${RED}$(printf "$MSG_BASE_ADD_ERROR_DUPLICATE" "$new_image")${NC}"
         return 1
     fi
     
@@ -127,33 +170,51 @@ add_base_image() {
     echo -e "${GREEN}$(printf "$MSG_BASE_ADD_SUCCESS" "$new_image")${NC}"
 }
 
-# Remove base image from list
+# Remove base image
 remove_base_image() {
-    local image_to_remove="$1"
+    local input="$1"
     
-    if [ -z "$image_to_remove" ]; then
+    if [ -z "$input" ]; then
         echo -e "${RED}$MSG_BASE_REMOVE_ERROR_NO_IMAGE${NC}"
         echo -e "${YELLOW}$MSG_BASE_REMOVE_USAGE${NC}"
         return 1
     fi
     
-    # Check if image exists in list
-    if ! grep -Fxq "$image_to_remove" "$BASE_IMAGE_LIST_FILE" 2>/dev/null; then
+    # Convert number to image name if needed
+    local image_to_remove
+    if [[ "$input" =~ ^[0-9]+$ ]]; then
+        image_to_remove=$(get_image_by_number "$input")
+        if [ $? -ne 0 ] || [ -z "$image_to_remove" ]; then
+            echo -e "${RED}$(printf "$MSG_BASE_REMOVE_ERROR_INVALID_NUMBER" "$input")${NC}"
+            echo -e "${YELLOW}$MSG_BASE_REMOVE_USAGE_NUMBER${NC}"
+            return 1
+        fi
+        echo -e "${CYAN}$(printf "$MSG_BASE_REMOVE_SELECTED_NUMBER" "$input" "$image_to_remove")${NC}"
+    else
+        image_to_remove="$input"
+    fi
+    
+    if [ ! -f "$BASE_IMAGE_LIST_FILE" ]; then
+        echo -e "${RED}$MSG_BASE_ERROR_LIST_NOT_FOUND${NC}"
+        return 1
+    fi
+    
+    # Check if image exists
+    if ! grep -Fxq "$image_to_remove" "$BASE_IMAGE_LIST_FILE"; then
         echo -e "${RED}$(printf "$MSG_BASE_REMOVE_ERROR_NOT_FOUND" "$image_to_remove")${NC}"
         return 1
     fi
     
-    # Check if it's the current base image
+    # Check if it's the currently selected image
     local current_image=$(get_current_base_image)
     if [ "$image_to_remove" = "$current_image" ]; then
-        echo -e "${RED}$MSG_BASE_REMOVE_ERROR_CURRENT${NC}"
+        echo -e "${RED}$(printf "$MSG_BASE_REMOVE_ERROR_CURRENT" "$image_to_remove")${NC}"
         return 1
     fi
     
-    # Remove image from list
-    local temp_file=$(mktemp)
-    grep -Fxv "$image_to_remove" "$BASE_IMAGE_LIST_FILE" > "$temp_file"
-    mv "$temp_file" "$BASE_IMAGE_LIST_FILE"
+    # Remove from list
+    grep -Fxv "$image_to_remove" "$BASE_IMAGE_LIST_FILE" > "${BASE_IMAGE_LIST_FILE}.tmp"
+    mv "${BASE_IMAGE_LIST_FILE}.tmp" "$BASE_IMAGE_LIST_FILE"
     
     echo -e "${GREEN}$(printf "$MSG_BASE_REMOVE_SUCCESS" "$image_to_remove")${NC}"
 }
