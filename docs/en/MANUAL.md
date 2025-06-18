@@ -21,6 +21,7 @@ This document explains the detailed usage of Dockit.
     - [status](#status---check-status)
     - [list](#list---project-list)
     - [ls](#ls---quick-project-list)
+    - [base](#base---base-image-management)
     - [image](#image---image-management)
     - [migrate](#migrate---upgrade-version)
     - [setup](#setup---complete-environment-setup)
@@ -515,6 +516,139 @@ This is a convenient short alias for the `list` command, providing the same func
 - Project information overview
 
 Perfect for quick status checks when you want to type fewer characters. All features of the `list` command are available through this alias.
+
+### base - Base Image Management
+
+Provides functionality for managing base images (ubuntu, node, python, etc.) used in projects.
+
+```bash
+dockit base <command> [options]
+```
+
+#### Subcommands:
+
+**1. list - View base image list**
+```bash
+dockit base list
+# or
+dockit base ls
+```
+- Displays all available base images with numbers
+- Shows current selected base image with `*` marker
+- Example:
+  ```
+     1. * namugach/ubuntu-basic:24.04-kor-deno (currently selected)
+     2.   ubuntu:24.04
+     3.   ubuntu:22.04
+     4.   node:20
+     5.   python:3.11
+  ```
+
+**2. set - Set base image**
+```bash
+dockit base set <image_or_number>
+```
+- Sets the default base image
+- Can select by image name or number
+- Examples:
+  ```bash
+  dockit base set ubuntu:22.04    # Set by name
+  dockit base set 3               # Set by number
+  ```
+
+**3. add - Add base image**
+```bash
+dockit base add <image>
+```
+- Adds a new base image to the list
+- Examples:
+  ```bash
+  dockit base add golang:1.21
+  dockit base add rust:1.70
+  ```
+
+**4. remove - Remove base image**
+```bash
+dockit base remove <image_or_number> [image2] [image3] ...
+# or
+dockit base rm <image_or_number> [image2] [image3] ...
+```
+- Removes base images from the list
+- Can remove multiple images at once
+- Currently selected image is automatically skipped
+- Examples:
+  ```bash
+  dockit base rm 5                    # Remove one
+  dockit base rm 1 2 3                # Remove multiple by number
+  dockit base rm ubuntu:20.04 node:18 # Remove multiple by name
+  dockit base rm 1 ubuntu:22.04 3     # Mix numbers and names
+  ```
+
+**5. validate - Validate base images**
+```bash
+dockit base validate
+# or
+dockit base check
+```
+- Checks if all base images in the list actually exist
+- Validates image existence on Docker Hub
+- Shows list of non-existent images
+
+**6. reset - Reset to defaults**
+```bash
+dockit base reset
+```
+- Resets base image list to default values
+- Executes after confirmation prompt
+
+#### Key Features:
+
+**Number-based Interface**:
+- Simple number selection instead of long image names
+- Easy and fast selection with `dockit base set 2` format
+
+**Multiple Operations Support**:
+- Remove multiple images at once: `dockit base rm 1 2 3`
+- Freely mix numbers and names: `dockit base rm 1 ubuntu:22.04 3`
+
+**Smart Protection**:
+- Currently selected base image is automatically skipped during removal
+- Operation summary: "Removal completed: 2 successful, 1 skipped, 0 failed"
+
+**Language Independent**:
+- Free base image selection regardless of language settings
+- Can use English base images in Korean environment
+
+#### Usage Scenarios:
+
+**Basic Usage**:
+```bash
+# Check current base image list
+dockit base list
+
+# Switch to Ubuntu 22.04
+dockit base set ubuntu:22.04
+
+# Add new base image
+dockit base add golang:1.21
+
+# Clean up unnecessary images
+dockit base rm 5 6 7
+```
+
+**Environment-specific Setup**:
+```bash
+# For Node.js projects
+dockit base set node:20
+
+# For Python projects
+dockit base set python:3.11
+
+# For Go projects
+dockit base set golang:1.21
+```
+
+This functionality allows you to easily select and manage optimized base images for each project.
 
 ### image - Image Management
 

@@ -21,6 +21,7 @@
     - [status](#status---상태-확인)
     - [list](#list---프로젝트-목록)
     - [ls](#ls---빠른-프로젝트-목록)
+    - [base](#base---베이스-이미지-관리)
     - [image](#image---이미지-관리)
     - [migrate](#migrate---버전-업그레이드)
     - [setup](#setup---전체-환경-설정)
@@ -522,6 +523,139 @@ dockit ls
 - 프로젝트 정보 개요
 
 적은 타이핑으로 빠른 상태 확인이 필요할 때 완벽합니다. `list` 명령어의 모든 기능을 이 별칭을 통해 사용할 수 있습니다.
+
+### base - 베이스 이미지 관리
+
+프로젝트에서 사용할 베이스 이미지(ubuntu, node, python 등)를 관리하는 기능을 제공합니다.
+
+```bash
+dockit base <명령어> [옵션]
+```
+
+#### 하위 명령어:
+
+**1. list - 베이스 이미지 목록 보기**
+```bash
+dockit base list
+# 또는
+dockit base ls
+```
+- 사용 가능한 모든 베이스 이미지를 번호와 함께 표시
+- 현재 선택된 베이스 이미지에 `*` 표시
+- 예시:
+  ```
+     1. * namugach/ubuntu-basic:24.04-kor-deno (현재 선택됨)
+     2.   ubuntu:24.04
+     3.   ubuntu:22.04
+     4.   node:20
+     5.   python:3.11
+  ```
+
+**2. set - 베이스 이미지 설정**
+```bash
+dockit base set <이미지_또는_번호>
+```
+- 기본 베이스 이미지를 설정
+- 이미지 이름 또는 번호로 선택 가능
+- 예시:
+  ```bash
+  dockit base set ubuntu:22.04    # 이름으로 설정
+  dockit base set 3               # 번호로 설정
+  ```
+
+**3. add - 베이스 이미지 추가**
+```bash
+dockit base add <이미지>
+```
+- 새로운 베이스 이미지를 목록에 추가
+- 예시:
+  ```bash
+  dockit base add golang:1.21
+  dockit base add rust:1.70
+  ```
+
+**4. remove - 베이스 이미지 제거**
+```bash
+dockit base remove <이미지_또는_번호> [이미지2] [이미지3] ...
+# 또는
+dockit base rm <이미지_또는_번호> [이미지2] [이미지3] ...
+```
+- 베이스 이미지를 목록에서 제거
+- 여러 개를 한 번에 제거 가능
+- 현재 선택된 이미지는 자동으로 건너뜀
+- 예시:
+  ```bash
+  dockit base rm 5                    # 하나 제거
+  dockit base rm 1 2 3                # 번호로 여러 개 제거
+  dockit base rm ubuntu:20.04 node:18 # 이름으로 여러 개 제거
+  dockit base rm 1 ubuntu:22.04 3     # 번호와 이름 혼합
+  ```
+
+**5. validate - 베이스 이미지 검증**
+```bash
+dockit base validate
+# 또는
+dockit base check
+```
+- 목록의 모든 베이스 이미지가 실제로 존재하는지 확인
+- Docker Hub에서 이미지 존재 여부 검증
+- 존재하지 않는 이미지 목록 표시
+
+**6. reset - 기본값으로 초기화**
+```bash
+dockit base reset
+```
+- 베이스 이미지 목록을 기본값으로 초기화
+- 확인 프롬프트 후 실행
+
+#### 주요 특징:
+
+**번호 기반 인터페이스**:
+- 긴 이미지 이름 대신 간단한 번호로 선택 가능
+- `dockit base set 2` 형태로 쉽고 빠른 선택
+
+**복수 작업 지원**:
+- 여러 이미지를 한 번에 제거: `dockit base rm 1 2 3`
+- 번호와 이름을 자유롭게 혼합: `dockit base rm 1 ubuntu:22.04 3`
+
+**스마트한 보호 기능**:
+- 현재 선택된 베이스 이미지는 제거 시 자동으로 건너뜀
+- 작업 결과 요약: "제거 완료: 2개 성공, 1개 건너뜀, 0개 실패"
+
+**언어 독립적**:
+- 언어 설정과 무관하게 자유로운 베이스 이미지 선택
+- 한국어 환경에서도 영어 베이스 이미지 사용 가능
+
+#### 사용 시나리오:
+
+**기본 사용법**:
+```bash
+# 현재 베이스 이미지 목록 확인
+dockit base list
+
+# Ubuntu 22.04로 변경
+dockit base set ubuntu:22.04
+
+# 새로운 베이스 이미지 추가
+dockit base add golang:1.21
+
+# 불필요한 이미지들 정리
+dockit base rm 5 6 7
+```
+
+**개발 환경별 설정**:
+```bash
+# Node.js 프로젝트용
+dockit base set node:20
+
+# Python 프로젝트용  
+dockit base set python:3.11
+
+# Go 프로젝트용
+dockit base set golang:1.21
+```
+
+이 기능을 통해 프로젝트별로 최적화된 베이스 이미지를 쉽게 선택하고 관리할 수 있습니다.
 
 ### image - 이미지 관리
 
