@@ -95,7 +95,7 @@ display_current_settings() {
     echo -e "$MSG_USER_GID: ${GREEN}${USER_GID:-$DEFAULT_GID}${NC}"
     echo -e "$MSG_PASSWORD: ${GREEN}${USER_PASSWORD:-$PASSWORD}${NC}"
     echo -e "$MSG_WORKDIR: ${GREEN}${WORKDIR}${NC}"
-    echo -e "$MSG_BASE_IMAGE: ${GREEN}${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}${NC}"
+    echo -e "$MSG_BASE_IMAGE: ${GREEN}${BASE_IMAGE:-$DEFAULT_IMAGE}${NC}"
     echo -e "$MSG_IMAGE_NAME: ${GREEN}${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}${NC}"
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}${CONTAINER_NAME}${NC}"
 }
@@ -118,7 +118,7 @@ set_default_values() {
     USER_GID=${USER_GID:-$DEFAULT_GID}
     USER_PASSWORD=${USER_PASSWORD:-$PASSWORD}
     WORKDIR=${WORKDIR:-$WORKDIR}
-    BASE_IMAGE=${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}
+    BASE_IMAGE=${BASE_IMAGE:-$DEFAULT_IMAGE}
     IMAGE_NAME=${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}
     CONTAINER_NAME=${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}
 }
@@ -141,8 +141,8 @@ get_custom_values() {
     read -p "$MSG_INPUT_WORKDIR [$WORKDIR]: " input
     WORKDIR=${input:-$WORKDIR}
     
-    read -p "$MSG_BASE_IMAGE [${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}]: " input
-    BASE_IMAGE=${input:-${BASE_IMAGE:-${DEFAULT_IMAGES["$LANGUAGE"]}}}
+    read -p "$MSG_BASE_IMAGE [${BASE_IMAGE:-$DEFAULT_IMAGE}]: " input
+    BASE_IMAGE=${input:-${BASE_IMAGE:-$DEFAULT_IMAGE}}
     
     read -p "$MSG_INPUT_IMAGE_NAME [${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}]: " input
     IMAGE_NAME=${input:-${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}}
@@ -330,7 +330,7 @@ process_template() {
     if [ -z "$BASE_IMAGE" ]; then
         log "WARNING" "$MSG_COMMON_BASE_IMAGE_NOT_SET"
         # 현재 언어에 맞는 기본 이미지 사용
-        BASE_IMAGE="${DEFAULT_IMAGES["$LANGUAGE"]}"
+        BASE_IMAGE="${DEFAULT_IMAGE}"
     fi
     
     # 템플릿 파일 존재 확인
@@ -491,7 +491,7 @@ check_base_image() {
     if [ -z "$BASE_IMAGE" ]; then
         log "WARNING" "$MSG_BASE_IMAGE_NOT_SET"
         # 현재 언어에 맞는 기본 이미지 사용
-        BASE_IMAGE="${DEFAULT_IMAGES["$LANGUAGE"]}"
+        BASE_IMAGE="${DEFAULT_IMAGE}"
     fi
     log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
 }

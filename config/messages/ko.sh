@@ -392,31 +392,31 @@ MSG_UNINSTALL_INCOMPLETE="제거가 완전하지 않을 수 있습니다. 수동
 MSG_UNINSTALL_RESTART_SHELL="셸을 다시 시작하거나 'source ~/.bashrc' 또는 'source ~/.zshrc'를 실행해주세요."
 
 # 자동완성 메시지
-MSG_COMPLETION_INIT="dockit 프로젝트 초기화"
-MSG_COMPLETION_START="컨테이너 시작 (옵션: number, \"this\", \"all\")"
-MSG_COMPLETION_BUILD="Docker 이미지 빌드"
+MSG_COMPLETION_INIT="도커 개발 환경 초기화"
+MSG_COMPLETION_START="컨테이너 시작"
+MSG_COMPLETION_BUILD="도커 이미지 빌드"
 MSG_COMPLETION_UP="컨테이너 백그라운드에서 시작"
-MSG_COMPLETION_STOP="컨테이너 중지 (옵션: number, \"this\", \"all\")"
+MSG_COMPLETION_STOP="컨테이너 정지"
 MSG_COMPLETION_DOWN="컨테이너 완전히 제거"
+MSG_COMPLETION_CONNECT="컨테이너에 연결"
 MSG_COMPLETION_STATUS="컨테이너 상태 확인"
-MSG_COMPLETION_CONNECT="컨테이너에 접속"
 MSG_COMPLETION_HELP="도움말 표시"
 MSG_COMPLETION_VERSION="버전 정보 표시"
-MSG_COMPLETION_MIGRATE="프로젝트를 새 버전으로 마이그레이션"
-MSG_COMPLETION_SETUP="초기화, 빌드, 시작, 접속을 한번에 실행"
-MSG_COMPLETION_RUN="자동 초기화, 빌드, 시작 실행"
+MSG_COMPLETION_MIGRATE="새 버전으로 업그레이드"
+MSG_COMPLETION_SETUP="완전한 프로젝트 설정 실행"
+MSG_COMPLETION_RUN="초기화, 빌드, 시작을 자동으로 실행"
 MSG_COMPLETION_PS="모든 dockit 컨테이너 목록 표시"
-MSG_COMPLETION_LIST="등록된 모든 dockit 프로젝트 목록 표시"
-MSG_COMPLETION_IMAGE="dockit으로 생성된 Docker 이미지 관리"
+MSG_COMPLETION_LIST="등록된 모든 프로젝트 목록 표시"
+MSG_COMPLETION_IMAGE="Docker 이미지 관리"
+MSG_COMPLETION_BASE="베이스 이미지 관리"
 
-# Build 명령어 옵션 메시지  
-MSG_BUILD_OPTION_NO_CACHE="Docker 캐시를 사용하지 않고 강제로 리빌드"
-
-# 공통 모듈 테스트 메시지
-MSG_COMMON_TESTING_FUNCTION="generate_dockit_name 함수 테스트 중..."
-MSG_COMMON_CURRENT_DIR="현재 디렉토리"
-MSG_COMMON_GENERATED_NAME="생성된 이름"
-MSG_COMMON_TESTING_EXPLICIT="명시적 경로로 테스트"
+# Base 자동완성 메시지
+MSG_BASE_COMPLETION_LIST="사용 가능한 베이스 이미지 목록 표시"
+MSG_BASE_COMPLETION_SET="기본 베이스 이미지 설정"
+MSG_BASE_COMPLETION_ADD="새 베이스 이미지를 목록에 추가"
+MSG_BASE_COMPLETION_REMOVE="베이스 이미지를 목록에서 제거"
+MSG_BASE_COMPLETION_VALIDATE="모든 베이스 이미지 존재 여부 확인"
+MSG_BASE_COMPLETION_RESET="베이스 이미지 설정을 기본값으로 초기화"
 
 # 언어 설정 메시지
 MSG_INSTALL_LANGUAGE_SETUP="언어 설정 중..."
@@ -530,11 +530,13 @@ MSG_INSTALL_SETTINGS_COPIED="설정 파일 복사됨: settings.env"
 MSG_INSTALL_DEFAULT_SETTINGS_CREATED="기본 설정 파일 생성됨: settings.env"
 MSG_INSTALL_DEFAULTS_COPIED="기본 상수 파일 복사됨: defaults.sh"
 MSG_INSTALL_MESSAGES_COPIED="메시지 파일 복사됨"
-MSG_INSTALL_MESSAGES_DIR_NOT_FOUND="메시지 디렉토리를 찾을 수 없음: %s"
+MSG_INSTALL_MESSAGES_DIR_NOT_FOUND="메시지 디렉토리를 찾을 수 없습니다: %s"
 MSG_INSTALL_SCRIPT_NOT_FOUND="dockit 스크립트를 찾을 수 없거나 실행 권한이 없습니다: %s"
 MSG_INSTALL_BASE_IMAGE_SET="베이스 이미지가 설정됩니다: %s"
 MSG_INSTALL_PASSWORD_SET="비밀번호가 설정됩니다: %s"
 MSG_INSTALL_WORKDIR_SET="작업 디렉토리가 설정됩니다: %s"
+MSG_INSTALL_BASE_IMAGE_LIST_COPIED="베이스 이미지 목록 복사됨: base_image_list"
+MSG_INSTALL_BASE_IMAGE_COPIED="베이스 이미지 설정 복사됨: base_image"
 
 # up 모듈 메시지
 MSG_UP_START="백그라운드에서 컨테이너 시작 모듈 실행 중..."
@@ -835,3 +837,66 @@ MSG_DIR_NAME_STARTING_SHELL="새 디렉토리에서 쉘을 시작합니다."
 MSG_DIR_NAME_CHANGE_FAILED="디렉토리 이름 변경에 실패했습니다."
 MSG_DIR_NAME_INIT_INSTRUCTION="이제 'dockit init'을 실행하여 초기화를 진행하세요."
 MSG_RUN_DIR_NAME_INSTRUCTION="run 명령어가 중단되었습니다. 새 디렉토리에서 다시 'dockit run'을 실행해주세요."
+
+# Base 모듈 메시지
+MSG_HELP_BASE="  base     - 베이스 이미지 관리 (list, set, add, remove, validate, reset)"
+
+# Base 모듈 사용법
+MSG_BASE_USAGE_TITLE="사용법: dockit base <명령어> [옵션]"
+MSG_BASE_USAGE_COMMANDS="명령어:"
+MSG_BASE_USAGE_LIST="list                 - 사용 가능한 베이스 이미지 목록 표시"
+MSG_BASE_USAGE_SET="set <이미지>         - 기본 베이스 이미지 설정"
+MSG_BASE_USAGE_ADD="add <이미지>         - 새 베이스 이미지를 목록에 추가"
+MSG_BASE_USAGE_REMOVE="remove <이미지>      - 베이스 이미지를 목록에서 제거"
+MSG_BASE_USAGE_VALIDATE="validate             - 모든 베이스 이미지 존재 여부 확인"
+MSG_BASE_USAGE_RESET="reset                - 베이스 이미지 설정을 기본값으로 초기화"
+
+# Base 모듈 예시
+MSG_BASE_USAGE_EXAMPLES="예시:"
+MSG_BASE_USAGE_EXAMPLE_LIST="dockit base list"
+MSG_BASE_USAGE_EXAMPLE_SET="dockit base set ubuntu:22.04"
+MSG_BASE_USAGE_EXAMPLE_ADD="dockit base add python:3.9"
+MSG_BASE_USAGE_EXAMPLE_REMOVE="dockit base remove python:3.9"
+
+# Base list 메시지
+MSG_BASE_LIST_TITLE="사용 가능한 베이스 이미지:"
+MSG_BASE_LIST_CURRENT="현재 베이스 이미지:"
+MSG_BASE_LIST_CURRENT_MARKER="(현재 선택됨)"
+MSG_BASE_LIST_NO_IMAGES="사용 가능한 베이스 이미지가 없습니다."
+
+# Base set 메시지
+MSG_BASE_SET_SUCCESS="베이스 이미지가 '%s'(으)로 설정되었습니다."
+MSG_BASE_SET_ERROR_NO_IMAGE="설정할 베이스 이미지를 지정해주세요."
+MSG_BASE_SET_ERROR_NOT_FOUND="베이스 이미지 '%s'를 사용 가능한 목록에서 찾을 수 없습니다."
+MSG_BASE_SET_USAGE="사용법: dockit base set <이미지>"
+
+# Base add 메시지
+MSG_BASE_ADD_SUCCESS="베이스 이미지 '%s'가 목록에 추가되었습니다."
+MSG_BASE_ADD_ERROR_NO_IMAGE="추가할 베이스 이미지를 지정해주세요."
+MSG_BASE_ADD_ERROR_EXISTS="베이스 이미지 '%s'가 이미 목록에 있습니다."
+MSG_BASE_ADD_USAGE="사용법: dockit base add <이미지>"
+
+# Base remove 메시지
+MSG_BASE_REMOVE_SUCCESS="베이스 이미지 '%s'가 목록에서 제거되었습니다."
+MSG_BASE_REMOVE_ERROR_NO_IMAGE="제거할 베이스 이미지를 지정해주세요."
+MSG_BASE_REMOVE_ERROR_NOT_FOUND="베이스 이미지 '%s'를 목록에서 찾을 수 없습니다."
+MSG_BASE_REMOVE_ERROR_CURRENT="현재 사용 중인 베이스 이미지는 제거할 수 없습니다."
+MSG_BASE_REMOVE_USAGE="사용법: dockit base remove <이미지>"
+
+# Base validate 메시지
+MSG_BASE_VALIDATE_START="베이스 이미지 존재 여부를 확인하는 중..."
+MSG_BASE_VALIDATE_CHECKING="'%s' 확인 중..."
+MSG_BASE_VALIDATE_SUCCESS="모든 베이스 이미지가 사용 가능합니다."
+MSG_BASE_VALIDATE_ERROR_DOCKER="Docker가 실행 중이지 않거나 설치되지 않았습니다."
+MSG_BASE_VALIDATE_ERROR_NOT_FOUND="베이스 이미지 '%s'를 찾을 수 없습니다."
+MSG_BASE_VALIDATE_FAILED="%d개의 베이스 이미지를 찾을 수 없습니다."
+
+# Base reset 메시지
+MSG_BASE_RESET_CONFIRM="베이스 이미지 설정을 기본값으로 초기화하시겠습니까? [y/N]: "
+MSG_BASE_RESET_SUCCESS="베이스 이미지 설정이 기본값으로 초기화되었습니다."
+MSG_BASE_RESET_CANCELLED="초기화가 취소되었습니다."
+
+# Base 일반 메시지
+MSG_BASE_ERROR_UNKNOWN_COMMAND="알 수 없는 명령어: %s"
+MSG_BASE_ERROR_CONFIG_NOT_FOUND="베이스 이미지 설정 파일을 찾을 수 없습니다."
+MSG_BASE_ERROR_LIST_NOT_FOUND="베이스 이미지 목록 파일을 찾을 수 없습니다."

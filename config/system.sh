@@ -237,26 +237,16 @@ print_message() {
 # Default settings by language - get directly from arrays
 get_language_settings() {
     local lang="$1"
-    # 지원하지 않는 언어인 경우 en(영어)을 기본값으로 사용
-    # Use en(English) as default for unsupported languages
-    if [[ -z "${DEFAULT_IMAGES[$lang]}" ]]; then
-        lang="en"
-    fi
-    
-    echo "${DEFAULT_IMAGES[$lang]}|${DEFAULT_LOCALES[$lang]}|${DEFAULT_TIMEZONES[$lang]}"
+    # 언어에 관계없이 동일한 베이스 이미지 사용
+    # Use same base image regardless of language
+    echo "$DEFAULT_IMAGE|${DEFAULT_LOCALES[$lang]}|${DEFAULT_TIMEZONES[$lang]}"
 }
 
 # Set base image based on language
 # 언어에 따른 베이스 이미지 설정
 set_base_image() {
-    # 지원하지 않는 언어인 경우 en(영어)을 기본값으로 사용
-    # Use en(English) as default for unsupported languages
-    if [[ -z "${DEFAULT_IMAGES[$LANGUAGE]}" ]]; then
-        LANGUAGE="en"
-    fi
-    
-    # BASE_IMAGE가 설정되어 있지 않으면 언어별 기본 이미지 사용
-    BASE_IMAGE=${BASE_IMAGE:-${DEFAULT_IMAGES[$LANGUAGE]}}
+    # BASE_IMAGE가 설정되어 있지 않으면 기본 이미지 사용
+    BASE_IMAGE=${BASE_IMAGE:-$DEFAULT_IMAGE}
     LOCALE_SETTING=${DEFAULT_LOCALES[$LANGUAGE]}
     TIMEZONE=${DEFAULT_TIMEZONES[$LANGUAGE]}
 }

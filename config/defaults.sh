@@ -3,11 +3,10 @@
 # 기본 상수 정의 (개발자 관리용 - 사용자는 settings.env로 오버라이드)
 # Default constants definition (for developer management - users override via settings.env)
 
-# 언어별 이미지 매핑
-# Image mapping by language
-declare -A DEFAULT_IMAGES
-DEFAULT_IMAGES["ko"]="namugach/ubuntu-basic:24.04-kor-deno"
-DEFAULT_IMAGES["en"]="ubuntu:24.04"
+# 베이스 이미지 설정 로드
+# Load base image configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_IMAGE=$(cat "$SCRIPT_DIR/base_image" 2>/dev/null || echo "namugach/ubuntu-basic:24.04-kor-deno")
 
 # 언어별 로케일 매핑
 # Locale mapping by language
@@ -35,7 +34,7 @@ DEFAULT_DEBUG="false"
 
 # 내보내기 - 다른 스크립트에서 사용할 수 있도록
 # Export - so other scripts can use these values
-export DEFAULT_IMAGES
+export DEFAULT_IMAGE
 export DEFAULT_LOCALES
 export DEFAULT_TIMEZONES
 export DEFAULT_PASSWORD

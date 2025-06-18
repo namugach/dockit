@@ -16,7 +16,7 @@ check_base_image() {
     if [ -z "$BASE_IMAGE" ]; then
         log "WARNING" "$MSG_BASE_IMAGE_NOT_SET"
         # 현재 언어에 맞는 기본 이미지 사용
-        BASE_IMAGE="${DEFAULT_IMAGES["$LANGUAGE"]}"
+        BASE_IMAGE="$DEFAULT_IMAGE"
     fi
     log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
 }

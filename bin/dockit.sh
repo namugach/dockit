@@ -119,6 +119,10 @@ execute_command() {
             source "$MODULES_DIR/image.sh"
             image_main "$@"
             ;;
+        base)
+            source "$MODULES_DIR/base.sh"
+            base_main "$@"
+            ;;
         help)
             source "$MODULES_DIR/help.sh"
             show_help

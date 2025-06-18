@@ -94,6 +94,21 @@ _dockit() {
                 _describe 'image_option' image_options
                 return 0
                 ;;
+            base)
+                base_options=(
+                    "list:$(dockit_get_message MSG_BASE_COMPLETION_LIST)"
+                    "ls:$(dockit_get_message MSG_BASE_COMPLETION_LIST)"
+                    "set:$(dockit_get_message MSG_BASE_COMPLETION_SET)"
+                    "add:$(dockit_get_message MSG_BASE_COMPLETION_ADD)"
+                    "remove:$(dockit_get_message MSG_BASE_COMPLETION_REMOVE)"
+                    "rm:$(dockit_get_message MSG_BASE_COMPLETION_REMOVE)"
+                    "validate:$(dockit_get_message MSG_BASE_COMPLETION_VALIDATE)"
+                    "check:$(dockit_get_message MSG_BASE_COMPLETION_VALIDATE)"
+                    "reset:$(dockit_get_message MSG_BASE_COMPLETION_RESET)"
+                )
+                _describe 'base_option' base_options
+                return 0
+                ;;
         esac
         return 0
     fi
@@ -124,6 +139,7 @@ _dockit() {
         "list:$(dockit_get_message MSG_COMPLETION_LIST)"
         "ls:$(dockit_get_message MSG_COMPLETION_LIST)"
         "image:$(dockit_get_message MSG_COMPLETION_IMAGE)"
+        "base:$(dockit_get_message MSG_COMPLETION_BASE)"
     )
     
     # 자동완성 설명 표시

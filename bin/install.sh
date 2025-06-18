@@ -155,6 +155,17 @@ copy_language_files() {
         log_info "$(get_message MSG_INSTALL_DEFAULTS_COPIED)"
     fi
     
+    # Copy base image configuration files if they exist
+    if check_file_exists "$PROJECT_ROOT/config/base_image_list"; then
+        cp "$PROJECT_ROOT/config/base_image_list" "$PROJECT_DIR/config/"
+        log_info "$(get_message MSG_INSTALL_BASE_IMAGE_LIST_COPIED)"
+    fi
+    
+    if check_file_exists "$PROJECT_ROOT/config/base_image"; then
+        cp "$PROJECT_ROOT/config/base_image" "$PROJECT_DIR/config/"
+        log_info "$(get_message MSG_INSTALL_BASE_IMAGE_COPIED)"
+    fi
+    
     if check_dir_exists "$PROJECT_ROOT/config/messages"; then
         cp -r "$PROJECT_ROOT/config/messages/"* "$PROJECT_DIR/config/messages/"
         log_info "$(get_message MSG_INSTALL_MESSAGES_COPIED)"
@@ -769,15 +780,11 @@ prepare_timezone_setting() {
 prepare_base_image_setting() {
     local selected_lang="$1"
     
-    # defaults.sh에서 언어별 기본 이미지 가져오기
+    # defaults.sh에서 기본 이미지 가져오기
     source "$PROJECT_ROOT/config/defaults.sh"
     
-    # 지원하지 않는 언어인 경우 en(영어)을 기본값으로 사용
-    if [[ -z "${DEFAULT_IMAGES[$selected_lang]}" ]]; then
-        selected_lang="en"
-    fi
-    
-    base_image="${DEFAULT_IMAGES[$selected_lang]}"
+    # 언어에 관계없이 동일한 베이스 이미지 사용
+    base_image="$DEFAULT_IMAGE"
     
     if [ -n "$base_image" ]; then
         export BASE_IMAGE="$base_image"
@@ -820,11 +827,8 @@ apply_language_settings() {
         # base_image가 비어있으면 다시 설정
         if [ -z "$base_image" ]; then
             source "$PROJECT_ROOT/config/defaults.sh"
-            local lang_for_image="$selected_lang"
-            if [[ -z "${DEFAULT_IMAGES[$selected_lang]}" ]]; then
-                lang_for_image="en"
-            fi
-            base_image="${DEFAULT_IMAGES[$lang_for_image]}"
+            # 언어에 관계없이 동일한 베이스 이미지 사용
+            base_image="$DEFAULT_IMAGE"
         fi
         
         # 기존 settings.env 파일을 임시 파일로 복사

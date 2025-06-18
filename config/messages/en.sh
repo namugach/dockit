@@ -254,6 +254,7 @@ MSG_HELP_VERSION="  version  - Display version information"
 MSG_HELP_PS="  ps       - List all dockit containers"
 MSG_HELP_LIST="  list     - List all registered projects"
 MSG_HELP_LS="  ls       - List all registered projects (alias for list)"
+MSG_HELP_BASE="  base     - Manage base images (list, set, add, remove, validate, reset)"
 
 MSG_CONFIG_FILES_HEADER="Configuration Files"
 MSG_CONFIG_FILE_ENV="  .dockit_project/.env                # User settings file"
@@ -531,12 +532,11 @@ MSG_INSTALL_DOCKER_NOT_INSTALLED="Docker not installed. Please install Docker fi
 MSG_INSTALL_PERMISSION_DENIED="Permission denied. Please check your permissions."
 MSG_INSTALL_RUN_WITH_SUDO="You may need to run with sudo or check directory permissions."
 MSG_INSTALL_SETTINGS_COPIED="Settings file copied: settings.env"
-MSG_INSTALL_DEFAULT_SETTINGS_CREATED="Default settings file created: settings.env"
+MSG_INSTALL_MESSAGES_DIR_NOT_FOUND="Message directory not found: %s"
 MSG_INSTALL_DEFAULTS_COPIED="Default constants file copied: defaults.sh"
 MSG_INSTALL_MESSAGES_COPIED="Message files copied"
-MSG_INSTALL_MESSAGES_DIR_NOT_FOUND="Message directory not found: %s"
-MSG_INSTALL_SCRIPT_NOT_FOUND="dockit script not found or not executable: %s"
-
+MSG_INSTALL_BASE_IMAGE_LIST_COPIED="Base image list copied: base_image_list"
+MSG_INSTALL_BASE_IMAGE_COPIED="Base image setting copied: base_image"
 
 # up module messages
 MSG_UP_START="Running container start module in background..."
@@ -846,4 +846,76 @@ MSG_DIR_NAME_NEW_LOCATION="New location: %s"
 MSG_DIR_NAME_STARTING_SHELL="Starting shell in the new directory."
 MSG_DIR_NAME_CHANGE_FAILED="Failed to change directory name."
 MSG_INIT_CANCELLED="Initialization has been cancelled."
+
+# Base module messages
+MSG_HELP_BASE="  base     - Manage base images (list, set, add, remove, validate, reset)"
+
+# Base module usage
+MSG_BASE_USAGE_TITLE="Usage: dockit base <command> [options]"
+MSG_BASE_USAGE_COMMANDS="Commands:"
+MSG_BASE_USAGE_LIST="list                 - Show available base images"
+MSG_BASE_USAGE_SET="set <image>          - Set default base image"
+MSG_BASE_USAGE_ADD="add <image>          - Add new base image to list"
+MSG_BASE_USAGE_REMOVE="remove <image>       - Remove base image from list"
+MSG_BASE_USAGE_VALIDATE="validate             - Check if all base images exist"
+MSG_BASE_USAGE_RESET="reset                - Reset base image settings to default"
+
+# Base module examples
+MSG_BASE_USAGE_EXAMPLES="Examples:"
+MSG_BASE_USAGE_EXAMPLE_LIST="dockit base list"
+MSG_BASE_USAGE_EXAMPLE_SET="dockit base set ubuntu:22.04"
+MSG_BASE_USAGE_EXAMPLE_ADD="dockit base add python:3.9"
+MSG_BASE_USAGE_EXAMPLE_REMOVE="dockit base remove python:3.9"
+
+# Base list messages
+MSG_BASE_LIST_TITLE="Available base images:"
+MSG_BASE_LIST_CURRENT="Current base image:"
+MSG_BASE_LIST_CURRENT_MARKER="(currently selected)"
+MSG_BASE_LIST_NO_IMAGES="No base images available."
+
+# Base set messages
+MSG_BASE_SET_SUCCESS="Base image set to '%s'."
+MSG_BASE_SET_ERROR_NO_IMAGE="Please specify a base image to set."
+MSG_BASE_SET_ERROR_NOT_FOUND="Base image '%s' not found in available list."
+MSG_BASE_SET_USAGE="Usage: dockit base set <image>"
+
+# Base add messages
+MSG_BASE_ADD_SUCCESS="Base image '%s' added to the list."
+MSG_BASE_ADD_ERROR_NO_IMAGE="Please specify a base image to add."
+MSG_BASE_ADD_ERROR_EXISTS="Base image '%s' already exists in the list."
+MSG_BASE_ADD_USAGE="Usage: dockit base add <image>"
+
+# Base remove messages
+MSG_BASE_REMOVE_SUCCESS="Base image '%s' removed from the list."
+MSG_BASE_REMOVE_ERROR_NO_IMAGE="Please specify a base image to remove."
+MSG_BASE_REMOVE_ERROR_NOT_FOUND="Base image '%s' not found in the list."
+MSG_BASE_REMOVE_ERROR_CURRENT="Cannot remove the currently selected base image."
+MSG_BASE_REMOVE_USAGE="Usage: dockit base remove <image>"
+
+# Base validate messages
+MSG_BASE_VALIDATE_START="Checking base image availability..."
+MSG_BASE_VALIDATE_CHECKING="Checking '%s'..."
+MSG_BASE_VALIDATE_SUCCESS="All base images are available."
+MSG_BASE_VALIDATE_ERROR_DOCKER="Docker is not running or not installed."
+MSG_BASE_VALIDATE_ERROR_NOT_FOUND="Base image '%s' not found."
+MSG_BASE_VALIDATE_FAILED="Failed to find %d base image(s)."
+
+# Base reset messages
+MSG_BASE_RESET_CONFIRM="Reset base image settings to default? [y/N]: "
+MSG_BASE_RESET_SUCCESS="Base image settings have been reset to default."
+MSG_BASE_RESET_CANCELLED="Reset cancelled."
+
+# Base general messages
+MSG_BASE_ERROR_UNKNOWN_COMMAND="Unknown command: %s"
+MSG_BASE_ERROR_CONFIG_NOT_FOUND="Base image configuration file not found."
+MSG_BASE_ERROR_LIST_NOT_FOUND="Base image list file not found."
+
+# Base completion messages
+MSG_COMPLETION_BASE="Manage base images"
+MSG_BASE_COMPLETION_LIST="Show available base images"
+MSG_BASE_COMPLETION_SET="Set default base image"
+MSG_BASE_COMPLETION_ADD="Add new base image to list"
+MSG_BASE_COMPLETION_REMOVE="Remove base image from list"
+MSG_BASE_COMPLETION_VALIDATE="Check if all base images exist"
+MSG_BASE_COMPLETION_RESET="Reset base image settings to default"
 
