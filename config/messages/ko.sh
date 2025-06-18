@@ -884,10 +884,12 @@ MSG_BASE_REMOVE_SUCCESS="베이스 이미지 '%s'가 목록에서 제거되었�
 MSG_BASE_REMOVE_ERROR_NO_IMAGE="제거할 베이스 이미지를 지정해주세요."
 MSG_BASE_REMOVE_ERROR_NOT_FOUND="베이스 이미지 '%s'를 목록에서 찾을 수 없습니다."
 MSG_BASE_REMOVE_ERROR_CURRENT="현재 선택된 베이스 이미지 '%s'는 제거할 수 없습니다."
-MSG_BASE_REMOVE_USAGE="사용법: dockit base remove <이미지>"
+MSG_BASE_REMOVE_USAGE="사용법: dockit base remove <이미지> [이미지2] [이미지3] ..."
 MSG_BASE_REMOVE_ERROR_INVALID_NUMBER="잘못된 번호 '%s'입니다."
-MSG_BASE_REMOVE_USAGE_NUMBER="사용법: dockit base remove <이미지> 또는 dockit base remove <번호>"
+MSG_BASE_REMOVE_USAGE_NUMBER="사용법: dockit base remove <이미지|번호> [이미지|번호] ..."
 MSG_BASE_REMOVE_SELECTED_NUMBER="번호 %s번을 선택했습니다: %s"
+MSG_BASE_REMOVE_SKIP_CURRENT="현재 선택된 이미지 '%s'는 건너뜁니다."
+MSG_BASE_REMOVE_SUMMARY="제거 완료: %d개 성공, %d개 건너뜀, %d개 실패"
 
 # Base validate 메시지
 MSG_BASE_VALIDATE_START="베이스 이미지 존재 여부를 확인하는 중..."

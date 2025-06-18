@@ -172,26 +172,10 @@ add_base_image() {
 
 # Remove base image
 remove_base_image() {
-    local input="$1"
-    
-    if [ -z "$input" ]; then
+    if [ $# -eq 0 ]; then
         echo -e "${RED}$MSG_BASE_REMOVE_ERROR_NO_IMAGE${NC}"
         echo -e "${YELLOW}$MSG_BASE_REMOVE_USAGE${NC}"
         return 1
-    fi
-    
-    # Convert number to image name if needed
-    local image_to_remove
-    if [[ "$input" =~ ^[0-9]+$ ]]; then
-        image_to_remove=$(get_image_by_number "$input")
-        if [ $? -ne 0 ] || [ -z "$image_to_remove" ]; then
-            echo -e "${RED}$(printf "$MSG_BASE_REMOVE_ERROR_INVALID_NUMBER" "$input")${NC}"
-            echo -e "${YELLOW}$MSG_BASE_REMOVE_USAGE_NUMBER${NC}"
-            return 1
-        fi
-        echo -e "${CYAN}$(printf "$MSG_BASE_REMOVE_SELECTED_NUMBER" "$input" "$image_to_remove")${NC}"
-    else
-        image_to_remove="$input"
     fi
     
     if [ ! -f "$BASE_IMAGE_LIST_FILE" ]; then
@@ -199,24 +183,65 @@ remove_base_image() {
         return 1
     fi
     
-    # Check if image exists
-    if ! grep -Fxq "$image_to_remove" "$BASE_IMAGE_LIST_FILE"; then
-        echo -e "${RED}$(printf "$MSG_BASE_REMOVE_ERROR_NOT_FOUND" "$image_to_remove")${NC}"
-        return 1
-    fi
-    
-    # Check if it's the currently selected image
     local current_image=$(get_current_base_image)
-    if [ "$image_to_remove" = "$current_image" ]; then
-        echo -e "${RED}$(printf "$MSG_BASE_REMOVE_ERROR_CURRENT" "$image_to_remove")${NC}"
-        return 1
+    local removed_count=0
+    local failed_count=0
+    local skipped_count=0
+    
+    # First pass: convert all numbers to image names
+    local images_to_remove=()
+    for input in "$@"; do
+        local image_to_remove
+        if [[ "$input" =~ ^[0-9]+$ ]]; then
+            image_to_remove=$(get_image_by_number "$input")
+            if [ $? -ne 0 ] || [ -z "$image_to_remove" ]; then
+                echo -e "${RED}$(printf "$MSG_BASE_REMOVE_ERROR_INVALID_NUMBER" "$input")${NC}"
+                failed_count=$((failed_count + 1))
+                continue
+            fi
+            echo -e "${CYAN}$(printf "$MSG_BASE_REMOVE_SELECTED_NUMBER" "$input" "$image_to_remove")${NC}"
+        else
+            image_to_remove="$input"
+        fi
+        images_to_remove+=("$image_to_remove")
+    done
+    
+    # Second pass: process each image
+    for image_to_remove in "${images_to_remove[@]}"; do
+        # Check if image exists
+        if ! grep -Fxq "$image_to_remove" "$BASE_IMAGE_LIST_FILE"; then
+            echo -e "${RED}$(printf "$MSG_BASE_REMOVE_ERROR_NOT_FOUND" "$image_to_remove")${NC}"
+            failed_count=$((failed_count + 1))
+            continue
+        fi
+        
+        # Check if it's the currently selected image
+        if [ "$image_to_remove" = "$current_image" ]; then
+            echo -e "${YELLOW}$(printf "$MSG_BASE_REMOVE_SKIP_CURRENT" "$image_to_remove")${NC}"
+            skipped_count=$((skipped_count + 1))
+            continue
+        fi
+        
+        # Remove from list
+        grep -Fxv "$image_to_remove" "$BASE_IMAGE_LIST_FILE" > "${BASE_IMAGE_LIST_FILE}.tmp"
+        mv "${BASE_IMAGE_LIST_FILE}.tmp" "$BASE_IMAGE_LIST_FILE"
+        
+        echo -e "${GREEN}$(printf "$MSG_BASE_REMOVE_SUCCESS" "$image_to_remove")${NC}"
+        removed_count=$((removed_count + 1))
+    done
+    
+    # Show summary if multiple items were processed
+    if [ $# -gt 1 ]; then
+        echo ""
+        echo -e "${CYAN}$(printf "$MSG_BASE_REMOVE_SUMMARY" "$removed_count" "$skipped_count" "$failed_count")${NC}"
     fi
     
-    # Remove from list
-    grep -Fxv "$image_to_remove" "$BASE_IMAGE_LIST_FILE" > "${BASE_IMAGE_LIST_FILE}.tmp"
-    mv "${BASE_IMAGE_LIST_FILE}.tmp" "$BASE_IMAGE_LIST_FILE"
-    
-    echo -e "${GREEN}$(printf "$MSG_BASE_REMOVE_SUCCESS" "$image_to_remove")${NC}"
+    # Return appropriate exit code
+    if [ $removed_count -gt 0 ]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # Validate all base images
@@ -308,7 +333,8 @@ base_main() {
             add_base_image "$2"
             ;;
         "remove"|"rm")
-            remove_base_image "$2"
+            shift  # Remove the first argument ("remove" or "rm")
+            remove_base_image "$@"
             ;;
         "validate"|"check")
             validate_base_images
