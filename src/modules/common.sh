@@ -12,6 +12,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$(dirname "$(dirname "$SCRIPT_DIR")")" && pwd)"
 CONFIG_DIR="$PROJECT_ROOT/config"
 
+# Base image configuration file
+BASE_IMAGE_FILE="$CONFIG_DIR/base_image"
+
 # Load defaults.sh
 # defaults.sh 로드
 source "$CONFIG_DIR/defaults.sh"

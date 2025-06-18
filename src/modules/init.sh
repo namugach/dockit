@@ -89,13 +89,21 @@ init_project() {
 # Display current configuration settings
 # 현재 설정값 표시
 display_current_settings() {
+    # Get current base image from config file for display
+    local current_base_image=""
+    local base_image_file="$HOME/.dockit/config/base_image"
+    if [ -f "$base_image_file" ]; then
+        current_base_image=$(cat "$base_image_file" 2>/dev/null | head -n1 | tr -d ' \n')
+    fi
+    local display_base_image=${current_base_image:-${BASE_IMAGE:-$DEFAULT_IMAGE}}
+    
     echo -e "\n${YELLOW}$MSG_CURRENT_SETTINGS:${NC}"
     echo -e "$MSG_USERNAME: ${GREEN}${USERNAME:-$DEFAULT_USERNAME}${NC}"
     echo -e "$MSG_USER_UID: ${GREEN}${USER_UID:-$DEFAULT_UID}${NC}"
     echo -e "$MSG_USER_GID: ${GREEN}${USER_GID:-$DEFAULT_GID}${NC}"
     echo -e "$MSG_PASSWORD: ${GREEN}${USER_PASSWORD:-$PASSWORD}${NC}"
     echo -e "$MSG_WORKDIR: ${GREEN}${WORKDIR}${NC}"
-    echo -e "$MSG_BASE_IMAGE: ${GREEN}${BASE_IMAGE:-$DEFAULT_IMAGE}${NC}"
+    echo -e "$MSG_BASE_IMAGE: ${GREEN}${display_base_image}${NC}"
     echo -e "$MSG_IMAGE_NAME: ${GREEN}${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}${NC}"
     echo -e "$MSG_CONTAINER_NAME: ${GREEN}${CONTAINER_NAME}${NC}"
 }
@@ -118,7 +126,19 @@ set_default_values() {
     USER_GID=${USER_GID:-$DEFAULT_GID}
     USER_PASSWORD=${USER_PASSWORD:-$PASSWORD}
     WORKDIR=${WORKDIR:-$WORKDIR}
-    BASE_IMAGE=${BASE_IMAGE:-$DEFAULT_IMAGE}
+    
+    # Get current base image from config file
+    local current_base_image=""
+    local base_image_file="$HOME/.dockit/config/base_image"
+    if [ -f "$base_image_file" ]; then
+        current_base_image=$(cat "$base_image_file" 2>/dev/null | head -n1 | tr -d ' \n')
+        # Use base image from file if it exists, otherwise use current BASE_IMAGE or DEFAULT_IMAGE
+        BASE_IMAGE=${current_base_image:-${BASE_IMAGE:-$DEFAULT_IMAGE}}
+    else
+        # Use current BASE_IMAGE or DEFAULT_IMAGE if file doesn't exist
+        BASE_IMAGE=${BASE_IMAGE:-$DEFAULT_IMAGE}
+    fi
+    
     IMAGE_NAME=${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}
     CONTAINER_NAME=${CONTAINER_NAME:-$DEFAULT_CONTAINER_NAME}
 }
@@ -141,8 +161,16 @@ get_custom_values() {
     read -p "$MSG_INPUT_WORKDIR [$WORKDIR]: " input
     WORKDIR=${input:-$WORKDIR}
     
-    read -p "$MSG_BASE_IMAGE [${BASE_IMAGE:-$DEFAULT_IMAGE}]: " input
-    BASE_IMAGE=${input:-${BASE_IMAGE:-$DEFAULT_IMAGE}}
+    # Get current base image for display
+    local current_base_image=""
+    local base_image_file="$HOME/.dockit/config/base_image"
+    if [ -f "$base_image_file" ]; then
+        current_base_image=$(cat "$base_image_file" 2>/dev/null | head -n1 | tr -d ' \n')
+    fi
+    local display_base_image=${current_base_image:-$DEFAULT_IMAGE}
+    
+    read -p "$MSG_BASE_IMAGE [$display_base_image]: " input
+    BASE_IMAGE=${input:-${current_base_image:-$DEFAULT_IMAGE}}
     
     read -p "$MSG_INPUT_IMAGE_NAME [${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}]: " input
     IMAGE_NAME=${input:-${IMAGE_NAME:-$(generate_dockit_name "$(pwd)")}}
