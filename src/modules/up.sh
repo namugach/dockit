@@ -291,7 +291,28 @@ handle_this_argument() {
         return 1
     fi
     
-    # 2. 컨테이너가 이미 실행 중인지 확인
+    # 2. 베이스 이미지 변경 감지 및 처리
+    source "$MODULES_DIR/registry.sh"
+    if check_base_image_change; then
+        log "INFO" "Base image has changed, previous image removed"
+        # 기존 이미지 제거 (컨테이너도 함께 정리됨)
+        if docker image inspect "$IMAGE_NAME" &>/dev/null; then
+            # 컨테이너가 실행 중이면 먼저 정지
+            if docker ps -q --filter "ancestor=$IMAGE_NAME" | grep -q .; then
+                log "INFO" "Stopping containers using the old image..."
+                docker ps -q --filter "ancestor=$IMAGE_NAME" | xargs -r docker stop
+            fi
+            
+            # 이미지 제거
+            docker image rm "$IMAGE_NAME" &>/dev/null || true
+        fi
+        
+        # 레지스트리에 새로운 베이스 이미지 정보 업데이트
+        update_base_image_in_registry
+        log "SUCCESS" "Updated base image info in registry"
+    fi
+    
+    # 3. 컨테이너가 이미 실행 중인지 확인
     if is_container_already_running; then
         # 컨테이너가 이미 실행 중이더라도 사용자 정보 업데이트
         update_container_user_info
@@ -304,15 +325,15 @@ handle_this_argument() {
         return 0
     fi
     
-    # 3. 컨테이너 시작
+    # 4. 컨테이너 시작
     if ! start_container; then
         return 1
     fi
     
-    # 4. 컨테이너 사용자 정보 업데이트
+    # 5. 컨테이너 사용자 정보 업데이트
     update_container_user_info
     
-    # 5. 레지스트리 상태 업데이트 (성공적으로 시작된 경우)
+    # 6. 레지스트리 상태 업데이트 (성공적으로 시작된 경우)
     local project_id
     if project_id=$(get_current_project_id); then
         update_project_state "$project_id" "$PROJECT_STATE_RUNNING"
@@ -321,7 +342,7 @@ handle_this_argument() {
         log "WARNING" "Could not update project status - project ID not found"
     fi
     
-    # 6. 컨테이너 상태 출력
+    # 7. 컨테이너 상태 출력
     display_container_status
     
     return 0
