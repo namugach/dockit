@@ -10,8 +10,6 @@ source "$SCRIPT_DIR/common.sh"
 source "$UTILS_DIR/async_tasks.sh"
 source "$MODULES_DIR/registry.sh"
 
-
-
 # Function to format time elapsed since last update
 # 마지막 업데이트 이후 경과 시간을 형식화하는 함수
 format_time_elapsed() {
@@ -364,8 +362,10 @@ list_main() {
         ((index++))
     done < <(echo "$registry_json" | jq -r 'keys[]')
     
-    # Print collected output
-    cat "$temp_file"
+    # Print collected output with color support
+    while IFS= read -r line; do
+        echo -e "$line"
+    done < "$temp_file"
     
     # Remove temporary file
     rm -f "$temp_file"

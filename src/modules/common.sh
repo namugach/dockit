@@ -57,6 +57,7 @@ PROJECT_STATE_ERROR="error"
 # 유틸리티 모듈 로드
 # Load utility modules
 source "${UTILS_DIR}/utils.sh"
+source "${UTILS_DIR}/colors.sh"
 
 
 # 로그 파일 설정
