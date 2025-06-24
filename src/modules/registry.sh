@@ -108,6 +108,51 @@ is_valid_project() {
     return 0  # 유효한 프로젝트
 }
 
+# 프로젝트 파일 상태 분류 함수 (개선된 cleanup을 위한)
+# Classify project file status for improved cleanup
+classify_project_file_status() {
+    local project_path="$1"
+    local project_id="$2"
+    
+    # 경로 자체가 존재하지 않음
+    # Path itself does not exist
+    if [ ! -d "$project_path" ]; then
+        echo "missing"
+        return 0
+    fi
+    
+    # .dockit_project 디렉토리가 없음
+    # .dockit_project directory does not exist
+    if [ ! -d "$project_path/.dockit_project" ]; then
+        echo "inactive"
+        return 0
+    fi
+    
+    # ID 파일이 없음
+    # ID file does not exist
+    if [ ! -f "$project_path/.dockit_project/id" ]; then
+        echo "invalid"
+        return 0
+    fi
+    
+    # ID 불일치 검사
+    # ID mismatch check
+    if [ -n "$project_id" ]; then
+        local file_id
+        file_id=$(cat "$project_path/.dockit_project/id" 2>/dev/null)
+        
+        if [ -z "$file_id" ] || [ "$file_id" != "$project_id" ]; then
+            echo "invalid"
+            return 0
+        fi
+    fi
+    
+    # 정상 활성 프로젝트
+    # Normal active project
+    echo "active"
+    return 0
+}
+
 # 레지스트리 정리 함수
 # Clean up registry function
 cleanup_registry() {
@@ -127,40 +172,66 @@ cleanup_registry() {
     local temp_file
     temp_file="$(mktemp)"
     
-    # jq를 사용하여 유효하지 않은 항목 필터링
-    # Filter invalid entries using jq
+    # jq를 사용하여 프로젝트 파일 상태별 처리
+    # Process projects by file status using jq
     if command -v jq &> /dev/null; then
         local removed_count=0
+        local inactive_count=0
         local total_count=0
+        local current_time=$(date +%s)
         
-        # jq 스크립트를 통해 유효한 항목만 새 객체로 구성
-        # Create new object with only valid entries through jq script
+        # 프로젝트별 파일 상태 확인 및 처리
+        # Check and process each project by file status
         jq -r 'to_entries | .[] | .key + ":" + .value.path' "$REGISTRY_FILE" | while read -r line; do
+            [ -z "$line" ] && continue
             total_count=$((total_count + 1))
             
             local id="${line%%:*}"
             local path="${line#*:}"
+            local file_status=$(classify_project_file_status "$path" "$id")
             
-            if is_valid_project "$path" "$id"; then
-                # 유효한 프로젝트는 유지
-                # Keep valid projects
-                :
-            else
-                # 유효하지 않은 프로젝트는 제거
-                # Remove invalid projects
-                removed_count=$((removed_count + 1))
-                log "INFO" "$(printf "$MSG_REGISTRY_REMOVING_INVALID" "$path")"
-                
-                # jq를 사용하여 해당 항목 제거
-                # Remove the entry using jq
-                jq "del(.[\"$id\"])" "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
-            fi
+            case "$file_status" in
+                "missing")
+                    # 경로 완전히 사라짐 → 삭제
+                    # Path completely missing → Remove
+                    removed_count=$((removed_count + 1))
+                    log "INFO" "Removing project (path missing): $path"
+                    jq "del(.[\"$id\"])" "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
+                    ;;
+                "inactive")
+                    # .dockit_project 없음 → project_status 업데이트
+                    # .dockit_project missing → Update project_status
+                    inactive_count=$((inactive_count + 1))
+                    log "INFO" "Marking project as inactive: $path"
+                    update_project_file_status "$id" "inactive" "$current_time"
+                    ;;
+                "active")
+                    # 정상 프로젝트 → project_status 확실히 active로 설정
+                    # Normal project → Ensure project_status is active
+                    log "DEBUG" "Project active: $path"
+                    update_project_file_status "$id" "active" "$current_time"
+                    ;;
+                "invalid")
+                    # 기타 문제 → 삭제
+                    # Other issues → Remove
+                    removed_count=$((removed_count + 1))
+                    log "INFO" "Removing invalid project: $path"
+                    jq "del(.[\"$id\"])" "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
+                    ;;
+                *)
+                    # 알 수 없는 상태 → 삭제
+                    # Unknown status → Remove
+                    removed_count=$((removed_count + 1))
+                    log "WARNING" "Removing project with unknown status ($file_status): $path"
+                    jq "del(.[\"$id\"])" "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
+                    ;;
+            esac
         done
         
-        log "SUCCESS" "$(printf "$MSG_REGISTRY_CLEANUP_COMPLETE" "$removed_count" "$total_count")"
+        log "SUCCESS" "Registry cleanup complete - Removed: $removed_count, Inactive: $inactive_count, Total: $total_count"
     else
-        # jq 없이 처리 (기본 구현, jq가 있는 경우보다 덜 효율적)
-        # Handle without jq (basic implementation, less efficient than with jq)
+        # jq 없이 처리 (기본 구현)
+        # Handle without jq (basic implementation)
         log "WARNING" "$MSG_REGISTRY_JQ_NOT_FOUND"
         log "INFO" "$MSG_REGISTRY_MANUAL_CLEANUP"
         
@@ -195,6 +266,8 @@ add_project_with_jq() {
     local project_path="$2"
     local created_time="$3"
     local state="${4:-$PROJECT_STATE_DOWN}"
+    local base_image="${5:-}"
+    local image_name="${6:-}"
     
     local temp_file=$(mktemp)
     
@@ -203,7 +276,9 @@ add_project_with_jq() {
        --argjson created "$created_time" \
        --arg state "$state" \
        --argjson last_seen "$created_time" \
-       '.[$id] = {"path": $path, "created": $created, "state": $state, "last_seen": $last_seen}' \
+       --arg base_image "$base_image" \
+       --arg image_name "$image_name" \
+       '.[$id] = {"path": $path, "created": $created, "state": $state, "last_seen": $last_seen, "base_image": $base_image, "image_name": $image_name}' \
        "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
 }
 
@@ -214,6 +289,8 @@ add_project_without_jq() {
     local project_path="$2"
     local created_time="$3"
     local state="${4:-$PROJECT_STATE_DOWN}"
+    local base_image="${5:-}"
+    local image_name="${6:-}"
     
     local registry_content=$(cat "$REGISTRY_FILE")
     
@@ -227,7 +304,7 @@ add_project_without_jq() {
     
     # 새 항목 추가
     # Add new entry
-    registry_content+="\n  \"$project_id\": {\n    \"path\": \"$project_path\",\n    \"created\": $created_time,\n    \"state\": \"$state\",\n    \"last_seen\": $created_time\n  }\n}"
+    registry_content+="\n  \"$project_id\": {\n    \"path\": \"$project_path\",\n    \"created\": $created_time,\n    \"state\": \"$state\",\n    \"last_seen\": $created_time,\n    \"base_image\": \"$base_image\",\n    \"image_name\": \"$image_name\"\n  }\n}"
     
     # 업데이트된 내용 저장
     # Save updated content
@@ -241,13 +318,15 @@ add_project_to_registry() {
     local project_path="$2"
     local created_time="$3"
     local state="${4:-$PROJECT_STATE_DOWN}"
+    local base_image="${5:-}"
+    local image_name="${6:-}"
     
     log "INFO" "$MSG_REGISTRY_ADDING_PROJECT"
     
     if command -v jq &> /dev/null; then
-        add_project_with_jq "$project_id" "$project_path" "$created_time" "$state"
+        add_project_with_jq "$project_id" "$project_path" "$created_time" "$state" "$base_image" "$image_name"
     else
-        add_project_without_jq "$project_id" "$project_path" "$created_time" "$state"
+        add_project_without_jq "$project_id" "$project_path" "$created_time" "$state" "$base_image" "$image_name"
     fi
     
     log "SUCCESS" "$MSG_REGISTRY_PROJECT_ADDED"
@@ -340,6 +419,9 @@ handle_project_id_sync() {
 # 레지스트리 초기화 함수
 # Registry initialization function
 init_registry() {
+    local base_image="${1:-}"
+    local image_name="${2:-}"
+    
     # 레지스트리 디렉토리 및 파일 확인
     # Ensure registry directory and file exist
     ensure_registry_dir
@@ -359,7 +441,7 @@ init_registry() {
     
     # 레지스트리에 프로젝트 추가
     # Add project to registry
-    add_project_to_registry "$project_id" "$project_path" "$created_time" "$PROJECT_STATE_NONE"
+    add_project_to_registry "$project_id" "$project_path" "$created_time" "$PROJECT_STATE_NONE" "$base_image" "$image_name"
 }
 
 # 레지스트리 메인 함수
@@ -381,6 +463,9 @@ registry_main() {
         sync)
             handle_project_id_sync "$@"
             ;;
+        check_base_image)
+            check_base_image_change "$@"
+            ;;
         *)
             log "ERROR" "$(printf "$MSG_ACTION_NOT_SUPPORTED" "$action")"
             return 1
@@ -393,3 +478,123 @@ registry_main() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     registry_main "$@"
 fi
+
+# 프로젝트 파일 상태 업데이트
+# Update project file status
+update_project_file_status() {
+    local project_id="$1"
+    local file_status="$2"
+    local current_time="$3"
+    
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        log "ERROR" "Registry file not found"
+        return 1
+    fi
+    
+    # 임시 파일 생성
+    # Create temporary file
+    local temp_file
+    temp_file="$(mktemp)"
+    
+    # jq를 사용하여 프로젝트 파일 상태 업데이트
+    # Update project file status using jq
+    if command -v jq &> /dev/null; then
+        jq --arg id "$project_id" \
+           --arg project_status "$file_status" \
+           --argjson last_seen "$current_time" \
+           'if has($id) then .[$id].project_status = $project_status | .[$id].last_seen = $last_seen else . end' \
+           "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
+           
+        log "DEBUG" "Updated project_status to $file_status for project: $project_id"
+    else
+        log "WARNING" "jq not found, skipping project_status update"
+        return 1
+    fi
+}
+
+# 베이스 이미지 변경 감지 및 처리
+# Detect and handle base image changes
+check_base_image_change() {
+    local project_path="$1"
+    local new_base_image="$2"
+    local new_image_name="$3"
+    
+    # 프로젝트 ID 가져오기
+    # Get project ID
+    if [ ! -f "$project_path/.dockit_project/id" ]; then
+        log "DEBUG" "No project ID found, skipping base image check"
+        return 0
+    fi
+    
+    local project_id=$(cat "$project_path/.dockit_project/id")
+    
+    # 레지스트리에서 현재 베이스 이미지 정보 가져오기
+    # Get current base image info from registry
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        log "DEBUG" "Registry file not found, skipping base image check"
+        return 0
+    fi
+    
+    if command -v jq &> /dev/null; then
+        local current_base_image=$(jq -r --arg id "$project_id" '.[$id].base_image // empty' "$REGISTRY_FILE")
+        local current_image_name=$(jq -r --arg id "$project_id" '.[$id].image_name // empty' "$REGISTRY_FILE")
+        
+        # 베이스 이미지 변경 확인
+        # Check for base image change
+        if [ -n "$current_base_image" ] && [ "$current_base_image" != "$new_base_image" ]; then
+            log "INFO" "Base image change detected: $current_base_image → $new_base_image"
+            
+            # 기존 이미지 삭제
+            # Remove existing image
+            if [ -n "$current_image_name" ]; then
+                log "INFO" "Removing old Docker image: $current_image_name"
+                docker rmi "$current_image_name" 2>/dev/null || log "WARNING" "Failed to remove old image: $current_image_name"
+            fi
+            
+            # 레지스트리에서 베이스 이미지 정보 업데이트
+            # Update base image info in registry
+            update_base_image_in_registry "$project_id" "$new_base_image" "$new_image_name"
+            
+            return 1  # 베이스 이미지가 변경됨
+        fi
+    else
+        log "WARNING" "jq not found, skipping base image change detection"
+    fi
+    
+    return 0  # 베이스 이미지 변경 없음
+}
+
+# 레지스트리에서 베이스 이미지 정보 업데이트
+# Update base image info in registry
+update_base_image_in_registry() {
+    local project_id="$1"
+    local new_base_image="$2"
+    local new_image_name="$3"
+    local current_time=$(date +%s)
+    
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        log "ERROR" "Registry file not found"
+        return 1
+    fi
+    
+    # 임시 파일 생성
+    # Create temporary file
+    local temp_file
+    temp_file="$(mktemp)"
+    
+    # jq를 사용하여 베이스 이미지 정보 업데이트
+    # Update base image info using jq
+    if command -v jq &> /dev/null; then
+        jq --arg id "$project_id" \
+           --arg base_image "$new_base_image" \
+           --arg image_name "$new_image_name" \
+           --argjson last_seen "$current_time" \
+           'if has($id) then .[$id].base_image = $base_image | .[$id].image_name = $image_name | .[$id].last_seen = $last_seen else . end' \
+           "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
+           
+        log "SUCCESS" "Updated base image info in registry"
+    else
+        log "WARNING" "jq not found, skipping base image update in registry"
+        return 1
+    fi
+}

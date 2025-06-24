@@ -1,11 +1,5 @@
 FROM ${BASE_IMAGE}
 
-# 빌드 시 사용할 인자들
-ARG USERNAME=${USERNAME}
-ARG USER_UID=${USER_UID}
-ARG USER_GID=${USER_GID}
-ARG USER_PASSWORD=${USER_PASSWORD}
-ARG WORKDIR=workspace
 
 # sudo 설치 및 기타 유틸리티
 RUN apt-get update && apt-get install -y sudo git

@@ -8,6 +8,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 source "$MODULES_DIR/container_base.sh"
+source "$MODULES_DIR/registry.sh"
 source "$UTILS_DIR/async_tasks.sh"
 
 # Check and set BASE_IMAGE if not already set
@@ -135,6 +136,13 @@ handle_this_argument() {
     # Load environment variables
     load_env
     
+    # Check for base image changes and handle accordingly
+    # 베이스 이미지 변경 확인 및 처리
+    local current_path="$(pwd)"
+    if registry_main "check_base_image" "$current_path" "$BASE_IMAGE" "$IMAGE_NAME"; then
+        log "INFO" "Base image has changed, previous image removed"
+    fi
+    
     # Stop and remove existing container if running
     if [ -n "$CONTAINER_NAME" ] && docker container inspect "$CONTAINER_NAME" &>/dev/null; then
         if [ "$(docker container inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" = "true" ]; then
@@ -152,6 +160,10 @@ handle_this_argument() {
         if project_id=$(get_current_project_id); then
             update_project_state "$project_id" "$PROJECT_STATE_READY"
             log "INFO" "$MSG_BUILD_STATE_UPDATED_READY"
+            
+            # Update base image info in registry after successful build
+            # 빌드 성공 후 레지스트리에 베이스 이미지 정보 업데이트
+            update_base_image_in_registry "$project_id" "$BASE_IMAGE" "$IMAGE_NAME"
         fi
         return 0
     else

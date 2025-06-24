@@ -586,7 +586,7 @@ init_main() {
     
     # 레지스트리 초기화 및 프로젝트 등록
     # Initialize registry and register project
-    registry_main "init"
+    registry_main "init" "$BASE_IMAGE" "$IMAGE_NAME"
     
     log "SUCCESS" "$MSG_INIT_COMPLETE"
 }
