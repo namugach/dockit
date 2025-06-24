@@ -6,7 +6,7 @@
 
 [English](docs/en/README.md) | [한국어](docs/ko/README.md)
 
-[![Version](https://img.shields.io/badge/version-1.6.1-blue.svg)](bin/VERSION)
+[![Version](https://img.shields.io/badge/version-1.6.2-blue.svg)](bin/VERSION)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](docs/meta/LICENSE)
 
 Dockit is a modular shell script tool for quickly setting up and managing development environments using Docker.
