@@ -293,7 +293,7 @@ handle_this_argument() {
     
     # 2. 베이스 이미지 변경 감지 및 처리
     source "$MODULES_DIR/registry.sh"
-    if check_base_image_change; then
+    if check_base_image_change "$(pwd)" "$BASE_IMAGE" "$IMAGE_NAME"; then
         log "INFO" "Base image has changed, previous image removed"
         # 기존 이미지 제거 (컨테이너도 함께 정리됨)
         if docker image inspect "$IMAGE_NAME" &>/dev/null; then
