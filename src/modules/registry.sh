@@ -176,7 +176,6 @@ cleanup_registry() {
     # Process projects by file status using jq
     if command -v jq &> /dev/null; then
         local removed_count=0
-        local inactive_count=0
         local total_count=0
         local current_time=$(date +%s)
         
@@ -199,11 +198,11 @@ cleanup_registry() {
                     jq "del(.[\"$id\"])" "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
                     ;;
                 "inactive")
-                    # .dockit_project 없음 → project_status 업데이트
-                    # .dockit_project missing → Update project_status
-                    inactive_count=$((inactive_count + 1))
-                    log "INFO" "Marking project as inactive: $path"
-                    update_project_file_status "$id" "inactive" "$current_time"
+                    # .dockit_project 없음 → 레지스트리에서 완전 제거
+                    # .dockit_project missing → Remove from registry completely
+                    removed_count=$((removed_count + 1))
+                    log "INFO" "Removing project (.dockit_project missing): $path [ID: ${id:0:12}...]"
+                    jq "del(.[\"$id\"])" "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
                     ;;
                 "active")
                     # 정상 프로젝트 → project_status 확실히 active로 설정
@@ -228,7 +227,7 @@ cleanup_registry() {
             esac
         done
         
-        log "SUCCESS" "Registry cleanup complete - Removed: $removed_count, Inactive: $inactive_count, Total: $total_count"
+        log "SUCCESS" "Registry cleanup complete - Removed: $removed_count projects, Total processed: $total_count"
     else
         # jq 없이 처리 (기본 구현)
         # Handle without jq (basic implementation)
