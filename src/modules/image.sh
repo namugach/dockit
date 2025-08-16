@@ -31,10 +31,10 @@ show_usage() {
 # Get dockit images from docker
 # Docker에서 dockit 이미지들 가져오기
 get_dockit_images() {
-    # Get all images that start with 'dockit-'
-    # 'dockit-'로 시작하는 모든 이미지 가져오기
+    # Get all images that start with 'dockit-' and sort by repository name for consistency
+    # 'dockit-'로 시작하는 모든 이미지를 저장소 이름순으로 정렬하여 일관성 보장
     docker image ls --format "{{.Repository}}\t{{.ID}}\t{{.CreatedSince}}\t{{.Size}}" \
-        --filter "reference=dockit-*"
+        --filter "reference=dockit-*" | sort
 }
 
 # List dockit images
@@ -183,9 +183,10 @@ remove_image() {
     fi
     
     # Check if image is being used by any containers
-    # 이미지를 사용하는 컨테이너가 있는지 확인
+    # 이미지를 사용하는 컨테이너가 있는지 확인 (정확한 이미지명 매칭)
     local containers_using_image
-    containers_using_image=$(docker ps -a --filter "ancestor=$image_name" --format "{{.Names}}" | tr '\n' ' ')
+    containers_using_image=$(docker ps -a --format "{{.Names}}\t{{.Image}}" | \
+        awk -v target="$image_name" '$2 == target {print $1}' | tr '\n' ' ')
     
     if [ -n "$containers_using_image" ]; then
         log "WARNING" "$(printf "$MSG_IMAGE_REMOVE_IN_USE" "$containers_using_image")"
@@ -298,10 +299,11 @@ clean_images() {
         if [ -n "$image_info" ]; then
             IFS=$'\t' read -r image_id created_since size <<< "$image_info"
             
-            # Check if image is used by any containers
-            # 이미지가 컨테이너에서 사용되는지 확인
+            # Check if image is used by any containers (정확한 이미지명 매칭)
+            # 이미지가 컨테이너에서 사용되는지 확인 (정확한 이미지명 매칭)
             local containers_using_image
-            containers_using_image=$(docker ps -a --filter "ancestor=$image_name" --format "{{.Names}}" | tr '\n' ' ')
+            containers_using_image=$(docker ps -a --format "{{.Names}}\t{{.Image}}" | \
+                awk -v target="$image_name" '$2 == target {print $1}' | tr '\n' ' ')
             
             local status
             if [ -n "$containers_using_image" ]; then
@@ -432,10 +434,11 @@ clean_images() {
     for image_name in "${all_image_names[@]}"; do
         echo "$(printf "$MSG_IMAGE_CLEAN_PROCESSING" "$image_name")"
         
-        # Check for containers using this image
-        # 이 이미지를 사용하는 컨테이너 확인
+        # Check for containers using this image (정확한 이미지명 매칭)
+        # 이 이미지를 사용하는 컨테이너 확인 (정확한 이미지명 매칭)
         local containers
-        containers=$(docker ps -a --filter "ancestor=$image_name" --format "{{.Names}}" | tr '\n' ' ')
+        containers=$(docker ps -a --format "{{.Names}}\t{{.Image}}" | \
+            awk -v target="$image_name" '$2 == target {print $1}' | tr '\n' ' ')
         
         if [ -n "$containers" ]; then
             echo "$(printf "$MSG_IMAGE_CLEAN_REMOVING_CONTAINERS" "$containers")"
@@ -517,6 +520,7 @@ prune_images() {
     local all_dockit_images
     all_dockit_images=$(docker image ls --filter "reference=dockit-*" --format "{{.Repository}}")
     
+    
     if [ -z "$all_dockit_images" ]; then
         echo "$MSG_IMAGE_PRUNE_NO_IMAGES"
         return 0
@@ -526,13 +530,16 @@ prune_images() {
     # 사용하지 않는 이미지 찾기 (어떤 컨테이너에서도 사용하지 않는 것)
     local unused_images=()
     
+    
     while IFS= read -r image_name; do
         [ -z "$image_name" ] && continue
         
-        # Check if image is used by any containers (running or stopped)
-        # 이미지가 컨테이너에서 사용되는지 확인 (실행 중이거나 중지된 것)
+        # Check if image is used by any containers (running or stopped) (정확한 이미지명 매칭)
+        # 이미지가 컨테이너에서 사용되는지 확인 (실행 중이거나 중지된 것) (정확한 이미지명 매칭)
         local containers_using_image
-        containers_using_image=$(docker ps -a --filter "ancestor=$image_name" --quiet)
+        containers_using_image=$(docker ps -a --format "{{.Names}}\t{{.Image}}" | \
+            awk -v target="$image_name" '$2 == target {print $1}')
+        
         
         # If no containers use this image, it's unused
         # 이 이미지를 사용하는 컨테이너가 없으면 사용하지 않는 것
