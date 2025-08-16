@@ -33,13 +33,6 @@ RUN ACTUAL_USER=$(cat /tmp/actual_user) && \
     chmod 700 /home/$ACTUAL_USER/.ssh && \
     chown -R ${USER_UID}:${USER_GID} /home/$ACTUAL_USER/.ssh
 
-# 한국어 로케일 설정 및 쉘 자동 변경 설정 (실제 사용자 기준)
-RUN ACTUAL_USER=$(cat /tmp/actual_user) && \
-    echo "export LANG=ko_KR.UTF-8" >> /home/$ACTUAL_USER/.bashrc && \
-    echo "export LC_ALL=ko_KR.UTF-8" >> /home/$ACTUAL_USER/.bashrc && \
-    touch /home/$ACTUAL_USER/.profile && \
-    chown ${USER_UID}:${USER_GID} /home/$ACTUAL_USER/.bashrc && \
-    chown ${USER_UID}:${USER_GID} /home/$ACTUAL_USER/.profile
 
 
 # 볼륨 마운트 시 권한 문제 해결을 위한 스크립트 추가
