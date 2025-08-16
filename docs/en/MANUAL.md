@@ -537,7 +537,7 @@ dockit base ls
 - Shows current selected base image with `*` marker
 - Example:
   ```
-     1. * namugach/ubuntu-basic:24.04-kor-deno (currently selected)
+     1. * namugach/ubuntu-basic:24.04-kor (currently selected)
      2.   ubuntu:24.04
      3.   ubuntu:22.04
      4.   node:20

@@ -48,7 +48,7 @@ get_current_base_image() {
     if [ -f "$BASE_IMAGE_FILE" ]; then
         cat "$BASE_IMAGE_FILE" 2>/dev/null | head -n1 | tr -d ' \n'
     else
-        echo "namugach/ubuntu-basic:24.04-kor-deno"
+        echo "namugach/ubuntu-basic:24.04-kor"
     fi
 }
 
@@ -294,7 +294,7 @@ reset_base_images() {
     
     # Reset base image list
     cat > "$BASE_IMAGE_LIST_FILE" << 'EOF'
-namugach/ubuntu-basic:24.04-kor-deno
+namugach/ubuntu-basic:24.04-kor
 ubuntu:24.04
 ubuntu:22.04
 ubuntu:20.04
@@ -307,7 +307,7 @@ debian:bookworm
 EOF
     
     # Reset current base image
-    echo "namugach/ubuntu-basic:24.04-kor-deno" > "$BASE_IMAGE_FILE"
+    echo "namugach/ubuntu-basic:24.04-kor" > "$BASE_IMAGE_FILE"
     
     echo -e "${GREEN}$MSG_BASE_RESET_SUCCESS${NC}"
 }

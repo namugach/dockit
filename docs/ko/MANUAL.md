@@ -544,7 +544,7 @@ dockit base ls
 - 현재 선택된 베이스 이미지에 `*` 표시
 - 예시:
   ```
-     1. * namugach/ubuntu-basic:24.04-kor-deno (현재 선택됨)
+     1. * namugach/ubuntu-basic:24.04-kor (현재 선택됨)
      2.   ubuntu:24.04
      3.   ubuntu:22.04
      4.   node:20
