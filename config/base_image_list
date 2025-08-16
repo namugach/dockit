@@ -2,9 +2,3 @@ namugach/ubuntu-basic:24.04-kor
 ubuntu:24.04
 ubuntu:22.04
 ubuntu:20.04
-node:20
-node:18
-python:3.11
-python:3.10
-alpine:latest
-debian:bookworm 

@@ -68,7 +68,7 @@ get_image_by_number() {
     fi
     
     local count=0
-    while IFS= read -r image; do
+    while IFS= read -r image || [ -n "$image" ]; do
         [ -z "$image" ] && continue
         count=$((count + 1))
         
@@ -95,7 +95,7 @@ list_base_images() {
     echo ""
     
     local count=0
-    while IFS= read -r image; do
+    while IFS= read -r image || [ -n "$image" ]; do
         [ -z "$image" ] && continue
         count=$((count + 1))
         
@@ -259,7 +259,7 @@ validate_base_images() {
     local failed_count=0
     local total_count=0
     
-    while IFS= read -r image; do
+    while IFS= read -r image || [ -n "$image" ]; do
         [ -z "$image" ] && continue
         total_count=$((total_count + 1))
         
@@ -298,12 +298,6 @@ namugach/ubuntu-basic:24.04-kor
 ubuntu:24.04
 ubuntu:22.04
 ubuntu:20.04
-node:20
-node:18
-python:3.11
-python:3.10
-alpine:latest
-debian:bookworm
 EOF
     
     # Reset current base image
