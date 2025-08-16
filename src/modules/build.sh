@@ -137,11 +137,8 @@ handle_this_argument() {
     load_env
     
     # Check for base image changes and handle accordingly
-    # 베이스 이미지 변경 확인 및 처리
-    local current_path="$(pwd)"
-    if registry_main "check_base_image" "$current_path" "$BASE_IMAGE" "$IMAGE_NAME"; then
-        log "INFO" "Base image has changed, previous image removed"
-    fi
+    # 베이스 이미지 변경 확인은 up.sh에서 이미 처리되므로 build.sh에서는 생략
+    # Base image change check is already handled in up.sh, so skip it in build.sh
     
     # Stop and remove existing container if running
     if [ -n "$CONTAINER_NAME" ] && docker container inspect "$CONTAINER_NAME" &>/dev/null; then

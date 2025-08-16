@@ -268,6 +268,10 @@ add_project_with_jq() {
     local base_image="${5:-}"
     local image_name="${6:-}"
     
+    # Trim whitespace from base_image to prevent comparison issues
+    # 베이스 이미지에서 공백 제거하여 비교 문제 방지
+    base_image=$(echo "$base_image" | tr -d '[:space:]')
+    
     local temp_file=$(mktemp)
     
     jq --arg id "$project_id" \
@@ -530,17 +534,42 @@ check_base_image_change() {
     # 레지스트리에서 현재 베이스 이미지 정보 가져오기
     # Get current base image info from registry
     if [ ! -f "$REGISTRY_FILE" ]; then
-        log "DEBUG" "Registry file not found, skipping base image check"
-        return 0
+        log "DEBUG" "Registry file not found - first time setup, no base image change"
+        # 초기 설정 시에는 레지스트리 초기화 및 현재 베이스 이미지 정보 저장
+        ensure_registry_dir
+        ensure_registry_file
+        
+        # 현재 베이스 이미지 정보를 레지스트리에 저장
+        if [ -n "$new_base_image" ] && [ -n "$new_image_name" ]; then
+            local current_time=$(date +%s)
+            # 프로젝트가 이미 등록되어 있는지 확인
+            if command -v jq &> /dev/null && echo '{}' | jq -e --arg id "$project_id" 'has($id)' "$REGISTRY_FILE" > /dev/null 2>&1; then
+                # 기존 프로젝트 업데이트
+                update_base_image_in_registry "$project_id" "$new_base_image" "$new_image_name"
+            else
+                # 새 프로젝트 추가
+                add_project_to_registry "$project_id" "$project_path" "$current_time" "$PROJECT_STATE_BUILDING" "$new_base_image" "$new_image_name"
+            fi
+        fi
+        return 0  # 초기 설정 시에는 변경 없음으로 처리
     fi
     
     if command -v jq &> /dev/null; then
         local current_base_image=$(jq -r --arg id "$project_id" '.[$id].base_image // empty' "$REGISTRY_FILE")
         local current_image_name=$(jq -r --arg id "$project_id" '.[$id].image_name // empty' "$REGISTRY_FILE")
         
+        # Trim whitespace from base images for accurate comparison
+        # 베이스 이미지 비교를 위한 공백 문자 제거
+        current_base_image=$(echo "$current_base_image" | tr -d '[:space:]')
+        new_base_image=$(echo "$new_base_image" | tr -d '[:space:]')
+        
+        log "INFO" "DEBUG: Base image comparison: current='$current_base_image' vs new='$new_base_image'"
+        
         # 베이스 이미지 변경 확인
         # Check for base image change
+        log "INFO" "DEBUG: Condition check - current_base_image='$current_base_image', comparison result: $( [ -n "$current_base_image" ] && [ "$current_base_image" != "$new_base_image" ] && echo "true" || echo "false" )"
         if [ -n "$current_base_image" ] && [ "$current_base_image" != "$new_base_image" ]; then
+            log "INFO" "DEBUG: Entering base image change block"
             log "INFO" "Base image change detected: $current_base_image → $new_base_image"
             
             # 기존 이미지 삭제
@@ -554,12 +583,15 @@ check_base_image_change() {
             # Update base image info in registry
             update_base_image_in_registry "$project_id" "$new_base_image" "$new_image_name"
             
+            log "INFO" "DEBUG: Returning 1 (base image changed)"
             return 1  # 베이스 이미지가 변경됨
         fi
+        log "INFO" "DEBUG: Base images are the same, continuing..."
     else
         log "WARNING" "jq not found, skipping base image change detection"
     fi
     
+    log "INFO" "DEBUG: Returning 0 (no base image change)"
     return 0  # 베이스 이미지 변경 없음
 }
 
@@ -570,6 +602,10 @@ update_base_image_in_registry() {
     local new_base_image="$2"
     local new_image_name="$3"
     local current_time=$(date +%s)
+    
+    # Trim whitespace from base_image to prevent comparison issues
+    # 베이스 이미지에서 공백 제거하여 비교 문제 방지
+    new_base_image=$(echo "$new_base_image" | tr -d '[:space:]')
     
     if [ ! -f "$REGISTRY_FILE" ]; then
         log "ERROR" "Registry file not found"

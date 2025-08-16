@@ -285,6 +285,7 @@ handle_this_argument() {
     fi
 
     log "INFO" "$MSG_UP_START"
+    log "INFO" "DEBUG: handle_this_argument started"
     
     # 1. 설정 로드 및 기본 검증
     if ! load_and_validate_config; then
@@ -293,7 +294,12 @@ handle_this_argument() {
     
     # 2. 베이스 이미지 변경 감지 및 처리
     source "$MODULES_DIR/registry.sh"
-    if check_base_image_change "$(pwd)" "$BASE_IMAGE" "$IMAGE_NAME"; then
+    log "INFO" "DEBUG: Checking base image change: $(pwd), $BASE_IMAGE, $IMAGE_NAME"
+    check_base_image_change "$(pwd)" "$BASE_IMAGE" "$IMAGE_NAME"
+    local return_code=$?
+    log "INFO" "DEBUG: check_base_image_change actual return code: $return_code"
+    if [ $return_code -eq 1 ]; then
+        log "INFO" "DEBUG: check_base_image_change returned 1 (changed)"
         log "INFO" "Base image has changed, previous image removed"
         # 기존 이미지 제거 (컨테이너도 함께 정리됨)
         if docker image inspect "$IMAGE_NAME" &>/dev/null; then
@@ -310,6 +316,8 @@ handle_this_argument() {
         # 레지스트리에 새로운 베이스 이미지 정보 업데이트
         update_base_image_in_registry
         log "SUCCESS" "Updated base image info in registry"
+    else
+        log "INFO" "DEBUG: check_base_image_change returned 0 (no change)"
     fi
     
     # 3. 컨테이너가 이미 실행 중인지 확인
@@ -537,6 +545,8 @@ handle_all_argument() {
 # Main function
 # 메인 함수
 up_main() {
+    log "INFO" "DEBUG: up_main started with args: $@"
+    
     # Docker 사용 가능 여부 확인
     if ! command -v docker &> /dev/null; then
         log "ERROR" "$MSG_COMMON_DOCKER_NOT_FOUND"
