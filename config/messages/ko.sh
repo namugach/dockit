@@ -839,7 +839,7 @@ MSG_DIR_NAME_INIT_INSTRUCTION="이제 'dockit init'을 실행하여 초기화를
 MSG_RUN_DIR_NAME_INSTRUCTION="run 명령어가 중단되었습니다. 새 디렉토리에서 다시 'dockit run'을 실행해주세요."
 
 # Base 모듈 메시지
-MSG_HELP_BASE="  base     - 베이스 이미지 관리 (list, set, add, remove, validate, reset)"
+MSG_HELP_BASE="  base     - 베이스 이미지 관리 (list, ls, set, add, remove, validate, reset)"
 
 # Base 모듈 사용법
 MSG_BASE_USAGE_TITLE="사용법: dockit base <명령어> [옵션]"

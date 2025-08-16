@@ -254,7 +254,7 @@ MSG_HELP_VERSION="  version  - Display version information"
 MSG_HELP_PS="  ps       - List all dockit containers"
 MSG_HELP_LIST="  list     - List all registered projects"
 MSG_HELP_LS="  ls       - List all registered projects (alias for list)"
-MSG_HELP_BASE="  base     - Manage base images (list, set, add, remove, validate, reset)"
+MSG_HELP_BASE="  base     - Manage base images (list, ls, set, add, remove, validate, reset)"
 
 MSG_CONFIG_FILES_HEADER="Configuration Files"
 MSG_CONFIG_FILE_ENV="  .dockit_project/.env                # User settings file"
@@ -848,7 +848,7 @@ MSG_DIR_NAME_CHANGE_FAILED="Failed to change directory name."
 MSG_INIT_CANCELLED="Initialization has been cancelled."
 
 # Base module messages
-MSG_HELP_BASE="  base     - Manage base images (list, set, add, remove, validate, reset)"
+MSG_HELP_BASE="  base     - Manage base images (list, ls, set, add, remove, validate, reset)"
 
 # Base module usage
 MSG_BASE_USAGE_TITLE="Usage: dockit base <command> [options]"
