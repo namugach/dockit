@@ -26,7 +26,7 @@ Dockit은 다음과 같은 독립적인 모듈로 구성되어 있습니다:
 - **run**: 상호작용 없이 자동으로 초기화, 빌드, 시작을 수행
 - **setup**: 초기화, 빌드, 시작, 접속을 한 번에 수행
 - **list**: dockit으로 생성된 모든 컨테이너 목록 조회
-- **base**: 베이스 이미지 관리 (list, ls, set, add, remove, validate, reset)
+- **base**: 베이스 이미지 관리 (ls, set, add, remove, validate, reset)
 - **ps**: 컨테이너 프로세스 상태 확인
 - **registry**: 컨테이너 레지스트리 관리
 - **migrate**: 새 버전으로 업그레이드

@@ -82,8 +82,8 @@ To remove Dockit from your system:
 - `run`: Automatically initialize, build, and start container without interaction
 - `list`: List all projects created with dockit (real-time Docker status synchronization)
 - `ls`: List all projects created with dockit (alias for list)
-- `base`: Base image management (list, ls, set, add, remove, validate, reset) with number-based selection
-- `image`: Docker image management (list, ls, remove, prune, clean)
+- `base`: Base image management (ls, set, add, remove, validate, reset) with number-based selection
+- `image`: Docker image management (ls, remove, prune, clean)
 - `migrate`: Upgrade to a newer version
 - `help`: Display help information
 

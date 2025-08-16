@@ -237,28 +237,27 @@ MSG_CONFIRM_INIT="초기화를 진행하시겠습니까? (y/n): "
 
 # 도움말 메시지
 MSG_HELP_USAGE="사용법: dockit [command]"
-MSG_HELP_COMMANDS="사용 가능한 명령어:"
+MSG_HELP_COMMANDS="명령어:"
 MSG_HELP_INIT="  init     - 도커 개발 환경 초기화"
-MSG_HELP_START="  start    - 컨테이너 시작 (옵션: number, this, all)"
-MSG_HELP_BUILD="  build    - 개발 환경용 도커 이미지 빌드 (옵션: number, this, all, --no-cache)"
-MSG_HELP_UP="  up       - 컨테이너 백그라운드에서 시작 (옵션: number, this, all)"
-MSG_HELP_STOP="  stop     - 컨테이너 정지 (옵션: number, this, all)"
-MSG_HELP_DOWN="  down     - 컨테이너 완전히 제거 (옵션: number, this, all)"
-MSG_HELP_CONNECT="  connect  - 컨테이너에 연결 (옵션: number, \"this\")"
+MSG_HELP_START="  start    - 컨테이너 시작 (number, this, all)"
+MSG_HELP_BUILD="  build    - 개발 환경용 도커 이미지 빌드 (number, this, all, --no-cache)"
+MSG_HELP_UP="  up       - 컨테이너 백그라운드에서 시작 (number, this, all)"
+MSG_HELP_STOP="  stop     - 컨테이너 정지 (number, this, all)"
+MSG_HELP_DOWN="  down     - 컨테이너 완전히 제거 (number, this, all)"
+MSG_HELP_CONNECT="  connect  - 컨테이너에 연결 (number, this)"
 MSG_HELP_STATUS="  status   - 컨테이너 상태 확인"
 MSG_HELP_MIGRATE="  migrate  - 새 버전으로 업그레이드"
-MSG_HELP_IMAGE="  image    - Docker 이미지 관리 (list, ls, remove, clean, prune)"
+MSG_HELP_IMAGE="  image    - Docker 이미지 관리 (ls, remove, clean, prune)"
 MSG_HELP_HELP="  help     - 도움말 표시"
 MSG_HELP_VERSION="  version  - 버전 정보 표시"
 MSG_HELP_PS="  ps       - 모든 dockit 컨테이너 목록 표시"
-MSG_HELP_LIST="  list     - 등록된 모든 프로젝트 목록 표시"
-MSG_HELP_LS="  ls       - 등록된 모든 프로젝트 목록 표시 (list 별칭)"
+MSG_HELP_LS="  ls       - 등록된 모든 프로젝트 목록 표시"
 
 MSG_CONFIG_FILES_HEADER="설정 파일"
 MSG_CONFIG_FILE_ENV="  .dockit_project/.env                # 사용자 설정이 저장되는 파일"
 MSG_CONFIG_FILE_COMPOSE="  .dockit_project/docker-compose.yml  # Docker Compose 설정 파일"
 MSG_CONFIG_FILE_LOG="  .dockit_project/dockit.log          # 로그 파일"
-MSG_CONFIG_FILE_SETTINGS="  config/settings.env         # 언어 및 기본 설정 파일"
+MSG_CONFIG_FILE_SETTINGS="  config/settings.env            # 언어 및 기본 설정 파일"
 
 # 시스템 메시지
 MSG_SYSTEM_DEBUG_INITIAL_LANG="===== 초기 언어 설정 상태 ====="
@@ -839,7 +838,7 @@ MSG_DIR_NAME_INIT_INSTRUCTION="이제 'dockit init'을 실행하여 초기화를
 MSG_RUN_DIR_NAME_INSTRUCTION="run 명령어가 중단되었습니다. 새 디렉토리에서 다시 'dockit run'을 실행해주세요."
 
 # Base 모듈 메시지
-MSG_HELP_BASE="  base     - 베이스 이미지 관리 (list, ls, set, add, remove, validate, reset)"
+MSG_HELP_BASE="  base     - 베이스 이미지 관리 (ls, set, add, remove, validate, reset)"
 
 # Base 모듈 사용법
 MSG_BASE_USAGE_TITLE="사용법: dockit base <명령어> [옵션]"
