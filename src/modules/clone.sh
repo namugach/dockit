@@ -534,17 +534,22 @@ execute_configuration_update() {
         # name 필드 업데이트
         sed -i "s|^name:.*|name: ${escaped_container_name}|" "$compose_file"
         
-        # image 필드 업데이트 (실제 커밋된 이미지 이름 사용)
-        sed -i "s|image:.*|image: ${escaped_image_name}|" "$compose_file"
-        
         # container_name 필드 업데이트
         sed -i "s|container_name:.*|container_name: ${escaped_container_name}|" "$compose_file"
         
-        # networks 섹션 업데이트 (안전한 치환)
-        sed -i "s|${escaped_source_container}|${escaped_container_name}|g" "$compose_file"
+        # networks 섹션 업데이트 (특정 섹션만 타겟팅하여 이미지 필드 보호)
+        # services의 networks 배열 항목 업데이트
+        sed -i "/^[[:space:]]*networks:/,/^[[:space:]]*[^[:space:]-]/ s|- ${escaped_source_container}|- ${escaped_container_name}|g" "$compose_file"
+        # 하단 networks 정의 섹션의 네트워크 이름 업데이트  
+        sed -i "/^networks:/,$ s|^[[:space:]]*${escaped_source_container}:|  ${escaped_container_name}:|" "$compose_file"
+        # 하단 networks 정의 섹션의 name 필드 업데이트
+        sed -i "/^networks:/,$ s|name: ${escaped_source_container}|name: ${escaped_container_name}|" "$compose_file"
         
         # labels 섹션 업데이트  
         sed -i "s|com.dockit.project=.*|com.dockit.project=${escaped_container_name}\"|" "$compose_file"
+        
+        # image 필드 업데이트 (실제 커밋된 이미지 이름으로 직접 설정)
+        sed -i "s|image:.*|image: ${escaped_image_name}|" "$compose_file"
         
         printf "${GREEN}[SUCCESS] docker-compose.yml 파일 수정 완료${NC}\n"
     fi

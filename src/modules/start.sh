@@ -12,6 +12,16 @@ source "$MODULES_DIR/container_base.sh"
 # 메시지 선언
 MSG_NO_CONTAINERS="No containers found."
 
+# 사용법 표시 함수
+# Show usage function
+show_usage() {
+    log "INFO" "Start module - Start containers"
+    echo -e "  dockit start <no> - Start container by number"
+    echo -e "  dockit start this - Start current project container"
+    echo -e "  dockit start all - Start all dockit containers"
+    echo ""
+}
+
 
 
 # "this" 인자 처리 (현재 프로젝트 컨테이너 시작)
