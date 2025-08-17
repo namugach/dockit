@@ -123,6 +123,10 @@ execute_command() {
             source "$MODULES_DIR/base.sh"
             base_main "$@"
             ;;
+        clone)
+            source "$MODULES_DIR/clone.sh"
+            clone_main "$@"
+            ;;
         help)
             source "$MODULES_DIR/help.sh"
             show_help
