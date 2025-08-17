@@ -18,6 +18,144 @@ readonly CONTAINER_START_TIMEOUT=30
 readonly DOCKER_COMMIT_TIMEOUT=300
 readonly CLONE_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
+# Global variables for rollback tracking
+# 롤백 추적을 위한 전역 변수
+ROLLBACK_CREATED_IMAGE=""
+ROLLBACK_CREATED_DIR=""
+ROLLBACK_REGISTRY_ID=""
+ROLLBACK_ENABLED=true
+
+# Rollback mechanism for cleanup on failure
+# 실패 시 정리를 위한 롤백 메커니즘
+execute_rollback() {
+    local exit_code="${1:-1}"
+    
+    if [ "$ROLLBACK_ENABLED" != "true" ]; then
+        printf "${YELLOW}[WARN] 롤백이 비활성화되어 있습니다${NC}\n"
+        return $exit_code
+    fi
+    
+    printf "${RED}[ERROR] 복제 실패! 롤백을 시작합니다...${NC}\n"
+    
+    local rollback_errors=0
+    
+    # 1. Remove registry entry if created
+    if [ -n "$ROLLBACK_REGISTRY_ID" ]; then
+        printf "${CYAN}[ROLLBACK] 레지스트리 항목 제거 중: $ROLLBACK_REGISTRY_ID${NC}\n"
+        if command -v jq &> /dev/null && [ -f "$REGISTRY_FILE" ]; then
+            local temp_file=$(mktemp)
+            if jq "del(.\"$ROLLBACK_REGISTRY_ID\")" "$REGISTRY_FILE" > "$temp_file" 2>/dev/null; then
+                mv "$temp_file" "$REGISTRY_FILE"
+                printf "${GREEN}[ROLLBACK] 레지스트리 항목 제거 완료${NC}\n"
+            else
+                printf "${RED}[ROLLBACK] 레지스트리 항목 제거 실패${NC}\n"
+                rollback_errors=$((rollback_errors + 1))
+                rm -f "$temp_file"
+            fi
+        else
+            printf "${YELLOW}[ROLLBACK] jq가 없거나 레지스트리 파일이 없습니다${NC}\n"
+        fi
+    fi
+    
+    # 2. Remove created directory if exists
+    if [ -n "$ROLLBACK_CREATED_DIR" ] && [ -d "$ROLLBACK_CREATED_DIR" ]; then
+        printf "${CYAN}[ROLLBACK] 생성된 디렉토리 제거 중: $ROLLBACK_CREATED_DIR${NC}\n"
+        if rm -rf "$ROLLBACK_CREATED_DIR"; then
+            printf "${GREEN}[ROLLBACK] 디렉토리 제거 완료${NC}\n"
+        else
+            printf "${RED}[ROLLBACK] 디렉토리 제거 실패${NC}\n"
+            rollback_errors=$((rollback_errors + 1))
+        fi
+    fi
+    
+    # 3. Remove created Docker image if exists
+    if [ -n "$ROLLBACK_CREATED_IMAGE" ]; then
+        printf "${CYAN}[ROLLBACK] 생성된 Docker 이미지 제거 중: $ROLLBACK_CREATED_IMAGE${NC}\n"
+        if docker rmi "$ROLLBACK_CREATED_IMAGE" 2>/dev/null; then
+            printf "${GREEN}[ROLLBACK] Docker 이미지 제거 완료${NC}\n"
+        else
+            printf "${YELLOW}[ROLLBACK] Docker 이미지 제거 실패 (이미 제거되었거나 존재하지 않음)${NC}\n"
+            # Docker image removal failure is not critical for rollback
+        fi
+    fi
+    
+    if [ $rollback_errors -eq 0 ]; then
+        printf "${GREEN}[ROLLBACK] 롤백이 성공적으로 완료되었습니다${NC}\n"
+    else
+        printf "${RED}[ROLLBACK] 롤백 중 $rollback_errors개의 오류가 발생했습니다${NC}\n"
+    fi
+    
+    # Reset rollback variables
+    ROLLBACK_CREATED_IMAGE=""
+    ROLLBACK_CREATED_DIR=""
+    ROLLBACK_REGISTRY_ID=""
+    
+    return $exit_code
+}
+
+# Trap function to handle unexpected exits
+# 예상치 못한 종료를 처리하는 트랩 함수
+cleanup_on_exit() {
+    if [ -n "$ROLLBACK_CREATED_IMAGE" ] || [ -n "$ROLLBACK_CREATED_DIR" ] || [ -n "$ROLLBACK_REGISTRY_ID" ]; then
+        printf "${YELLOW}[WARN] 예상치 못한 종료가 감지되었습니다. 롤백을 실행합니다...${NC}\n"
+        execute_rollback $?
+    fi
+}
+
+# Set trap for cleanup on script exit
+trap cleanup_on_exit EXIT INT TERM
+
+# Security validation functions
+# 보안 검증 함수들
+
+# Validate project name input (prevent injection attacks)
+# 프로젝트 이름 입력 검증 (인젝션 공격 방지)
+validate_project_name() {
+    local name="$1"
+    
+    # Check for empty or null
+    [ -z "$name" ] && return 1
+    
+    # Allow only alphanumeric, hyphens, underscores (no special chars, paths, spaces)
+    [[ "$name" =~ ^[a-zA-Z0-9_-]+$ ]] || return 1
+    
+    # Prevent reserved names and dangerous patterns
+    case "$name" in
+        "." | ".." | "root" | "admin" | "sudo" | "docker" | "bin" | "etc" | "var" | "tmp")
+            return 1
+            ;;
+        *"/"* | *"\\"* | *"|"* | *"&"* | *";"* | *"\`"* | *"$"* | *"("* | *")"*)
+            return 1
+            ;;
+    esac
+    
+    # Length limits (1-50 characters)
+    local len=${#name}
+    [ $len -ge 1 ] && [ $len -le 50 ]
+}
+
+# Safely escape string for sed command
+# sed 명령어용 문자열 안전 이스케이프
+escape_for_sed() {
+    local input="$1"
+    # Escape special characters for sed
+    echo "$input" | sed 's/[[\.*^$()+?{|]/\\&/g'
+}
+
+# Validate container/image names for Docker safety
+# Docker 안전성을 위한 컨테이너/이미지 이름 검증
+validate_docker_name() {
+    local name="$1"
+    
+    # Docker name requirements: lowercase, alphanumeric, hyphens, underscores, periods, slashes
+    [[ "$name" =~ ^[a-z0-9._/-]+$ ]] || return 1
+    
+    # Must not start with period, hyphen, or slash
+    [[ "$name" =~ ^[a-z0-9] ]] || return 1
+    
+    return 0
+}
+
 # Extract project name from IMAGE_NAME or path
 # IMAGE_NAME 또는 경로에서 프로젝트 이름 추출
 extract_project_name() {
@@ -72,10 +210,26 @@ prompt_for_name() {
     # 사용자 입력이 없으면 suggested_name 사용
     local chosen_name="${user_input:-$suggested_name}"
     
-    # 최종 검증: 선택한 이름이 여전히 충돌하는지 확인
-    while [ -d "./$chosen_name" ]; do
-        printf "${RED}❌ $(printf "$MSG_CLONE_DIRECTORY_CONFLICT" "$chosen_name")${NC}\n" >&2
-        read -p "$(printf "$MSG_CLONE_ENTER_NAME"): " chosen_name
+    # 보안 검증 및 충돌 확인 루프
+    while true; do
+        # 보안 검증: 프로젝트 이름 유효성 검사
+        if ! validate_project_name "$chosen_name"; then
+            printf "${RED}❌ 잘못된 프로젝트 이름: '$chosen_name'${NC}\n" >&2
+            printf "${YELLOW}📋 허용되는 문자: 영문, 숫자, 하이픈(-), 언더스코어(_)${NC}\n" >&2
+            printf "${YELLOW}📋 길이: 1-50자, 특수문자/공백/경로문자 금지${NC}\n" >&2
+            read -p "$(printf "$MSG_CLONE_ENTER_NAME"): " chosen_name
+            continue
+        fi
+        
+        # 디렉토리 충돌 확인
+        if [ -d "./$chosen_name" ]; then
+            printf "${RED}❌ $(printf "$MSG_CLONE_DIRECTORY_CONFLICT" "$chosen_name")${NC}\n" >&2
+            read -p "$(printf "$MSG_CLONE_ENTER_NAME"): " chosen_name
+            continue
+        fi
+        
+        # 모든 검증 통과
+        break
     done
     
     echo "$chosen_name"
@@ -212,13 +366,25 @@ determine_target_name() {
     local extracted_name="$1"
     local provided_name="$2"
     
-    printf "${CYAN}[INFO] $MSG_CLONE_DETERMINING_NAME${NC}\n" >&2
-    
     if [ -n "$provided_name" ]; then
-        # 명령줄에서 이름이 지정된 경우
+        # 명령줄에서 이름이 지정된 경우 - 보안 검증 필요 (조용한 모드)
+        if ! validate_project_name "$provided_name"; then
+            printf "${RED}[ERROR] 잘못된 프로젝트 이름: '$provided_name'${NC}\n" >&2
+            printf "${YELLOW}[INFO] 허용되는 문자: 영문, 숫자, 하이픈(-), 언더스코어(_)${NC}\n" >&2
+            printf "${YELLOW}[INFO] 길이: 1-50자, 특수문자/공백/경로문자 금지${NC}\n" >&2
+            return 1
+        fi
+        
+        # 디렉토리 충돌 확인
+        if [ -d "./$provided_name" ]; then
+            printf "${RED}[ERROR] $(printf "$MSG_CLONE_DIRECTORY_CONFLICT" "$provided_name")${NC}\n" >&2
+            return 1
+        fi
+        
         echo "$provided_name"
     else
-        # 대화형 모드
+        # 대화형 모드 - 이때만 안내 메시지 출력
+        printf "${CYAN}[INFO] $MSG_CLONE_DETERMINING_NAME${NC}\n" >&2
         local default_name="$extracted_name"
         local suggested_name=$(resolve_conflicts "$default_name" ".")
         prompt_for_name "1" "$default_name" "$suggested_name"
@@ -264,88 +430,143 @@ ensure_container_running() {
     fi
 }
 
-# Execute the actual cloning process
-# 실제 복제 프로세스 실행
-execute_clone() {
-    local source_info="$1"
-    local target_name="$2"
+# Container preparation phase
+# 컨테이너 준비 단계
+execute_container_preparation() {
+    printf "${CYAN}[INFO] 컨테이너 상태 확인 및 준비 중...${NC}\n"
     
-    printf "${CYAN}[INFO] $MSG_CLONE_STARTING_EXECUTION${NC}\n"
-    
-    # 1. Ensure container is running
-    show_clone_progress 1 5 "컨테이너 상태 확인 및 시작"
     if ! ensure_container_running "$SOURCE_PROJECT_CONTAINER" "$SOURCE_PROJECT_STATE"; then
         printf "${RED}[ERROR] 컨테이너를 시작할 수 없습니다${NC}\n"
         return 1
     fi
     
-    # 2. Docker commit with timestamp
-    show_clone_progress 2 5 "Docker 이미지 커밋 실행"
-    local new_image_name="${SOURCE_PROJECT_IMAGE}:clone-${CLONE_TIMESTAMP}"
+    return 0
+}
+
+# Docker commit phase
+# Docker 커밋 단계
+execute_docker_commit() {
+    local target_name="$1"
+    local -n new_image_ref=$2
     
-    printf "${CYAN}[INFO] 새 이미지 생성 중: $new_image_name${NC}\n"
-    if ! timeout $DOCKER_COMMIT_TIMEOUT docker commit "$SOURCE_PROJECT_CONTAINER" "$new_image_name"; then
+    printf "${CYAN}[INFO] Docker 이미지 커밋 실행 중...${NC}\n"
+    
+    new_image_ref="${SOURCE_PROJECT_IMAGE}:clone-${CLONE_TIMESTAMP}"
+    
+    printf "${CYAN}[INFO] 새 이미지 생성 중: $new_image_ref${NC}\n"
+    if ! timeout $DOCKER_COMMIT_TIMEOUT docker commit "$SOURCE_PROJECT_CONTAINER" "$new_image_ref"; then
         printf "${RED}[ERROR] Docker commit 실패${NC}\n"
         return 1
     fi
+    
+    # Track created image for rollback
+    ROLLBACK_CREATED_IMAGE="$new_image_ref"
+    
     printf "${GREEN}[SUCCESS] 이미지 커밋 완료${NC}\n"
+    return 0
+}
+
+# Project structure setup phase
+# 프로젝트 구조 설정 단계
+execute_project_setup() {
+    local target_name="$1"
+    local -n target_dir_ref=$2
     
-    # 3. Create project structure
-    show_clone_progress 3 5 "프로젝트 구조 생성"
-    local target_dir="./$target_name"
+    printf "${CYAN}[INFO] 프로젝트 구조 생성 중...${NC}\n"
     
-    if ! mkdir -p "$target_dir/.dockit_project"; then
+    target_dir_ref="./$target_name"
+    
+    if ! mkdir -p "$target_dir_ref/.dockit_project"; then
         printf "${RED}[ERROR] 프로젝트 디렉토리 생성 실패${NC}\n"
         return 1
     fi
     
-    # 4. Copy and modify configuration files
-    show_clone_progress 4 5 "설정 파일 복사 및 수정"
+    # Track created directory for rollback
+    ROLLBACK_CREATED_DIR="$(pwd)/$target_name"
     
     # .dockit_project 폴더 전체 복사 (숨김파일 포함)
-    if ! cp -r "$SOURCE_PROJECT_PATH/.dockit_project/." "$target_dir/.dockit_project/"; then
+    if ! cp -r "$SOURCE_PROJECT_PATH/.dockit_project/." "$target_dir_ref/.dockit_project/"; then
         printf "${RED}[ERROR] 설정 파일 복사 실패${NC}\n"
         return 1
     fi
     
-    # .env 파일 수정
-    local new_container_name="dockit-$(echo "$(pwd)/$target_name" | sed 's|/|-|g' | sed 's|^-||')"
+    printf "${GREEN}[SUCCESS] 프로젝트 구조 생성 완료${NC}\n"
+    return 0
+}
+
+# Configuration update phase
+# 설정 파일 업데이트 단계
+execute_configuration_update() {
+    local target_name="$1"
+    local target_dir="$2"
+    local new_image_name="$3"
+    local -n new_container_name_ref=$4
+    
+    printf "${CYAN}[INFO] 설정 파일 수정 중...${NC}\n"
+    
+    # 안전한 컨테이너 이름 생성 (보안 강화)
+    local safe_pwd=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
+    local safe_target=$(echo "$target_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
+    new_container_name_ref="dockit-${safe_pwd}-${safe_target}"
+    
+    # Docker 이름 규칙 검증
+    if ! validate_docker_name "$new_container_name_ref"; then
+        printf "${RED}[ERROR] 생성된 컨테이너 이름이 Docker 규칙에 맞지 않습니다: $new_container_name_ref${NC}\n"
+        return 1
+    fi
+    
     local env_file="$target_dir/.dockit_project/.env"
     local compose_file="$target_dir/.dockit_project/docker-compose.yml"
     
-    # IMAGE_NAME과 CONTAINER_NAME 업데이트
-    sed -i "s|IMAGE_NAME=.*|IMAGE_NAME=\"$new_image_name\"|" "$env_file"
-    sed -i "s|CONTAINER_NAME=.*|CONTAINER_NAME=\"$new_container_name\"|" "$env_file"
+    # 안전한 sed 명령어 사용 (명령어 주입 방지)
+    local escaped_image_name=$(escape_for_sed "$new_image_name")
+    local escaped_container_name=$(escape_for_sed "$new_container_name_ref")
     
-    # docker-compose.yml 파일 수정
+    # IMAGE_NAME과 CONTAINER_NAME 업데이트
+    sed -i "s|IMAGE_NAME=.*|IMAGE_NAME=\"${escaped_image_name}\"|" "$env_file"
+    sed -i "s|CONTAINER_NAME=.*|CONTAINER_NAME=\"${escaped_container_name}\"|" "$env_file"
+    
+    # docker-compose.yml 파일 수정 (보안 강화)
     if [ -f "$compose_file" ]; then
+        # 원본 컨테이너 이름도 안전하게 이스케이프
+        local escaped_source_container=$(escape_for_sed "$SOURCE_PROJECT_CONTAINER")
+        
         # name 필드 업데이트
-        sed -i "s|^name:.*|name: $new_container_name|" "$compose_file"
+        sed -i "s|^name:.*|name: ${escaped_container_name}|" "$compose_file"
         
         # image 필드 업데이트 (실제 커밋된 이미지 이름 사용)
-        sed -i "s|image:.*|image: $new_image_name|" "$compose_file"
+        sed -i "s|image:.*|image: ${escaped_image_name}|" "$compose_file"
         
         # container_name 필드 업데이트
-        sed -i "s|container_name:.*|container_name: $new_container_name|" "$compose_file"
+        sed -i "s|container_name:.*|container_name: ${escaped_container_name}|" "$compose_file"
         
-        # networks 섹션 업데이트
-        sed -i "s|$SOURCE_PROJECT_CONTAINER|$new_container_name|g" "$compose_file"
+        # networks 섹션 업데이트 (안전한 치환)
+        sed -i "s|${escaped_source_container}|${escaped_container_name}|g" "$compose_file"
         
         # labels 섹션 업데이트  
-        sed -i "s|com.dockit.project=.*|com.dockit.project=$new_container_name\"|" "$compose_file"
+        sed -i "s|com.dockit.project=.*|com.dockit.project=${escaped_container_name}\"|" "$compose_file"
         
         printf "${GREEN}[SUCCESS] docker-compose.yml 파일 수정 완료${NC}\n"
     fi
     
     printf "${GREEN}[SUCCESS] 설정 파일 수정 완료${NC}\n"
+    return 0
+}
+
+# Registry registration phase
+# 레지스트리 등록 단계
+execute_registry_registration() {
+    local target_name="$1"
     
-    # 5. Register in registry
-    show_clone_progress 5 5 "레지스트리 등록"
+    printf "${CYAN}[INFO] 레지스트리 등록 중...${NC}\n"
     
     # 새 프로젝트 ID 생성
     local new_project_id=$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 64 | head -n 1)
     local new_project_path="$(pwd)/$target_name"
     local current_timestamp=$(date +%s)
+    
+    # Track registry ID for rollback before adding to registry
+    ROLLBACK_REGISTRY_ID="$new_project_id"
     
     # 레지스트리에 새 프로젝트 추가
     local registry_json=$(cat "$REGISTRY_FILE")
@@ -361,7 +582,70 @@ execute_clone() {
             "image_name": ""
         }}')
     
-    echo "$updated_registry" > "$REGISTRY_FILE"
+    if ! echo "$updated_registry" > "$REGISTRY_FILE"; then
+        printf "${RED}[ERROR] 레지스트리 등록 실패${NC}\n"
+        return 1
+    fi
+    
+    printf "${GREEN}[SUCCESS] 레지스트리 등록 완료${NC}\n"
+    return 0
+}
+
+# Main clone execution orchestrator (refactored for single responsibility)
+# 메인 복제 실행 오케스트레이터 (단일 책임 원칙으로 리팩토링)
+execute_clone() {
+    local source_info="$1"
+    local target_name="$2"
+    
+    printf "${CYAN}[INFO] $MSG_CLONE_STARTING_EXECUTION${NC}\n"
+    
+    # Reset rollback variables at start
+    ROLLBACK_CREATED_IMAGE=""
+    ROLLBACK_CREATED_DIR=""
+    ROLLBACK_REGISTRY_ID=""
+    
+    # Phase 1: Container preparation
+    show_clone_progress 1 5 "컨테이너 상태 확인 및 시작"
+    if ! execute_container_preparation; then
+        execute_rollback 1
+        return 1
+    fi
+    
+    # Phase 2: Docker commit
+    show_clone_progress 2 5 "Docker 이미지 커밋 실행"
+    local new_image_name
+    if ! execute_docker_commit "$target_name" new_image_name; then
+        execute_rollback 1
+        return 1
+    fi
+    
+    # Phase 3: Project structure setup
+    show_clone_progress 3 5 "프로젝트 구조 생성"
+    local target_dir
+    if ! execute_project_setup "$target_name" target_dir; then
+        execute_rollback 1
+        return 1
+    fi
+    
+    # Phase 4: Configuration update
+    show_clone_progress 4 5 "설정 파일 복사 및 수정"
+    local new_container_name
+    if ! execute_configuration_update "$target_name" "$target_dir" "$new_image_name" new_container_name; then
+        execute_rollback 1
+        return 1
+    fi
+    
+    # Phase 5: Registry registration
+    show_clone_progress 5 5 "레지스트리 등록"
+    if ! execute_registry_registration "$target_name"; then
+        execute_rollback 1
+        return 1
+    fi
+    
+    # Success: Clear rollback tracking (clone completed successfully)
+    ROLLBACK_CREATED_IMAGE=""
+    ROLLBACK_CREATED_DIR=""
+    ROLLBACK_REGISTRY_ID=""
     
     printf "${GREEN}[SUCCESS] $MSG_CLONE_EXECUTION_SUCCESS${NC}\n"
     return 0
@@ -407,6 +691,12 @@ clone_main() {
     
     local final_name
     final_name=$(determine_target_name "$extracted_name" "$target_name")
+    
+    # 프로젝트 이름 결정 실패 시 종료
+    if [ $? -ne 0 ] || [ -z "$final_name" ]; then
+        printf "${RED}[ERROR] 유효한 프로젝트 이름을 결정할 수 없습니다${NC}\n"
+        return 1
+    fi
     
     printf "${GREEN}[INFO] $(printf "$MSG_CLONE_TARGET_NAME" "$final_name")${NC}\n"
     
