@@ -116,8 +116,11 @@ validate_project_name() {
     # Check for empty or null
     [ -z "$name" ] && return 1
     
-    # Allow only alphanumeric, hyphens, underscores (no special chars, paths, spaces)
-    [[ "$name" =~ ^[a-zA-Z0-9_-]+$ ]] || return 1
+    # Reject hyphens - causes path conversion issues
+    [[ "$name" =~ - ]] && return 1
+    
+    # Allow only alphanumeric and underscores (no special chars, paths, spaces, hyphens)
+    [[ "$name" =~ ^[a-zA-Z0-9_]+$ ]] || return 1
     
     # Prevent reserved names and dangerous patterns
     case "$name" in
@@ -176,11 +179,14 @@ resolve_conflicts() {
     local desired_name="$1"
     local current_dir="$2"
     local counter=2
-    local final_name="$desired_name"
+    
+    # 하이픈이 포함된 이름을 언더스코어로 변환
+    local safe_name=$(echo "$desired_name" | tr '-' '_')
+    local final_name="$safe_name"
     
     # 현재 디렉토리에서 충돌 검사
     while [ -d "$current_dir/$final_name" ]; do
-        final_name="${desired_name}-${counter}"
+        final_name="${safe_name}_${counter}"
         counter=$((counter + 1))
     done
     
@@ -196,6 +202,13 @@ prompt_for_name() {
     local user_input
     
     printf "${CYAN}$(printf "$MSG_CLONE_STARTING" "$source_id")${NC}\n" >&2
+    
+    # 하이픈이 언더스코어로 변환되었는지 확인
+    local original_suggested=$(echo "$suggested_name" | tr '_' '-')
+    if [[ "$default_name" =~ - ]] && [[ "$suggested_name" != *"-"* ]]; then
+        printf "${YELLOW}⚠️  디렉토리 이름에 하이픈(-)이 포함되어 있습니다${NC}\n" >&2
+        printf "${GREEN}💡 Docker 호환성을 위해 언더스코어(_)로 변환을 권장합니다: $default_name → $suggested_name${NC}\n" >&2
+    fi
     
     if [ "$default_name" != "$suggested_name" ]; then
         # 충돌이 있는 경우
@@ -215,7 +228,8 @@ prompt_for_name() {
         # 보안 검증: 프로젝트 이름 유효성 검사
         if ! validate_project_name "$chosen_name"; then
             printf "${RED}❌ 잘못된 프로젝트 이름: '$chosen_name'${NC}\n" >&2
-            printf "${YELLOW}📋 허용되는 문자: 영문, 숫자, 하이픈(-), 언더스코어(_)${NC}\n" >&2
+            printf "${YELLOW}📋 허용되는 문자: 영문, 숫자, 언더스코어(_)${NC}\n" >&2
+            printf "${YELLOW}📋 하이픈(-) 금지 - Docker 경로 변환 문제 방지${NC}\n" >&2
             printf "${YELLOW}📋 길이: 1-50자, 특수문자/공백/경로문자 금지${NC}\n" >&2
             read -p "$(printf "$MSG_CLONE_ENTER_NAME"): " chosen_name
             continue
@@ -566,29 +580,34 @@ execute_registry_registration() {
     
     printf "${CYAN}[INFO] 레지스트리 등록 중...${NC}\n"
     
-    # 새 프로젝트 ID 생성
-    local new_project_id=$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 64 | head -n 1)
     local new_project_path="$(pwd)/$target_name"
     local current_timestamp=$(date +%s)
+    
+    # 새 프로젝트 ID 생성 및 저장 (registry.sh 함수 사용)
+    local new_project_id
+    if ! new_project_id=$(generate_and_save_project_id "$new_project_path/.dockit_project"); then
+        printf "${RED}[ERROR] 프로젝트 ID 생성 실패${NC}\n"
+        return 1
+    fi
     
     # Track registry ID for rollback before adding to registry
     ROLLBACK_REGISTRY_ID="$new_project_id"
     
-    # 레지스트리에 새 프로젝트 추가
-    local registry_json=$(cat "$REGISTRY_FILE")
-    local updated_registry=$(echo "$registry_json" | jq --arg id "$new_project_id" \
-        --arg path "$new_project_path" \
-        --arg timestamp "$current_timestamp" \
-        '. + {($id): {
-            "path": $path,
-            "created": ($timestamp | tonumber),
-            "state": "ready",
-            "last_seen": ($timestamp | tonumber),
-            "base_image": "",
-            "image_name": ""
-        }}')
+    # 이미지 정보 수집
+    local image_name="" container_name="" base_image=""
+    local env_file="$new_project_path/.dockit_project/.env"
     
-    if ! echo "$updated_registry" > "$REGISTRY_FILE"; then
+    if [ -f "$env_file" ]; then
+        # .env 파일에서 정보 추출
+        image_name=$(grep "^IMAGE_NAME=" "$env_file" | cut -d'=' -f2 | sed 's/^"\|"$//g')
+        container_name=$(grep "^CONTAINER_NAME=" "$env_file" | cut -d'=' -f2 | sed 's/^"\|"$//g')
+        base_image=$(grep "^BASE_IMAGE=" "$env_file" | cut -d'=' -f2 | sed 's/^"\|"$//g')
+    else
+        printf "${YELLOW}[WARN] .env 파일을 찾을 수 없음, 기본값 사용${NC}\n"
+    fi
+    
+    # 레지스트리에 새 프로젝트 추가
+    if ! add_project_to_registry "$new_project_id" "$new_project_path" "$current_timestamp" "ready" "$base_image" "$image_name"; then
         printf "${RED}[ERROR] 레지스트리 등록 실패${NC}\n"
         return 1
     fi
@@ -717,7 +736,7 @@ clone_main() {
     printf "${GREEN}✅ $MSG_CLONE_COMPLETED${NC}\n"
     printf "${YELLOW}$MSG_CLONE_NEXT_STEPS${NC}\n"
     echo "  cd $final_name"
-    echo "  dockit start"
+    echo "  dockit start this"
     
     return 0
 }

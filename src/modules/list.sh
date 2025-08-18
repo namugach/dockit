@@ -256,6 +256,94 @@ sync_with_docker_status() {
     return 0
 }
 
+# Auto-discover unregistered dockit projects from Docker
+# Docker에서 미등록 dockit 프로젝트 자동 발견
+discover_and_register_projects() {
+    local discovered_count=0
+    
+    # 1. Docker 컨테이너에서 dockit 프로젝트 찾기
+    local docker_names=""
+    
+    # 컨테이너에서 찾기
+    if command -v docker &> /dev/null; then
+        docker_names=$(docker container ls -a --format "{{.Names}}" 2>/dev/null | grep "^dockit-" || echo "")
+        
+        # 이미지에서도 찾기 (컨테이너가 없는 경우)
+        local image_names=$(docker image ls --format "{{.Repository}}" 2>/dev/null | grep "^dockit-" || echo "")
+        docker_names=$(echo -e "$docker_names\n$image_names" | grep -v "^$" | sort -u)
+    fi
+    
+    if [ -z "$docker_names" ]; then
+        return 0
+    fi
+    
+    local registry_json=$(cat "$REGISTRY_FILE")
+    
+    # 2. 각 Docker 이름에 대해 처리
+    while IFS= read -r docker_name; do
+        [ -z "$docker_name" ] && continue
+        
+        # 이미 레지스트리에 등록된 프로젝트인지 확인
+        local already_registered=$(echo "$registry_json" | jq -r --arg name "$docker_name" 'to_entries[] | select(.value.image_name == $name or (.value.image_name // "" | contains($name))) | .key' 2>/dev/null)
+        if [ -n "$already_registered" ] && [ "$already_registered" != "null" ]; then
+            continue
+        fi
+        
+        # 3. Docker 이름을 경로로 변환 시도 (안전한 방법)
+        local potential_paths=()
+        
+        # 방법 1: 표준 변환 (하이픈을 슬래시로)
+        local name_without_prefix=$(echo "$docker_name" | sed 's/^dockit-//')
+        local standard_path="/$(echo "$name_without_prefix" | tr '-' '/')"
+        potential_paths+=("$standard_path")
+        
+        # 방법 2: 현재 작업 디렉토리 주변에서 검색
+        local base_dir=$(pwd | sed 's|/[^/]*$||')  # 상위 디렉토리
+        if [ -d "$base_dir" ]; then
+            # 패턴 매칭으로 유사한 디렉토리 찾기
+            local found_path=$(find "$base_dir" -maxdepth 3 -type d -name ".dockit_project" 2>/dev/null | while read -r dockit_dir; do
+                local project_dir=$(dirname "$dockit_dir")
+                local project_name=$(generate_dockit_name "$project_dir")
+                if [ "$project_name" = "$docker_name" ]; then
+                    echo "$project_dir"
+                    break
+                fi
+            done | head -1)
+            
+            if [ -n "$found_path" ]; then
+                potential_paths+=("$found_path")
+            fi
+        fi
+        
+        # 4. 각 경로에 대해 검증
+        for path in "${potential_paths[@]}"; do
+            [ -z "$path" ] && continue
+            
+            # 디렉토리와 .dockit_project 존재 확인
+            if [ -d "$path" ] && [ -d "$path/.dockit_project" ] && [ -f "$path/.dockit_project/id" ]; then
+                # 프로젝트 ID 확인
+                local project_id=$(cat "$path/.dockit_project/id" 2>/dev/null)
+                if [ -n "$project_id" ]; then
+                    # 레지스트리에 등록
+                    local current_time=$(date +%s)
+                    if add_project_to_registry "$project_id" "$path" "$current_time" "ready" "" "$docker_name"; then
+                        ((discovered_count++))
+                        echo "🔍 발견된 프로젝트 등록: $(basename "$path")" >&2
+                    fi
+                fi
+                break  # 성공하면 다음 docker_name으로
+            fi
+        done
+        
+    done <<< "$docker_names"
+    
+    if [ $discovered_count -gt 0 ]; then
+        echo "✨ $discovered_count 개의 미등록 프로젝트가 자동으로 발견되어 등록되었습니다." >&2
+    fi
+    
+    return 0
+}
+
 # Main function for listing registered projects
 # 등록된 프로젝트 목록 표시를 위한 메인 함수
 list_main() {
@@ -278,6 +366,11 @@ list_main() {
     # Sync registry with real-time Docker status
     sync_with_docker_status > /dev/null 2>&1
     
+    # 미등록 프로젝트 자동 발견 및 등록
+    # Auto-discover and register unregistered projects
+    discover_and_register_projects > /dev/null 2>&1
+    
+    # 레지스트리 다시 로드 (새로 등록된 프로젝트 포함)
     local registry_json=$(cat "$REGISTRY_FILE")
     
     # Check if registry is empty

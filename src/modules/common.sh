@@ -280,12 +280,88 @@ suggest_directory_rename() {
     fi
 }
 
+# 하이픈 디렉토리 이름 변경 제안 및 실행
+# Suggest hyphen directory name change and execute
+suggest_directory_rename_hyphen() {
+    local current_dir="$1"
+    local instruction_message="$2"
+    local current_name=$(basename "$current_dir")
+    local suggested_name=$(echo "$current_name" | tr '-' '_')
+    local parent_dir=$(dirname "$current_dir")
+    local new_path="$parent_dir/$suggested_name"
+    
+    # 제안된 이름이 현재 이름과 같으면 변경 불필요
+    if [ "$current_name" = "$suggested_name" ]; then
+        return 0
+    fi
+    
+    echo ""
+    log "WARNING" "현재 디렉토리 이름에 하이픈(-)이 포함되어 있습니다."
+    echo ""
+    echo "Docker 이미지 이름 규칙상 하이픈은 경로 변환 시 문제를 일으킵니다."
+    echo "디렉토리 이름을 언더스코어(_)로 변경하는 것을 권장합니다."
+    echo ""
+    printf "현재: %s\n" "$current_dir"
+    printf "제안: %s\n" "$new_path"
+    echo ""
+    
+    # 제안된 디렉토리가 이미 존재하는지 확인
+    if [ -d "$new_path" ]; then
+        log "ERROR" "제안된 디렉토리가 이미 존재합니다: $new_path"
+        echo "기존 디렉토리를 삭제하거나 다른 이름을 사용하세요."
+        return 1
+    fi
+    
+    echo -n "디렉토리 이름을 변경하시겠습니까? [Y/n]: "
+    read -r confirm
+    
+    # 소문자로 변환해서 비교 (기본값은 Y)
+    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+    
+    if [ "$confirm" = "n" ] || [ "$confirm" = "no" ]; then
+        log "INFO" "디렉토리 이름 변경이 취소되었습니다."
+        echo ""
+        echo "⚠️  경고: 하이픈이 포함된 디렉토리명은 향후 문제를 일으킬 수 있습니다."
+        echo "권장사항: 수동으로 디렉토리 이름을 변경하세요."
+        echo ""
+        return 1
+    else
+        log "INFO" "디렉토리 이름 변경 중..."
+        
+        if mv "$current_dir" "$new_path"; then
+            log "SUCCESS" "디렉토리 이름 변경 완료"
+            printf "새 위치: %s\n" "$new_path"
+            echo ""
+            echo "새로운 디렉토리에서 작업을 계속합니다."
+            echo ""
+            echo "$instruction_message"
+            echo ""
+            
+            # 새 디렉토리로 이동
+            cd "$new_path"
+            
+            # 사용자 쉘로 새로고침 (자동 실행 없이)
+            local user_shell="${SHELL:-/bin/bash}"
+            exec "$user_shell"
+        else
+            log "ERROR" "디렉토리 이름 변경 실패"
+            return 1
+        fi
+    fi
+}
+
 # 디렉토리 이름 검증 및 변경 제안
 # Validate directory name and suggest changes
 validate_and_suggest_directory_name() {
     local instruction_message="$1"
     local current_dir="$(pwd)"
     local dir_name=$(basename "$current_dir")
+    
+    # 하이픈이 포함되어 있는지 확인 (우선 처리)
+    if [[ "$dir_name" =~ - ]]; then
+        suggest_directory_rename_hyphen "$current_dir" "$instruction_message"
+        return $?
+    fi
     
     # 대문자가 포함되어 있는지 확인
     if has_uppercase_letters "$dir_name"; then
