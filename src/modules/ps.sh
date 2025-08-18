@@ -82,11 +82,27 @@ get_project_number() {
     return 1
 }
 
-# Get container basic info
-# 컨테이너 기본 정보 가져오기
+# Get container basic info with optimized single docker inspect call
+# 최적화된 단일 docker inspect 호출로 컨테이너 기본 정보 가져오기
 get_container_info() {
     local container_id="$1"
-    local full_name=$(docker inspect --format "{{.Name}}" "$container_id" | sed 's/^\///')
+    
+    # Single docker inspect call to get all needed information
+    # 필요한 모든 정보를 한 번의 docker inspect 호출로 가져오기
+    local inspect_output
+    inspect_output=$(docker inspect --format \
+        "{{.Name}}|{{.Config.Image}}|{{.Created}}|{{.State.Status}}|{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}|{{.NetworkSettings.IPAddress}}" \
+        "$container_id" 2>/dev/null)
+    
+    if [ -z "$inspect_output" ]; then
+        return 1
+    fi
+    
+    # Parse the output using IFS
+    IFS='|' read -r full_name image created status network_ip default_ip <<< "$inspect_output"
+    
+    # Clean up the name (remove leading slash)
+    full_name=$(echo "$full_name" | sed 's/^\///')
     
     # 컨테이너 이름에서 'dockit-' 접두사 제거
     local raw_name=$(echo "$full_name" | sed 's/^dockit-//')
@@ -104,30 +120,32 @@ get_container_info() {
         simple_name="$raw_name"
     fi
     
-    local image=$(docker inspect --format "{{.Config.Image}}" "$container_id")
-    local created=$(docker inspect --format "{{.Created}}" "$container_id" | cut -d'T' -f1,2 | sed 's/T/ /' | cut -d'.' -f1)
-    local status=$(docker inspect --format "{{.State.Status}}" "$container_id")
+    # Format created date
+    created=$(echo "$created" | cut -d'T' -f1,2 | sed 's/T/ /' | cut -d'.' -f1)
+    
+    # Determine IP address (prefer network_ip, fallback to default_ip)
+    local ip_address="-"
+    if [ "$status" = "running" ]; then
+        if [ -n "$network_ip" ]; then
+            ip_address="$network_ip"
+        elif [ -n "$default_ip" ]; then
+            ip_address="$default_ip"
+        fi
+    fi
+    
+    # Store results in global variables for the calling function
+    CONTAINER_SIMPLE_NAME="$simple_name"
+    CONTAINER_IMAGE="$image"
+    CONTAINER_CREATED="$created"
+    CONTAINER_STATUS="$status"
+    CONTAINER_IP="$ip_address"
     
     echo "$simple_name|$image|$created|$status"
 }
 
 # Get container IP address
-# 컨테이너 IP 주소 가져오기
-get_container_ip() {
-    local container_id="$1"
-    local status="$2"
-    
-    if [ "$status" == "running" ]; then
-        local ip_address=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container_id")
-        # IP가 비어있으면 NetworkSettings에서 직접 가져오기
-        if [ -z "$ip_address" ]; then
-            ip_address=$(docker inspect --format '{{.NetworkSettings.IPAddress}}' "$container_id")
-        fi
-        echo "$ip_address"
-    else
-        echo "-"
-    fi
-}
+# get_container_ip() function removed - IP address is now included in get_container_info() for performance
+# get_container_ip() 함수 제거됨 - 성능 향상을 위해 IP 주소가 get_container_info()에 포함됨
 
 # Get container ports
 # 컨테이너 포트 가져오기
@@ -185,15 +203,18 @@ format_container_info() {
         project_number="-"
     fi
     
-    # 컨테이너 기본 정보 가져오기
-    local container_info=$(get_container_info "$container_id")
-    local name=$(echo "$container_info" | cut -d'|' -f1)
-    local image=$(echo "$container_info" | cut -d'|' -f2)
-    local created=$(echo "$container_info" | cut -d'|' -f3)
-    local status=$(echo "$container_info" | cut -d'|' -f4)
+    # 컨테이너 기본 정보 가져오기 (최적화된 단일 호출)
+    if ! get_container_info "$container_id"; then
+        log "WARNING" "Failed to get container info for $container_id"
+        return 1
+    fi
     
-    # 추가 정보 가져오기
-    local ip_address=$(get_container_ip "$container_id" "$status")
+    # 글로벌 변수에서 정보 가져오기 (docker inspect 호출 없음)
+    local name="$CONTAINER_SIMPLE_NAME"
+    local image="$CONTAINER_IMAGE"
+    local created="$CONTAINER_CREATED"
+    local status="$CONTAINER_STATUS"
+    local ip_address="$CONTAINER_IP"
     local ports=$(get_container_ports "$container_id" "$status")
     
     # 긴 텍스트 필드 잘라내기
@@ -294,15 +315,14 @@ collect_container_data() {
         container_id=$(docker ps -aq --filter "name=^${container_name}$" --filter "label=com.dockit=true" | head -1)
         
         if [ -n "$container_id" ]; then
-            # 컨테이너가 존재하는 경우만 처리
-            container_info=$(get_container_info "$container_id")
-            name=$(echo "$container_info" | cut -d'|' -f1)
-            image=$(echo "$container_info" | cut -d'|' -f2)
-            created=$(echo "$container_info" | cut -d'|' -f3)
-            status=$(echo "$container_info" | cut -d'|' -f4)
-            
-            # 추가 정보 가져오기
-            ip_address=$(get_container_ip "$container_id" "$status")
+            # 컨테이너가 존재하는 경우만 처리 (최적화된 단일 호출)
+            if get_container_info "$container_id"; then
+                # 글로벌 변수에서 정보 가져오기 (docker inspect 호출 없음)
+                name="$CONTAINER_SIMPLE_NAME"
+                image="$CONTAINER_IMAGE"
+                created="$CONTAINER_CREATED"
+                status="$CONTAINER_STATUS"
+                ip_address="$CONTAINER_IP"
             ports=$(get_container_ports "$container_id" "$status")
             
             # 컨테이너 ID 표시용

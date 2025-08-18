@@ -37,6 +37,21 @@ get_dockit_images() {
         --filter "reference=dockit-*" | sort
 }
 
+# Enhanced container-image matching that handles tagged images
+# 태그된 이미지를 처리하는 향상된 컨테이너-이미지 매칭
+find_containers_using_image() {
+    local image_name="$1"
+    
+    # 정확한 이미지명 매칭과 태그된 이미지 매칭을 모두 지원
+    docker ps -a --format "{{.Names}}\t{{.Image}}" | \
+        awk -v target="$image_name" '
+        $2 == target || 
+        $2 ~ "^" target ":" || 
+        ($2 ~ ":" && substr($2, 1, index($2, ":")-1) == target) {
+            print $1
+        }' | tr '\n' ' '
+}
+
 # List dockit images
 # dockit 이미지 목록 표시
 list_images() {
@@ -183,10 +198,9 @@ remove_image() {
     fi
     
     # Check if image is being used by any containers
-    # 이미지를 사용하는 컨테이너가 있는지 확인 (정확한 이미지명 매칭)
+    # 이미지를 사용하는 컨테이너가 있는지 확인 (태그된 이미지 포함)
     local containers_using_image
-    containers_using_image=$(docker ps -a --format "{{.Names}}\t{{.Image}}" | \
-        awk -v target="$image_name" '$2 == target {print $1}' | tr '\n' ' ')
+    containers_using_image=$(find_containers_using_image "$image_name")
     
     if [ -n "$containers_using_image" ]; then
         log "WARNING" "$(printf "$MSG_IMAGE_REMOVE_IN_USE" "$containers_using_image")"
@@ -299,11 +313,10 @@ clean_images() {
         if [ -n "$image_info" ]; then
             IFS=$'\t' read -r image_id created_since size <<< "$image_info"
             
-            # Check if image is used by any containers (정확한 이미지명 매칭)
-            # 이미지가 컨테이너에서 사용되는지 확인 (정확한 이미지명 매칭)
+            # Check if image is used by any containers (태그된 이미지 포함)
+            # 이미지가 컨테이너에서 사용되는지 확인 (태그된 이미지 포함)
             local containers_using_image
-            containers_using_image=$(docker ps -a --format "{{.Names}}\t{{.Image}}" | \
-                awk -v target="$image_name" '$2 == target {print $1}' | tr '\n' ' ')
+            containers_using_image=$(find_containers_using_image "$image_name")
             
             local status
             if [ -n "$containers_using_image" ]; then
@@ -434,33 +447,48 @@ clean_images() {
     for image_name in "${all_image_names[@]}"; do
         echo "$(printf "$MSG_IMAGE_CLEAN_PROCESSING" "$image_name")"
         
-        # Check for containers using this image (정확한 이미지명 매칭)
-        # 이 이미지를 사용하는 컨테이너 확인 (정확한 이미지명 매칭)
+        # Check for containers using this image (태그된 이미지 포함)
+        # 이 이미지를 사용하는 컨테이너 확인 (태그된 이미지 포함)
         local containers
-        containers=$(docker ps -a --format "{{.Names}}\t{{.Image}}" | \
-            awk -v target="$image_name" '$2 == target {print $1}' | tr '\n' ' ')
+        containers=$(find_containers_using_image "$image_name")
         
         if [ -n "$containers" ]; then
             echo "$(printf "$MSG_IMAGE_CLEAN_REMOVING_CONTAINERS" "$containers")"
             
-            # Stop and remove containers
-            # 컨테이너 중지 및 제거
-            for container in $containers; do
-                echo -n "$(printf "$MSG_IMAGE_CLEAN_STOPPING" "$container")"
-                if docker stop "$container" &>/dev/null; then
-                    echo "✓"
-                else
-                    echo "⚠️"
-                fi
-                
-                echo -n "$(printf "$MSG_IMAGE_CLEAN_REMOVING" "$container")"
-                if docker rm "$container" &>/dev/null; then
-                    echo "✓"
-                    ((removed_containers++))
-                else
-                    echo "✗"
-                fi
-            done
+            # Stop and remove containers using batch processing for better performance
+            # 성능 향상을 위해 배치 처리로 컨테이너 중지 및 제거
+            local containers_array=($containers)
+            
+            # Batch stop containers
+            echo -n "$MSG_IMAGE_CLEAN_STOPPING_BATCH"
+            if docker stop "${containers_array[@]}" &>/dev/null; then
+                echo "✓ (${#containers_array[@]} containers)"
+            else
+                echo "⚠️ (some may have failed)"
+                # Individual verification for failed cases
+                for container in "${containers_array[@]}"; do
+                    if docker container inspect "$container" --format='{{.State.Running}}' 2>/dev/null | grep -q "true"; then
+                        echo "  ⚠️ $container still running"
+                    fi
+                done
+            fi
+            
+            # Batch remove containers  
+            echo -n "$MSG_IMAGE_CLEAN_REMOVING_BATCH"
+            if docker rm "${containers_array[@]}" &>/dev/null; then
+                echo "✓ (${#containers_array[@]} containers)"
+                removed_containers=$((removed_containers + ${#containers_array[@]}))
+            else
+                echo "⚠️ (some may have failed)"
+                # Individual verification and counting for failed cases
+                for container in "${containers_array[@]}"; do
+                    if ! docker container inspect "$container" &>/dev/null; then
+                        ((removed_containers++))
+                    else
+                        echo "  ✗ $container removal failed"
+                    fi
+                done
+            fi
         fi
         
         # Remove the image
@@ -534,11 +562,10 @@ prune_images() {
     while IFS= read -r image_name; do
         [ -z "$image_name" ] && continue
         
-        # Check if image is used by any containers (running or stopped) (정확한 이미지명 매칭)
-        # 이미지가 컨테이너에서 사용되는지 확인 (실행 중이거나 중지된 것) (정확한 이미지명 매칭)
+        # Check if image is used by any containers (running or stopped) (태그된 이미지 포함)
+        # 이미지가 컨테이너에서 사용되는지 확인 (실행 중이거나 중지된 것) (태그된 이미지 포함)
         local containers_using_image
-        containers_using_image=$(docker ps -a --format "{{.Names}}\t{{.Image}}" | \
-            awk -v target="$image_name" '$2 == target {print $1}')
+        containers_using_image=$(find_containers_using_image "$image_name" | tr ' ' '\n' | head -1)
         
         
         # If no containers use this image, it's unused
@@ -661,17 +688,43 @@ prune_images() {
     local removed_count=0
     local failed_count=0
     
-    for image_name in "${unused_images[@]}"; do
-        echo -n "$(printf "$MSG_IMAGE_PRUNE_REMOVING_IMAGE" "$image_name")"
+    # Use batch processing for better performance when removing multiple images
+    # 여러 이미지 제거 시 성능 향상을 위해 배치 처리 사용
+    if [ ${#unused_images[@]} -gt 1 ]; then
+        echo -n "$(printf "$MSG_IMAGE_PRUNE_REMOVING_BATCH" "${#unused_images[@]}")"
         
-        if docker rmi "$image_name" &>/dev/null; then
-            echo "✓"
-            ((removed_count++))
+        # Attempt batch removal first
+        if docker rmi "${unused_images[@]}" &>/dev/null; then
+            echo "✓ (${#unused_images[@]} images)"
+            removed_count=${#unused_images[@]}
         else
-            echo "✗"
-            ((failed_count++))
+            echo "⚠️ (some may have failed, checking individually)"
+            # Fall back to individual processing for failed batch
+            for image_name in "${unused_images[@]}"; do
+                echo -n "  $(printf "$MSG_IMAGE_PRUNE_REMOVING_IMAGE" "$image_name")"
+                if docker rmi "$image_name" &>/dev/null; then
+                    echo "✓"
+                    ((removed_count++))
+                else
+                    echo "✗"
+                    ((failed_count++))
+                fi
+            done
         fi
-    done
+    else
+        # Single image - use individual processing
+        for image_name in "${unused_images[@]}"; do
+            echo -n "$(printf "$MSG_IMAGE_PRUNE_REMOVING_IMAGE" "$image_name")"
+            
+            if docker rmi "$image_name" &>/dev/null; then
+                echo "✓"
+                ((removed_count++))
+            else
+                echo "✗"
+                ((failed_count++))
+            fi
+        done
+    fi
     
     echo ""
     

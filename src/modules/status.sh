@@ -52,29 +52,44 @@ status_main() {
         exit 0
     fi
     
-    # 컨테이너 상태 출력
-    # Display container status
+    # 컨테이너 상태 출력 (최적화된 단일 docker inspect 호출)
+    # Display container status (optimized single docker inspect call)
     echo -e "\n${YELLOW}$MSG_CONTAINER_STATUS${NC}"
     echo -e "$MSG_STATUS_CONTAINER_NAME: ${GREEN}$CONTAINER_NAME${NC}"
-    echo -e "$MSG_CONTAINER_ID: ${GREEN}$(docker container inspect -f '{{.Id}}' "$CONTAINER_NAME")${NC}"
-    echo -e "$MSG_CONTAINER_STATE: ${GREEN}$(docker container inspect -f '{{.State.Status}}' "$CONTAINER_NAME")${NC}"
-    echo -e "$MSG_CONTAINER_CREATED: ${GREEN}$(docker container inspect -f '{{.Created}}' "$CONTAINER_NAME")${NC}"
-    echo -e "$MSG_CONTAINER_IMAGE: ${GREEN}$(docker container inspect -f '{{.Config.Image}}' "$CONTAINER_NAME")${NC}"
+    
+    # 단일 docker inspect 호출로 모든 정보 가져오기
+    # Get all information with single docker inspect call
+    local inspect_output
+    inspect_output=$(docker container inspect --format \
+        "{{.Id}}|{{.State.Status}}|{{.Created}}|{{.Config.Image}}|{{.State.Running}}|{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}|{{range \$p, \$conf := .NetworkSettings.Ports}}{{printf \"%s -> \" \$p}}{{range \$conf}}{{printf \"%s:%s\" .HostIp .HostPort}}{{end}}{{printf \", \"}}{{end}}" \
+        "$CONTAINER_NAME" 2>/dev/null)
+    
+    if [ -z "$inspect_output" ]; then
+        log "ERROR" "Failed to get container information"
+        return 1
+    fi
+    
+    # Parse the output
+    IFS='|' read -r container_id state created image is_running network_ip port_info <<< "$inspect_output"
+    
+    # Format created date
+    created=$(echo "$created" | cut -d'T' -f1,2 | sed 's/T/ /' | cut -d'.' -f1)
+    
+    # Display basic information
+    echo -e "$MSG_CONTAINER_ID: ${GREEN}$container_id${NC}"
+    echo -e "$MSG_CONTAINER_STATE: ${GREEN}$state${NC}"
+    echo -e "$MSG_CONTAINER_CREATED: ${GREEN}$created${NC}"
+    echo -e "$MSG_CONTAINER_IMAGE: ${GREEN}$image${NC}"
     
     # 컨테이너가 실행 중이면 추가 정보 출력
     # Display additional information if container is running
-    if [ "$(docker container inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" = "true" ]; then
-        # IP 주소 가져오기: 더 안정적인 방법으로 변경
-        local container_ip
-        container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$CONTAINER_NAME" 2>/dev/null)
+    if [ "$is_running" = "true" ]; then
+        # IP 주소 처리
+        local container_ip="$network_ip"
         if [ -z "$container_ip" ]; then
             container_ip=$(docker exec -i "$CONTAINER_NAME" hostname -i 2>/dev/null || echo "")
         fi
         echo -e "$MSG_CONTAINER_IP: ${GREEN}${container_ip:-N/A}${NC}"
-        
-        # 포트 정보 가져오기
-        local port_info
-        port_info=$(docker inspect -f '{{range $p, $conf := .NetworkSettings.Ports}}{{$p}} -> {{range $conf}}{{.HostIp}}:{{.HostPort}}{{end}}{{printf ", "}}{{end}}' "$CONTAINER_NAME" 2>/dev/null)
         
         # 포트 정보가 없으면 포트 매핑 없음 메시지 표시
         if [ -z "$port_info" ] || [ "$port_info" = ", " ] || [ "$port_info" = " -> , " ]; then

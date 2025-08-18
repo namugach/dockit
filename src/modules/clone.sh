@@ -451,7 +451,9 @@ execute_docker_commit() {
     
     printf "${CYAN}[INFO] Docker 이미지 커밋 실행 중...${NC}\n"
     
-    new_image_ref="${SOURCE_PROJECT_IMAGE}:clone-${CLONE_TIMESTAMP}"
+    # 디렉토리 기반 명명 규칙 사용 (일관성 유지)
+    local target_path="$(pwd)/$target_name"
+    new_image_ref=$(generate_dockit_name "$target_path")
     
     printf "${CYAN}[INFO] 새 이미지 생성 중: $new_image_ref${NC}\n"
     if ! timeout $DOCKER_COMMIT_TIMEOUT docker commit "$SOURCE_PROJECT_CONTAINER" "$new_image_ref"; then
@@ -504,10 +506,9 @@ execute_configuration_update() {
     
     printf "${CYAN}[INFO] 설정 파일 수정 중...${NC}\n"
     
-    # 안전한 컨테이너 이름 생성 (보안 강화)
-    local safe_pwd=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
-    local safe_target=$(echo "$target_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')
-    new_container_name_ref="dockit-${safe_pwd}-${safe_target}"
+    # 일관된 명명 규칙 사용 (이미지와 동일한 방식)
+    local target_path="$(pwd)/$target_name"
+    new_container_name_ref=$(generate_dockit_name "$target_path")
     
     # Docker 이름 규칙 검증
     if ! validate_docker_name "$new_container_name_ref"; then
