@@ -621,8 +621,6 @@ MSG_COMPLETION_RUN="초기화, 빌드, 시작을 자동으로 실행"
 # List module messages
 MSG_LIST_NO_CONTAINERS="dockit 컨테이너가 현재 실행 중이지 않습니다"
 MSG_LIST_RUN_INIT_HINT="컨테이너를 생성하려면 다음 명령어를 실행하세요:"
-MSG_STATUS_RUNNING="running"
-MSG_STATUS_STOPPED="stopped"
 MSG_LIST_LOADING_DATA="컨테이너 정보를 불러오는 중..."
 
 # 액션 관련 메시지
@@ -995,8 +993,6 @@ MSG_LIST_IP="IP"
 MSG_LIST_PORTS="포트"
 MSG_LIST_NO_CONTAINERS="현재 실행 중인 dockit 컨테이너가 없습니다"
 MSG_LIST_RUN_INIT_HINT="컨테이너를 생성하려면 다음을 실행하세요:"
-MSG_STATUS_RUNNING="실행 중"
-MSG_STATUS_STOPPED="중지됨"
 MSG_LIST_LOADING_DATA="컨테이너 데이터를 로드하는 중..."
 MSG_LIST_NO_PROJECTS="등록된 프로젝트가 없습니다."
 MSG_PROJECT_LIST_HINT_PS="📌 컨테이너 상태를 확인하려면:  dockit ps"

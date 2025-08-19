@@ -172,10 +172,10 @@ get_status_display() {
     
     case "$status" in
         "running")
-            echo $(get_message MSG_STATUS_RUNNING)
+            echo -e "${GREEN}running${NC}"
             ;;
         "exited")
-            echo $(get_message MSG_STATUS_STOPPED)
+            echo -e "${YELLOW}stopped${NC}"
             ;;
         *)
             echo $status
@@ -348,9 +348,10 @@ collect_container_data() {
                 "$status_display" \
                 "$ip_address" \
                 "$ports_display" >> "$output_file"
-        fi
-        # 컨테이너가 없는 경우는 ps 출력에서 제외하지만 project_number는 증가
-        ((project_number++))
+          fi
+      fi
+      # 컨테이너가 없는 경우는 ps 출력에서 제외하지만 project_number는 증가
+      ((project_number++))
     done < <(echo "$registry_json" | jq -r 'keys[]')
 }
 

@@ -628,8 +628,6 @@ MSG_LIST_IP="IP"
 MSG_LIST_PORTS="PORTS"
 MSG_LIST_NO_CONTAINERS="No dockit containers are currently running"
 MSG_LIST_RUN_INIT_HINT="To create a container, run:"
-MSG_STATUS_RUNNING="running"
-MSG_STATUS_STOPPED="stopped"
 MSG_LIST_LOADING_DATA="Loading container data..."
 
 # Action related messages
