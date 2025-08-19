@@ -350,26 +350,199 @@ suggest_directory_rename_hyphen() {
     fi
 }
 
-# 디렉토리 이름 검증 및 변경 제안
-# Validate directory name and suggest changes
+# 디렉토리 이름 종합 분석
+# Comprehensive directory name analysis
+analyze_directory_name_issues() {
+    local dir_name="$1"
+    local issues=()
+    
+    # 하이픈 검사
+    if [[ "$dir_name" =~ - ]]; then
+        issues+=("hyphen")
+    fi
+    
+    # 대문자 검사
+    if [[ "$dir_name" =~ [A-Z] ]]; then
+        issues+=("uppercase")
+    fi
+    
+    # 결과 반환: 공백으로 구분된 이슈 목록
+    printf "%s\n" "${issues[@]}"
+}
+
+# 최적화된 디렉토리 이름 생성
+# Generate optimal directory name
+generate_optimal_directory_name() {
+    local input="$1"
+    local result="$input"
+    
+    # 1단계: 하이픈을 언더스코어로 변환
+    result=$(echo "$result" | tr '-' '_')
+    
+    # 2단계: camelCase/PascalCase를 snake_case로 변환
+    # 대문자 앞에 언더스코어 추가 (첫 글자 제외)
+    result=$(echo "$result" | sed 's/\([a-z0-9]\)\([A-Z]\)/\1_\2/g')
+    
+    # 3단계: 모든 글자를 소문자로 변환
+    result=$(echo "$result" | tr '[:upper:]' '[:lower:]')
+    
+    # 4단계: 연속된 언더스코어를 하나로 정리
+    result=$(echo "$result" | sed 's/__*/_/g')
+    
+    # 5단계: 시작과 끝의 언더스코어 제거
+    result=$(echo "$result" | sed 's/^_\+\|_\+$//g')
+    
+    echo "$result"
+}
+
+# 통합 디렉토리 이름 변경 제안
+# Comprehensive directory name change suggestion
+suggest_comprehensive_directory_rename() {
+    local current_dir="$1"
+    local instruction_message="$2"
+    local current_name=$(basename "$current_dir")
+    local issues=($(analyze_directory_name_issues "$current_name"))
+    
+    # 이슈가 없으면 변경 불필요
+    if [ ${#issues[@]} -eq 0 ]; then
+        return 0
+    fi
+    
+    local suggested_name=$(generate_optimal_directory_name "$current_name")
+    local parent_dir=$(dirname "$current_dir")
+    local new_path="$parent_dir/$suggested_name"
+    
+    # 제안된 이름이 현재 이름과 같으면 변경 불필요
+    if [ "$current_name" = "$suggested_name" ]; then
+        return 0
+    fi
+    
+    echo ""
+    
+    # 이슈별 메시지 출력
+    if [[ " ${issues[@]} " =~ " hyphen " ]] && [[ " ${issues[@]} " =~ " uppercase " ]]; then
+        log "WARNING" "현재 디렉토리 이름에 하이픈(-)과 대문자가 포함되어 있습니다."
+        echo ""
+        echo "Docker 이미지 이름 규칙상 다음 사항들을 준수해야 합니다:"
+        echo "• 하이픈은 경로 변환 시 문제를 일으킵니다"
+        echo "• 소문자만 허용됩니다"
+        echo "디렉토리 이름을 적절한 형태로 변경하는 것을 권장합니다."
+    elif [[ " ${issues[@]} " =~ " hyphen " ]]; then
+        log "WARNING" "현재 디렉토리 이름에 하이픈(-)이 포함되어 있습니다."
+        echo ""
+        echo "Docker 이미지 이름 규칙상 하이픈은 경로 변환 시 문제를 일으킵니다."
+        echo "디렉토리 이름을 언더스코어(_)로 변경하는 것을 권장합니다."
+    elif [[ " ${issues[@]} " =~ " uppercase " ]]; then
+        log "WARNING" "현재 디렉토리 이름에 대문자가 포함되어 있습니다."
+        echo ""
+        echo "Docker 이미지 이름 규칙상 소문자만 허용됩니다."
+        echo "디렉토리 이름을 변경하는 것을 권장합니다."
+    fi
+    
+    echo ""
+    printf "현재: %s\\n" "$current_dir"
+    printf "제안: %s\\n" "$new_path"
+    echo ""
+    
+    # 제안된 디렉토리가 이미 존재하는지 확인
+    if [ -d "$new_path" ]; then
+        log "ERROR" "제안된 디렉토리가 이미 존재합니다: $new_path"
+        echo "기존 디렉토리를 삭제하거나 다른 이름을 사용하세요."
+        return 1
+    fi
+    
+    echo -n "디렉토리 이름을 변경하시겠습니까? [Y/n]: "
+    read -r confirm
+    
+    # 소문자로 변환해서 비교 (기본값은 Y)
+    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+    
+    if [ "$confirm" = "n" ] || [ "$confirm" = "no" ]; then
+        log "INFO" "디렉토리 이름 변경이 취소되었습니다."
+        echo ""
+        echo "⚠️  경고: 현재 디렉토리명은 향후 문제를 일으킬 수 있습니다."
+        echo "권장사항: 수동으로 디렉토리 이름을 변경하세요."
+        echo ""
+        return 1
+    else
+        log "INFO" "디렉토리 이름 변경 중..."
+        
+        # 안전한 디렉토리 이동: 상위 디렉토리로 이동 후 mv 실행
+        local parent_dir=$(dirname "$current_dir")
+        local current_name=$(basename "$current_dir")
+        local new_name=$(basename "$new_path")
+        
+        # 상위 디렉토리로 이동
+        cd "$parent_dir" || return 1
+        
+        # 디렉토리 이름 변경
+        if mv "$current_name" "$new_name"; then
+            log "SUCCESS" "디렉토리 이름 변경 완료"
+            printf "새 위치: %s\\n" "$new_path"
+            echo ""
+            
+            # 새 디렉토리로 이동
+            cd "$new_name" || return 1
+            
+            # 이전 디렉토리를 비동기적으로 정리
+            # init 프로세스 완료 후 백그라운드에서 정리 예약
+            if [ "$current_name" != "$new_name" ]; then
+                # 정리 스크립트 생성
+                cat > "/tmp/dockit_cleanup_$$" << EOF
+#!/bin/bash
+# Dockit 디렉토리 정리 스크립트
+sleep 2
+if [ -d "$parent_dir/$current_name" ]; then
+    rm -rf "$parent_dir/$current_name" 2>/dev/null
+fi
+rm -f "/tmp/dockit_cleanup_$$"
+EOF
+                chmod +x "/tmp/dockit_cleanup_$$"
+                
+                # 백그라운드에서 정리 실행
+                nohup "/tmp/dockit_cleanup_$$" >/dev/null 2>&1 &
+                
+                log "INFO" "이전 디렉토리 정리가 백그라운드에서 진행됩니다"
+            fi
+            
+            # 환경 변수 업데이트 (현재 실행 디렉토리 변경)
+            export EXEC_DIR="$(pwd)"
+            export DOCKIT_PROJECT_DIR="${EXEC_DIR}/.dockit_project"
+            export CONFIG_ENV="${DOCKIT_PROJECT_DIR}/.env"
+            export DOCKER_COMPOSE_FILE="${DOCKIT_PROJECT_DIR}/docker-compose.yml"
+            export DOCKERFILE="${DOCKIT_PROJECT_DIR}/Dockerfile"
+            export LOG_FILE="${DOCKIT_PROJECT_DIR}/dockit.log"
+            
+            # 로그 파일 재설정
+            [ -n "$LOG_FILE" ] && set_log_file "$LOG_FILE"
+            
+            echo "새 디렉토리에서 쉘을 시작합니다."
+            echo ""
+            echo "이제 'dockit init'을 실행하여 초기화를 진행하세요."
+            echo ""
+            
+            # 사용자 쉘로 새로고침 (자동 실행 없이)
+            local user_shell="${SHELL:-/bin/bash}"
+            exec "$user_shell"
+        else
+            log "ERROR" "디렉토리 이름 변경 실패"
+            # 원래 디렉토리로 복귀
+            cd "$current_dir" 2>/dev/null || cd "$parent_dir/$current_name" 2>/dev/null
+            return 1
+        fi
+    fi
+}
+
+# 디렉토리 이름 검증 및 변경 제안 (개선된 버전)
+# Validate directory name and suggest changes (improved version)
 validate_and_suggest_directory_name() {
     local instruction_message="$1"
     local current_dir="$(pwd)"
     local dir_name=$(basename "$current_dir")
     
-    # 하이픈이 포함되어 있는지 확인 (우선 처리)
-    if [[ "$dir_name" =~ - ]]; then
-        suggest_directory_rename_hyphen "$current_dir" "$instruction_message"
-        return $?
-    fi
-    
-    # 대문자가 포함되어 있는지 확인
-    if has_uppercase_letters "$dir_name"; then
-        suggest_directory_rename "$current_dir" "$instruction_message"
-        return $?
-    fi
-    
-    return 0
+    # 통합 검증 및 변경 제안
+    suggest_comprehensive_directory_rename "$current_dir" "$instruction_message"
+    return $?
 }
 
 # dockit 이름 생성 함수 테스트
