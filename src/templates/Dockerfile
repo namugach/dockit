@@ -1,5 +1,7 @@
 FROM ${BASE_IMAGE}
 
+USER root
+
 
 # sudo 설치 및 기타 유틸리티
 RUN apt-get update && apt-get install -y sudo git
