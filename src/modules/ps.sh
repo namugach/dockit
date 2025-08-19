@@ -139,8 +139,6 @@ get_container_info() {
     CONTAINER_CREATED="$created"
     CONTAINER_STATUS="$status"
     CONTAINER_IP="$ip_address"
-    
-    echo "$simple_name|$image|$created|$status"
 }
 
 # Get container IP address
