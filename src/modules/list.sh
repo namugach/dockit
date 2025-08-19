@@ -623,11 +623,19 @@ list_main() {
     
     # Create temporary file for output
     local temp_file=$(mktemp)
-    
+    local ids_to_remove=()
+
     # Process each project entry
     local index=1
     while IFS= read -r id; do
         local path=$(echo "$registry_json" | jq -r --arg id "$id" '.[$id].path')
+
+        # If path is not valid, schedule for removal and skip display
+        if ! is_path_valid "$path"; then
+            ids_to_remove+=("$id")
+            continue
+        fi
+        
         local created=$(echo "$registry_json" | jq -r --arg id "$id" '.[$id].created')
         local state=$(echo "$registry_json" | jq -r --arg id "$id" '.[$id].state')
         local last_seen=$(echo "$registry_json" | jq -r --arg id "$id" 'if .[$id] | has("last_seen") then .[$id].last_seen else .[$id].created end')
@@ -638,13 +646,7 @@ list_main() {
             handle_project_id_sync "$path" > /dev/null 2>&1
         fi
         
-        # Check if path exists
-        local path_display
-        if is_path_valid "$path"; then
-            path_display=$(format_path "$path")
-        else
-            path_display="$(format_path "$path")   ${RED}$(get_message MSG_PROJECT_LIST_PATH_NOT_FOUND)${NC}"
-        fi
+        local path_display=$(format_path "$path")
         
         # Format ID (use full ID if in collision list)
         local id_display
@@ -678,6 +680,14 @@ list_main() {
     
     # Remove temporary file
     rm -f "$temp_file"
+
+    # Remove invalid projects from registry after listing
+    if [ ${#ids_to_remove[@]} -gt 0 ]; then
+        echo "" # Newline for separation
+        for id in "${ids_to_remove[@]}"; do
+            remove_project_from_registry "$id"
+        done
+    fi
     
     # Print hints
     echo ""
