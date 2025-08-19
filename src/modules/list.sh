@@ -152,6 +152,99 @@ format_status_display() {
     printf "%s%*s" "$status_display" "$padding" ""
 }
 
+# Performance optimization: Cache local Docker images and container states
+# 성능 최적화: 로컬 Docker 이미지와 컨테이너 상태 캐시
+
+# Global cache variables
+# 전역 캐시 변수
+declare -a LOCAL_DOCKIT_IMAGES_CACHE=()
+declare -A CONTAINER_STATES_CACHE=()
+declare LOCAL_IMAGES_LOADED=0
+
+# Function to get all local dockit images at once
+# 로컬 dockit 이미지를 한 번에 모두 가져오는 함수
+get_local_dockit_images() {
+    # Return cached result if already loaded
+    # 이미 로드된 경우 캐시된 결과 반환
+    if [ $LOCAL_IMAGES_LOADED -eq 1 ]; then
+        printf '%s\n' "${LOCAL_DOCKIT_IMAGES_CACHE[@]}"
+        return 0
+    fi
+    
+    # Load images from Docker
+    # Docker에서 이미지 로드
+    if command -v docker &> /dev/null; then
+        local images
+        images=$(docker image ls -a --format "{{.Repository}}" 2>/dev/null | grep "^dockit-" || echo "")
+        
+        # Store in cache
+        # 캐시에 저장
+        LOCAL_DOCKIT_IMAGES_CACHE=()
+        while IFS= read -r image; do
+            [ -n "$image" ] && LOCAL_DOCKIT_IMAGES_CACHE+=("$image")
+        done <<< "$images"
+        
+        LOCAL_IMAGES_LOADED=1
+        printf '%s\n' "${LOCAL_DOCKIT_IMAGES_CACHE[@]}"
+    fi
+}
+
+# Function to check if image exists in cache
+# 캐시에서 이미지 존재 여부 확인하는 함수
+image_exists_in_cache() {
+    local image_name="$1"
+    
+    # Ensure cache is loaded
+    # 캐시가 로드되었는지 확인
+    if [ $LOCAL_IMAGES_LOADED -eq 0 ]; then
+        get_local_dockit_images > /dev/null
+    fi
+    
+    # Check if image exists in cache
+    # 캐시에서 이미지 존재 확인
+    local i
+    for i in "${LOCAL_DOCKIT_IMAGES_CACHE[@]}"; do
+        if [ "$i" = "$image_name" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Function to get all container states at once
+# 모든 컨테이너 상태를 한 번에 가져오는 함수
+get_batch_container_states() {
+    # Clear existing cache
+    # 기존 캐시 클리어
+    CONTAINER_STATES_CACHE=()
+    
+    if command -v docker &> /dev/null; then
+        # Get all dockit containers with their states
+        # 모든 dockit 컨테이너와 상태 가져오기
+        local container_info
+        container_info=$(docker container ls -a --filter "name=dockit-" --format "{{.Names}}:{{.State}}" 2>/dev/null || echo "")
+        
+        # Parse and store in associative array
+        # 연관 배열에 파싱하여 저장
+        while IFS=':' read -r name state; do
+            if [ -n "$name" ] && [ -n "$state" ]; then
+                if [ "$state" = "running" ]; then
+                    CONTAINER_STATES_CACHE["$name"]="running"
+                else
+                    CONTAINER_STATES_CACHE["$name"]="stopped"
+                fi
+            fi
+        done <<< "$container_info"
+    fi
+}
+
+# Function to get container state from cache
+# 캐시에서 컨테이너 상태 가져오는 함수
+get_container_state_from_cache() {
+    local container_name="$1"
+    echo "${CONTAINER_STATES_CACHE[$container_name]:-not_found}"
+}
+
 # Function to get project Docker information (image name, container name)
 # 프로젝트의 Docker 정보 가져오기 (이미지명, 컨테이너명)
 get_project_docker_info() {
@@ -175,33 +268,27 @@ get_project_docker_info() {
     return 0
 }
 
-# Function to get actual Docker state for a project
-# 프로젝트의 실제 Docker 상태 확인
+# Function to get actual Docker state for a project (optimized with cache)
+# 프로젝트의 실제 Docker 상태 확인 (캐시로 최적화됨)
 get_actual_docker_state() {
     local image_name="$1"
     local container_name="$2"
     
-    # 이미지 존재 여부 확인
+    # Check image existence using cache
+    # 캐시를 사용하여 이미지 존재 여부 확인
     local image_exists=false
-    if docker image inspect "$image_name" >/dev/null 2>&1; then
+    if image_exists_in_cache "$image_name"; then
         image_exists=true
     fi
     
-    # 컨테이너 존재 여부 및 상태 확인
-    local container_exists=false
-    local container_running=false
+    # Check container state using cache
+    # 캐시를 사용하여 컨테이너 상태 확인
+    local container_state=$(get_container_state_from_cache "$container_name")
     
-    if docker container inspect "$container_name" >/dev/null 2>&1; then
-        container_exists=true
-        if [ "$(docker container inspect -f '{{.State.Running}}' "$container_name")" = "true" ]; then
-            container_running=true
-        fi
-    fi
-    
-    # 상태 결정 로직
-    if [ "$container_running" = true ]; then
+    # 상태 결정 로직 (최적화됨)
+    if [ "$container_state" = "running" ]; then
         echo "running"
-    elif [ "$container_exists" = true ]; then
+    elif [ "$container_state" = "stopped" ]; then
         echo "stopped"
     elif [ "$image_exists" = true ]; then
         echo "ready"
@@ -210,9 +297,71 @@ get_actual_docker_state() {
     fi
 }
 
-# Function to sync registry state with actual Docker status
-# 레지스트리 상태를 실제 Docker 상태와 동기화
+# Function to check if Docker sync is needed by comparing image lists
+# Docker 이미지 목록 비교로 동기화 필요성 판단하는 함수
+should_sync_docker_status() {
+    # Docker 사용 가능 여부 확인
+    if ! command -v docker &> /dev/null; then
+        return 1  # Docker 없으면 동기화 불필요
+    fi
+    
+    # 레지스트리 파일 확인 - 없으면 빈 레지스트리로 처리
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        # 레지스트리 파일이 없으면 Docker 이미지가 있는지만 확인
+        local docker_images
+        docker_images=$(docker image ls -a | grep -oE '^dockit-[^[:space:]]+' | sort)
+        
+        if [ $? -ne 0 ]; then
+            return 1  # Docker 명령 실패하면 동기화 불필요
+        fi
+        
+        if [ -n "$docker_images" ]; then
+            return 0  # Docker 이미지가 있으면 동기화 필요
+        else
+            return 1  # Docker 이미지도 없으면 동기화 불필요
+        fi
+    fi
+    
+    # 실제 Docker 이미지 목록 추출 및 정렬
+    local docker_images
+    docker_images=$(docker image ls -a --format "{{.Repository}}" 2>/dev/null | grep "^dockit-" | sort)
+    
+    if [ $? -ne 0 ]; then
+        return 1  # Docker 명령 실패하면 동기화 불필요
+    fi
+    
+    # 레지스트리의 이미지 목록 추출 및 정렬
+    local registry_images
+    registry_images=$(cat "$REGISTRY_FILE" | jq -r 'to_entries[] | .value.image_name' 2>/dev/null | sort)
+    
+    # jq 실패하면 레지스트리를 비어있는 것으로 처리
+    if [ $? -ne 0 ]; then
+        registry_images=""
+    fi
+    
+    # 핵심 로직 수정: 레지스트리와 Docker 이미지 상태 비교
+    if [ -z "$registry_images" ] && [ -z "$docker_images" ]; then
+        return 1  # 둘 다 비어있으면 동기화 불필요
+    elif [ -z "$registry_images" ] && [ -n "$docker_images" ]; then
+        return 0  # 레지스트리 비어있고 Docker 이미지 있으면 동기화 필요 ✅
+    elif [ -n "$registry_images" ] && [ -z "$docker_images" ]; then
+        return 0  # 레지스트리 있고 Docker 이미지 없으면 동기화 필요
+    elif [ "$registry_images" = "$docker_images" ]; then
+        return 1  # 동일하면 동기화 불필요
+    else
+        return 0  # 다르면 동기화 필요
+    fi
+}
+
+# Function to sync registry state with actual Docker status (optimized)
+# 레지스트리 상태를 실제 Docker 상태와 동기화 (최적화됨)
 sync_with_docker_status() {
+    # 성능 최적화: 이미지 목록 변경사항이 없으면 동기화 완전 스킵
+    # Performance optimization: Skip sync completely if no image changes detected
+    if ! should_sync_docker_status; then
+        return 0  # 동기화 불필요 - Docker API 호출 없이 즉시 종료
+    fi
+    
     # Docker 사용 가능 여부 확인
     if ! command -v docker &> /dev/null; then
         return 0
@@ -223,10 +372,14 @@ sync_with_docker_status() {
         return 0
     fi
     
+    # Performance optimization: Load Docker images at once (container states already cached)
+    # 성능 최적화: Docker 이미지 목록만 로드 (컨테이너 상태는 이미 캐시됨)
+    get_local_dockit_images > /dev/null  # Initialize image cache
+    
     local registry_json=$(cat "$REGISTRY_FILE")
     local updated=false
     
-    # 각 프로젝트의 실제 Docker 상태 확인 및 업데이트
+    # 각 프로젝트의 실제 Docker 상태 확인 및 업데이트 (캐시 사용)
     while IFS= read -r project_id; do
         local path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
         local current_state=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].state')
@@ -242,7 +395,7 @@ sync_with_docker_status() {
             continue
         fi
         
-        # 실제 Docker 상태 확인
+        # 실제 Docker 상태 확인 (캐시 사용으로 빠름)
         local actual_state
         actual_state=$(get_actual_docker_state "$image_name" "$container_name")
         
@@ -256,21 +409,33 @@ sync_with_docker_status() {
     return 0
 }
 
-# Auto-discover unregistered dockit projects from Docker
-# Docker에서 미등록 dockit 프로젝트 자동 발견
+# Auto-discover unregistered dockit projects from Docker (optimized)
+# Docker에서 미등록 dockit 프로젝트 자동 발견 (최적화됨)
 discover_and_register_projects() {
     local discovered_count=0
     
-    # 1. Docker 컨테이너에서 dockit 프로젝트 찾기
+    # Performance optimization: Use cached Docker information
+    # 성능 최적화: 캐시된 Docker 정보 사용
     local docker_names=""
     
-    # 컨테이너에서 찾기
     if command -v docker &> /dev/null; then
-        docker_names=$(docker container ls -a --format "{{.Names}}" 2>/dev/null | grep "^dockit-" || echo "")
+        # Use cached image information if available, otherwise load it
+        # 캐시된 이미지 정보가 있으면 사용, 없으면 로드
+        local image_names
+        image_names=$(get_local_dockit_images)
         
-        # 이미지에서도 찾기 (컨테이너가 없는 경우)
-        local image_names=$(docker image ls --format "{{.Repository}}" 2>/dev/null | grep "^dockit-" || echo "")
-        docker_names=$(echo -e "$docker_names\n$image_names" | grep -v "^$" | sort -u)
+        # Get container names from cached container states
+        # 캐시된 컨테이너 상태에서 컨테이너 이름 가져오기
+        local container_names=""
+        for container_name in "${!CONTAINER_STATES_CACHE[@]}"; do
+            if [[ "$container_name" == dockit-* ]]; then
+                container_names+="$container_name"$'\n'
+            fi
+        done
+        
+        # Combine image and container names
+        # 이미지와 컨테이너 이름 결합
+        docker_names=$(echo -e "$container_names\n$image_names" | grep -v "^$" | sort -u)
     fi
     
     if [ -z "$docker_names" ]; then
@@ -347,8 +512,26 @@ discover_and_register_projects() {
 # Main function for listing registered projects
 # 등록된 프로젝트 목록 표시를 위한 메인 함수
 list_main() {
-    # Load registry with cleanup (removes invalid entries)
-    load_registry "with_cleanup" > /dev/null 2>&1
+    # 성능 최적화: Docker 상태 변경 여부를 먼저 확인
+    # Performance optimization: Check if Docker status changed first
+    local needs_sync=false
+    if should_sync_docker_status; then
+        needs_sync=true
+    fi
+    
+    # 레지스트리 파일 확인 및 초기화
+    # Check and initialize registry file
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        echo '{}' > "$REGISTRY_FILE"
+    fi
+    
+    # 조건부 정리: 변경사항이 있을 때만 cleanup 수행
+    # Conditional cleanup: Only perform cleanup when there are changes
+    if [ "$needs_sync" = true ]; then
+        load_registry "with_cleanup" > /dev/null 2>&1
+    else
+        load_registry "no_cleanup" > /dev/null 2>&1
+    fi
     
     # 현재 디렉토리에서 프로젝트 ID 동기화 시도
     # Try to synchronize project ID in current directory
@@ -356,22 +539,55 @@ list_main() {
         handle_project_id_sync "$(pwd)" > /dev/null 2>&1
     fi
     
-    # 레지스트리 파일 직접 로드
-    # Directly load registry file
-    if [ ! -f "$REGISTRY_FILE" ]; then
-        echo '{}' > "$REGISTRY_FILE"
+    # 성능 최적화: 컨테이너 상태 캐시는 항상 초기화 (이미지와 독립적)
+    # Performance optimization: Always initialize container state cache (independent from images)
+    get_batch_container_states
+    
+    # 컨테이너 상태는 이미지와 독립적이므로 항상 업데이트
+    # Container states are independent from images, so always update them
+    local registry_json=$(cat "$REGISTRY_FILE")
+    
+    # 각 프로젝트의 컨테이너 상태만 빠르게 업데이트 (캐시 사용)
+    while IFS= read -r project_id; do
+        local path=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].path')
+        local current_state=$(echo "$registry_json" | jq -r --arg id "$project_id" '.[$id].state')
+        
+        # 프로젝트 경로가 유효하지 않으면 건너뛰기
+        if [ ! -d "$path" ] || [ ! -f "$path/.dockit_project/.env" ]; then
+            continue
+        fi
+        
+        # .env 파일에서 이미지명과 컨테이너명 로드
+        local image_name container_name
+        if ! get_project_docker_info "$path" image_name container_name; then
+            continue
+        fi
+        
+        # 실제 Docker 상태 확인 (캐시 사용으로 빠름)
+        local actual_state
+        actual_state=$(get_actual_docker_state "$image_name" "$container_name")
+        
+        # 상태가 다르면 업데이트 (error 상태는 수동으로만 변경)
+        if [ "$current_state" != "$actual_state" ] && [ "$current_state" != "error" ]; then
+            update_project_status "$project_id" "$actual_state"
+        fi
+    done < <(echo "$registry_json" | jq -r 'keys[]')
+    
+    # 조건부 이미지 동기화 및 프로젝트 발견
+    # Conditional image sync and project discovery
+    if [ "$needs_sync" = true ]; then
+        # 실시간 Docker 상태와 레지스트리 동기화 (이미지 레벨)
+        # Sync registry with real-time Docker status (image level)
+        sync_with_docker_status > /dev/null 2>&1
+        
+        # 미등록 프로젝트 자동 발견 및 등록
+        # Auto-discover and register unregistered projects
+        discover_and_register_projects > /dev/null 2>&1
     fi
     
-    # 실시간 Docker 상태와 레지스트리 동기화
-    # Sync registry with real-time Docker status
-    sync_with_docker_status > /dev/null 2>&1
-    
-    # 미등록 프로젝트 자동 발견 및 등록
-    # Auto-discover and register unregistered projects
-    discover_and_register_projects > /dev/null 2>&1
-    
-    # 레지스트리 다시 로드 (새로 등록된 프로젝트 포함)
-    local registry_json=$(cat "$REGISTRY_FILE")
+    # 레지스트리 다시 로드 (상태 업데이트 반영)
+    # Reload registry (to reflect status updates)
+    registry_json=$(cat "$REGISTRY_FILE")
     
     # Check if registry is empty
     local project_count=$(echo "$registry_json" | jq -r 'length')
