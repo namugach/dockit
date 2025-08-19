@@ -919,6 +919,7 @@ MSG_BASE_ERROR_LIST_NOT_FOUND="Base image list file not found."
 
 # Base completion messages
 MSG_COMPLETION_BASE="Manage base images"
+MSG_COMPLETION_CLONE="Clone projects"
 MSG_BASE_COMPLETION_LIST="Show available base images"
 MSG_BASE_COMPLETION_SET="Set default base image"
 MSG_BASE_COMPLETION_ADD="Add new base image to list"
@@ -927,7 +928,7 @@ MSG_BASE_COMPLETION_VALIDATE="Check if all base images exist"
 MSG_BASE_COMPLETION_RESET="Reset base image settings to default"
 
 # Clone module messages
-MSG_CLONE_MODULE_TITLE="Dockit Clone Module - Phase 1 MVP"
+MSG_CLONE_MODULE_TITLE="Clone"
 MSG_CLONE_STARTING="Cloning project #%s..."
 MSG_CLONE_ERROR_NO_SOURCE="Source project is required"
 MSG_CLONE_USAGE="Usage: dockit clone <source_project> [project_name]"

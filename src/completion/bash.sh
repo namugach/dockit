@@ -32,7 +32,7 @@ _dockit_completion() {
     
     # 사용 가능한 명령어 목록
     # List of available commands
-    local commands="init start build up stop down connect status help version migrate setup run ps list ls image base"
+    local commands="init start build up stop down connect status help version migrate setup run ps list ls image base clone"
     
     # 첫 번째 인자만 자동완성 처리
     # Only handle completion for the first argument
@@ -70,6 +70,7 @@ _dockit_completion() {
                     ls) desc="$(dockit_get_message MSG_COMPLETION_LIST)" ;;
                     image) desc="$(dockit_get_message MSG_COMPLETION_IMAGE)" ;;
                     base) desc="$(dockit_get_message MSG_COMPLETION_BASE)" ;;
+                    clone) desc="$(dockit_get_message MSG_COMPLETION_CLONE)" ;;
                 esac
                 
                 if [ -n "$desc" ]; then

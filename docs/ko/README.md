@@ -75,6 +75,7 @@ Dockit을 시스템에서 제거하려면:
 - `ls`: dockit으로 생성된 모든 프로젝트 목록 표시 (list 별칭)
 - `base`: 베이스 이미지 관리 (ls, set, add, remove, validate, reset) 번호 기반 선택 지원
 - `image`: Docker 이미지 관리 (ls, remove, prune, clean)
+- `clone`: 기존 프로젝트 복제 및 새 설정으로 구성 (롤백 지원)
 - `migrate`: 새 버전으로 업그레이드
 - `help`: 도움말 표시
 

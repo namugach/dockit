@@ -140,6 +140,7 @@ _dockit() {
         "ls:$(dockit_get_message MSG_COMPLETION_LIST)"
         "image:$(dockit_get_message MSG_COMPLETION_IMAGE)"
         "base:$(dockit_get_message MSG_COMPLETION_BASE)"
+        "clone:$(dockit_get_message MSG_COMPLETION_CLONE)"
     )
     
     # 자동완성 설명 표시

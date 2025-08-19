@@ -75,6 +75,7 @@ Dockit provides the following main commands:
 - `ls`: List all projects created with dockit (alias for list)
 - `base`: Base image management (ls, set, add, remove, validate, reset) with number-based selection
 - `image`: Docker image management (ls, remove, prune, clean)
+- `clone`: Clone existing project with new configuration and rollback support
 - `migrate`: Upgrade to a newer version
 - `help`: Display help information
 

@@ -408,6 +408,7 @@ MSG_COMPLETION_PS="모든 dockit 컨테이너 목록 표시"
 MSG_COMPLETION_LIST="등록된 모든 프로젝트 목록 표시"
 MSG_COMPLETION_IMAGE="Docker 이미지 관리"
 MSG_COMPLETION_BASE="베이스 이미지 관리"
+MSG_COMPLETION_CLONE="프로젝트 복제"
 
 # Base 자동완성 메시지
 MSG_BASE_COMPLETION_LIST="사용 가능한 베이스 이미지 목록 표시"
@@ -909,7 +910,7 @@ MSG_BASE_ERROR_CONFIG_NOT_FOUND="베이스 이미지 설정 파일을 찾을 수
 MSG_BASE_ERROR_LIST_NOT_FOUND="베이스 이미지 목록 파일을 찾을 수 없습니다."
 
 # Clone 모듈 메시지
-MSG_CLONE_MODULE_TITLE="Dockit Clone 모듈 - Phase 1 MVP"
+MSG_CLONE_MODULE_TITLE="Clone"
 MSG_CLONE_STARTING="프로젝트 #%s을(를) 복제하는 중..."
 MSG_CLONE_ERROR_NO_SOURCE="소스 프로젝트가 필요합니다"
 MSG_CLONE_USAGE="사용법: dockit clone <소스_프로젝트> [프로젝트_이름]"
