@@ -7,6 +7,7 @@
 # 공통 모듈 로드
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
+source "$MODULES_DIR/registry.sh"
 
 # Show usage function
 # 사용법 표시 함수
@@ -567,10 +568,16 @@ prune_images() {
         local containers_using_image
         containers_using_image=$(find_containers_using_image "$image_name" | tr ' ' '\n' | head -1)
         
+        # Check if project is active in registry
+        # 레지스트리에서 프로젝트가 활성 상태인지 확인
+        local is_active_project=0
+        if is_project_active_by_image "$image_name"; then
+            is_active_project=1
+        fi
         
-        # If no containers use this image, it's unused
-        # 이 이미지를 사용하는 컨테이너가 없으면 사용하지 않는 것
-        if [ -z "$containers_using_image" ]; then
+        # If no containers use this image AND project is not active, it's unused
+        # 이 이미지를 사용하는 컨테이너가 없고 프로젝트가 비활성 상태일 때만 사용하지 않는 것으로 간주
+        if [ -z "$containers_using_image" ] && [ $is_active_project -eq 0 ]; then
             unused_images+=("$image_name")
         fi
     done <<< "$all_dockit_images"

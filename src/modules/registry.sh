@@ -633,3 +633,46 @@ update_base_image_in_registry() {
         return 1
     fi
 }
+
+# 이미지명으로 프로젝트가 활성 상태인지 확인
+# Check if project is active by image name
+is_project_active_by_image() {
+    local image_name="$1"
+    
+    # 레지스트리 파일이 없으면 비활성으로 간주
+    # Consider inactive if registry file doesn't exist
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        return 1
+    fi
+    
+    if command -v jq &> /dev/null; then
+        # jq를 사용하여 이미지명으로 프로젝트 찾기
+        # Find project by image name using jq
+        local project_info
+        project_info=$(jq -r --arg image_name "$image_name" '
+            to_entries[] | 
+            select(.value.image_name == $image_name) | 
+            .key + ":" + .value.path + ":" + (.value.state // "none")
+        ' "$REGISTRY_FILE" 2>/dev/null | head -1)
+        
+        if [ -n "$project_info" ]; then
+            local project_id="${project_info%%:*}"
+            local remaining="${project_info#*:}"
+            local project_path="${remaining%%:*}"
+            local project_state="${remaining##*:}"
+            
+            # 프로젝트 파일 상태 확인
+            # Check project file status
+            local file_status=$(classify_project_file_status "$project_path" "$project_id")
+            
+            # 프로젝트가 활성 상태이고 파일도 유효한 경우에만 활성으로 간주
+            # Consider active only if project state is active and files are valid
+            # ready 상태도 활성으로 간주 (빌드된 프로젝트)
+            if [ "$file_status" = "active" ] && [ "$project_state" != "none" ] && [ "$project_state" != "down" ]; then
+                return 0  # 활성 프로젝트
+            fi
+        fi
+    fi
+    
+    return 1  # 비활성 또는 찾을 수 없음
+}
