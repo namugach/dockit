@@ -155,11 +155,219 @@ format_status_display() {
 # Performance optimization: Cache local Docker images and container states
 # 성능 최적화: 로컬 Docker 이미지와 컨테이너 상태 캐시
 
+# Advanced Performance: State-based intelligent management
+# 고급 성능 최적화: 상태 기반 지능형 관리
+readonly CACHE_DIR="$HOME/.dockit/cache"
+readonly INIT_STATE_FILE="$CACHE_DIR/init_state"
+readonly DOCKER_SNAPSHOT_FILE="$CACHE_DIR/docker_snapshot"
+
+# Asynchronous Background Initialization System
+# 비동기 백그라운드 초기화 시스템
+readonly BACKGROUND_LOCK_FILE="$CACHE_DIR/background.lock"
+readonly BACKGROUND_PID_FILE="$CACHE_DIR/background.pid"
+readonly BACKGROUND_STATUS_FILE="$CACHE_DIR/background_status"
+readonly BACKGROUND_COMPLETE_FILE="$CACHE_DIR/background_complete"
+
 # Global cache variables
 # 전역 캐시 변수
 declare -a LOCAL_DOCKIT_IMAGES_CACHE=()
 declare -A CONTAINER_STATES_CACHE=()
 declare LOCAL_IMAGES_LOADED=0
+
+# State management functions for advanced performance optimization
+# 고급 성능 최적화를 위한 상태 관리 함수들
+
+# Ensure cache directory exists
+# 캐시 디렉토리 생성 확인
+ensure_cache_directory() {
+    [ ! -d "$CACHE_DIR" ] && mkdir -p "$CACHE_DIR"
+}
+
+# Check if list system is initialized
+# 리스트 시스템 초기화 상태 확인
+is_list_initialized() {
+    [ -f "$INIT_STATE_FILE" ] && [ "$(cat "$INIT_STATE_FILE" 2>/dev/null)" = "true" ]
+}
+
+# Set list system as initialized
+# 리스트 시스템 초기화 상태 설정
+set_list_initialized() {
+    ensure_cache_directory
+    echo "true" > "$INIT_STATE_FILE"
+}
+
+# Check if Docker state has changed since last snapshot
+# 마지막 스냅샷 이후 Docker 상태 변경 확인
+has_docker_state_changed() {
+    local current_docker_images=$(docker image ls -a --format "{{.Repository}}" 2>/dev/null | grep "^dockit-" | sort)
+    local cached_docker_images=""
+    
+    if [ -f "$DOCKER_SNAPSHOT_FILE" ]; then
+        cached_docker_images=$(cat "$DOCKER_SNAPSHOT_FILE" 2>/dev/null)
+    fi
+    
+    if [ "$current_docker_images" != "$cached_docker_images" ]; then
+        # Save new snapshot
+        # 새로운 스냅샷 저장
+        ensure_cache_directory
+        echo "$current_docker_images" > "$DOCKER_SNAPSHOT_FILE"
+        return 0  # Changed
+    fi
+    
+    return 1  # Not changed
+}
+
+# Smart sync decision - enhanced version of should_sync_docker_status
+# 스마트 동기화 결정 - should_sync_docker_status의 향상된 버전
+should_perform_smart_sync() {
+    # 초기화되지 않았다면 전체 동기화 필요
+    if ! is_list_initialized; then
+        return 0  # Full sync needed
+    fi
+    
+    # Docker 상태가 변경되었다면 동기화 필요
+    if has_docker_state_changed; then
+        return 0  # Sync needed
+    fi
+    
+    return 1  # No sync needed - use quick mode
+}
+
+# ========================================================================================
+# Asynchronous Background Initialization System
+# 비동기 백그라운드 초기화 시스템
+# ========================================================================================
+
+# Check if background initialization is currently running
+# 백그라운드 초기화가 현재 실행 중인지 확인
+is_background_init_running() {
+    if [ -f "$BACKGROUND_LOCK_FILE" ] && [ -f "$BACKGROUND_PID_FILE" ]; then
+        local bg_pid=$(cat "$BACKGROUND_PID_FILE" 2>/dev/null)
+        if [ -n "$bg_pid" ] && kill -0 "$bg_pid" 2>/dev/null; then
+            return 0  # Running
+        else
+            # Cleanup stale lock files
+            rm -f "$BACKGROUND_LOCK_FILE" "$BACKGROUND_PID_FILE" 2>/dev/null
+            return 1  # Not running
+        fi
+    fi
+    return 1  # Not running
+}
+
+# Check if background initialization has completed successfully
+# 백그라운드 초기화가 성공적으로 완료되었는지 확인
+is_background_init_complete() {
+    [ -f "$BACKGROUND_COMPLETE_FILE" ] && [ "$(cat "$BACKGROUND_COMPLETE_FILE" 2>/dev/null)" = "true" ]
+}
+
+# Show light mode list with immediate response
+# 즉시 응답하는 가벼운 모드 리스트 표시
+show_light_mode_list() {
+    echo "등록된 프로젝트 (조회 중...)"
+    echo ""
+    
+    # Try to show cached registry info if available
+    # 캐시된 레지스트리 정보가 있으면 표시
+    local registry_file="$DOCKIT_CONFIG_DIR/registry.json"
+    local temp_list_file="/tmp/dockit_light_list.$$"
+    
+    if [ -f "$registry_file" ]; then
+        # Show basic project info from cached registry
+        # 캐시된 레지스트리에서 기본 프로젝트 정보 표시
+        echo "NO    PID           STATUS         LAST SEEN    PATH"
+        local count=0
+        while IFS= read -r line; do
+            if [ -n "$line" ] && [ "$line" != "null" ]; then
+                count=$((count + 1))
+                local path=$(echo "$line" | jq -r '.path // empty')
+                local container_name=$(echo "$line" | jq -r '.container_name // empty')
+                
+                if [ -n "$path" ] && [ -n "$container_name" ]; then
+                    local short_id=${container_name:0:12}
+                    local formatted_path=$(format_path "$path")
+                    printf "%-5s %-13s %s%-10s%s %s%-8s%s   %s\n" \
+                        "$count" "$short_id" "${CYAN}" "updating..." "${NC}" \
+                        "${GRAY}" "..." "${NC}" "$formatted_path"
+                fi
+            fi
+        done < <(jq -c '.[]?' "$registry_file" 2>/dev/null)
+        
+        if [ $count -eq 0 ]; then
+            echo "등록된 프로젝트가 없습니다."
+        else
+            echo ""
+            echo "📋 기본 정보 표시 중... 백그라운드에서 최신 상태를 확인하고 있습니다."
+        fi
+    else
+        echo "등록된 프로젝트가 없습니다."
+        echo ""
+        echo "🔄 처음 실행입니다. 백그라운드에서 프로젝트를 검색하고 있습니다..."
+    fi
+    
+    echo ""
+    echo "📌 컨테이너 상태를 확인하려면:  dockit ps"
+    echo "📌 새 프로젝트를 만들려면:     dockit init"
+}
+
+# Initialize all heavy operations in background asynchronously
+# 모든 무거운 작업을 백그라운드에서 비동기로 초기화
+initialize_background_async() {
+    # Prevent multiple background processes
+    # 다중 백그라운드 프로세스 방지
+    if is_background_init_running; then
+        return 0
+    fi
+    
+    # Start background initialization
+    # 백그라운드 초기화 시작
+    (
+        # Create lock file with current PID
+        ensure_cache_directory
+        echo $$ > "$BACKGROUND_PID_FILE"
+        touch "$BACKGROUND_LOCK_FILE"
+        echo "initializing" > "$BACKGROUND_STATUS_FILE"
+        
+        # Remove completion marker to indicate work in progress
+        rm -f "$BACKGROUND_COMPLETE_FILE" 2>/dev/null
+        
+        # Redirect all output to avoid interfering with main process
+        # 메인 프로세스 방해를 피하기 위해 모든 출력을 리디렉션
+        exec >/dev/null 2>&1
+        
+        # Set trap to cleanup on exit
+        trap 'rm -f "$BACKGROUND_LOCK_FILE" "$BACKGROUND_PID_FILE" "$BACKGROUND_STATUS_FILE" 2>/dev/null' EXIT
+        
+        # Perform all heavy operations sequentially
+        # 모든 무거운 작업을 순차적으로 수행
+        echo "docker_images" > "$BACKGROUND_STATUS_FILE"
+        get_local_dockit_images >/dev/null
+        
+        echo "container_states" > "$BACKGROUND_STATUS_FILE"  
+        get_batch_container_states >/dev/null
+        
+        echo "registry_sync" > "$BACKGROUND_STATUS_FILE"
+        load_registry "with_cleanup" >/dev/null
+        
+        echo "docker_sync" > "$BACKGROUND_STATUS_FILE"
+        sync_with_docker_status >/dev/null
+        
+        echo "project_discovery" > "$BACKGROUND_STATUS_FILE"
+        discover_and_register_projects >/dev/null
+        
+        # Mark system as fully initialized
+        echo "finalizing" > "$BACKGROUND_STATUS_FILE"
+        set_list_initialized "true"
+        echo "true" > "$BACKGROUND_COMPLETE_FILE"
+        
+        # Cleanup background files
+        rm -f "$BACKGROUND_LOCK_FILE" "$BACKGROUND_PID_FILE" "$BACKGROUND_STATUS_FILE" 2>/dev/null
+        
+    ) &
+    
+    # Return immediately after starting background process
+    # 백그라운드 프로세스 시작 후 즉시 반환
+    return 0
+}
 
 # Function to get all local dockit images at once
 # 로컬 dockit 이미지를 한 번에 모두 가져오는 함수
@@ -274,23 +482,36 @@ get_actual_docker_state() {
     local image_name="$1"
     local container_name="$2"
     
-    # Check image existence using cache
-    # 캐시를 사용하여 이미지 존재 여부 확인
-    local image_exists=false
-    if image_exists_in_cache "$image_name"; then
-        image_exists=true
+    # Direct real-time Docker state check - no cache dependency
+    # 직접 실시간 Docker 상태 확인 - 캐시 의존성 없음
+    
+    # First check container state directly
+    # 먼저 컨테이너 상태를 직접 확인
+    local container_state=""
+    if command -v docker &> /dev/null; then
+        container_state=$(docker container inspect --format '{{.State.Status}}' "$container_name" 2>/dev/null || echo "not_found")
     fi
     
-    # Check container state using cache
-    # 캐시를 사용하여 컨테이너 상태 확인
-    local container_state=$(get_container_state_from_cache "$container_name")
-    
-    # 상태 결정 로직 (최적화됨)
+    # Return container state if found and running
+    # 컨테이너를 찾았고 실행 중이면 상태 반환
     if [ "$container_state" = "running" ]; then
         echo "running"
-    elif [ "$container_state" = "stopped" ]; then
+        return
+    elif [ "$container_state" = "exited" ] || [ "$container_state" = "stopped" ]; then
         echo "stopped"
-    elif [ "$image_exists" = true ]; then
+        return
+    fi
+    
+    # If container not found, check if image exists directly
+    # 컨테이너를 찾지 못하면 이미지 존재 여부를 직접 확인
+    local image_exists=false
+    if command -v docker &> /dev/null; then
+        if docker image inspect "$image_name" &>/dev/null; then
+            image_exists=true
+        fi
+    fi
+    
+    if [ "$image_exists" = true ]; then
         echo "ready"
     else
         echo "none"
@@ -512,11 +733,23 @@ discover_and_register_projects() {
 # Main function for listing registered projects
 # 등록된 프로젝트 목록 표시를 위한 메인 함수
 list_main() {
-    # 성능 최적화: Docker 상태 변경 여부를 먼저 확인
-    # Performance optimization: Check if Docker status changed first
-    local needs_sync=false
-    if should_sync_docker_status; then
-        needs_sync=true
+    # ========================================================================================
+    # Clean Synchronous Architecture - Silent Performance Optimization
+    # 깔끔한 동기 아키텍처 - 조용한 성능 최적화
+    # ========================================================================================
+    
+    # Smart sync decision for performance optimization
+    # 성능 최적화를 위한 스마트 동기화 결정
+    local needs_full_sync=false
+    local is_first_run=false
+    local show_progress_message=false
+    
+    if should_perform_smart_sync; then
+        needs_full_sync=true
+        if ! is_list_initialized; then
+            is_first_run=true
+            show_progress_message=true
+        fi
     fi
     
     # 레지스트리 파일 확인 및 초기화
@@ -525,9 +758,16 @@ list_main() {
         echo '{}' > "$REGISTRY_FILE"
     fi
     
-    # 조건부 정리: 변경사항이 있을 때만 cleanup 수행
-    # Conditional cleanup: Only perform cleanup when there are changes
-    if [ "$needs_sync" = true ]; then
+    # Show progress message only on first run
+    # 첫 실행 시에만 진행 메시지 표시
+    if [ "$show_progress_message" = true ]; then
+        echo "등록된 프로젝트 (조회 중...)"
+        echo ""
+    fi
+    
+    # Smart cleanup: Full cleanup only on first run or when changes detected
+    # 스마트 정리: 첫 실행 또는 변경사항이 있을 때만 전체 cleanup 수행
+    if [ "$needs_full_sync" = true ]; then
         load_registry "with_cleanup" > /dev/null 2>&1
     else
         load_registry "no_cleanup" > /dev/null 2>&1
@@ -573,9 +813,9 @@ list_main() {
         fi
     done < <(echo "$registry_json" | jq -r 'keys[]')
     
-    # 조건부 이미지 동기화 및 프로젝트 발견
-    # Conditional image sync and project discovery
-    if [ "$needs_sync" = true ]; then
+    # 조건부 이미지 동기화 및 프로젝트 발견 (스마트 모드)
+    # Conditional image sync and project discovery (smart mode)
+    if [ "$needs_full_sync" = true ]; then
         # 실시간 Docker 상태와 레지스트리 동기화 (이미지 레벨)
         # Sync registry with real-time Docker status (image level)
         sync_with_docker_status > /dev/null 2>&1
@@ -583,6 +823,12 @@ list_main() {
         # 미등록 프로젝트 자동 발견 및 등록
         # Auto-discover and register unregistered projects
         discover_and_register_projects > /dev/null 2>&1
+        
+        # 초기화 상태 설정 (첫 실행 시)
+        # Set initialization state (on first run)
+        if [ "$is_first_run" = true ]; then
+            set_list_initialized
+        fi
     fi
     
     # 레지스트리 다시 로드 (상태 업데이트 반영)
