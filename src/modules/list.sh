@@ -1004,3 +1004,29 @@ handle_project_id_sync() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     list_main "$@"
 fi 
+
+# 레지스트리에서 프로젝트 제거
+# Remove project from registry
+remove_project_from_registry() {
+    local project_id="$1"
+    
+    if [ ! -f "$REGISTRY_FILE" ]; then
+        log "ERROR" "Registry file not found"
+        return 1
+    fi
+    
+    # 임시 파일 생성
+    # Create temporary file
+    local temp_file
+    temp_file="$(mktemp)"
+    
+    # jq를 사용하여 프로젝트 제거
+    # Remove project using jq
+    if command -v jq &> /dev/null; then
+        jq --arg id "$project_id" 'del(.[$id])' "$REGISTRY_FILE" > "$temp_file" && mv "$temp_file" "$REGISTRY_FILE"
+        log "INFO" "Removed project from registry: ${project_id:0:12}..."
+    else
+        log "WARNING" "jq not found, cannot remove project from registry"
+        return 1
+    fi
+}
