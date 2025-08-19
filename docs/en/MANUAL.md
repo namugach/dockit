@@ -27,6 +27,7 @@ This document explains the detailed usage of Dockit.
     - [setup](#setup---complete-environment-setup)
     - [run](#run---automated-run)
     - [ps](#ps---list-containers)
+    - [clone](#clone---clone-project)
     - [help](#help---display-help)
 5. [Configuration File](#configuration-file)
 6. [Troubleshooting](#troubleshooting)
@@ -808,6 +809,52 @@ Container names are displayed in a simplified form for better readability:
   - Example: 'dockit-home-hgs-dockit-test-temp-b' → 'temp-b'
 
 This feature is particularly useful when managing multiple dockit environments, making it easy to identify and check the status of containers created from different projects at a glance.
+
+### clone - Clone Project
+
+Clone an existing Dockit project to create a new one with a similar environment. This command streamlines the process of duplicating a project setup, including its Docker image and configurations.
+
+```bash
+dockit clone <source_project> [new_project_name]
+```
+
+#### Arguments:
+
+-   `<source_project>`: The source project to clone. This can be the project's number from the `dockit ls` list, its full ID, or a unique prefix of the ID.
+-   `[new_project_name]` (Optional): The name for the new cloned project. If not provided, you will be prompted to enter a name.
+
+#### Key Features:
+
+-   **Image Committing**: Creates a new Docker image from the source project's running container state.
+-   **Configuration Duplication**: Copies all configuration files from the source project's `.dockit_project` directory.
+-   **Automatic Naming**: Suggests a new project name and handles potential naming conflicts.
+-   **Rollback Mechanism**: If any step of the cloning process fails, it automatically rolls back the changes, such as removing the created directory, image, and registry entry.
+-   **Interactive and Non-interactive Modes**: Works interactively by prompting for a new name, or non-interactively if the new name is provided as an argument.
+
+#### Workflow:
+
+1.  **Select Source**: Specify the project to clone.
+2.  **Name New Project**: Provide a name for the new project, or let Dockit suggest one.
+3.  **Container Check**: Ensures the source container is running, and starts it if it's stopped.
+4.  **Image Creation**: Commits the running container to a new Docker image.
+5.  **File Copying**: Duplicates the `.dockit_project` directory.
+6.  **Configuration Update**: Updates the `.env` and `docker-compose.yml` files with the new project's name and image.
+7.  **Registry Update**: Registers the new project in the Dockit registry.
+
+#### Example Usage:
+
+```bash
+# List projects to find the source project number
+dockit ls
+
+# Clone project number 1 to a new project named "my_new_project"
+dockit clone 1 my_new_project
+
+# Clone a project and get prompted for a name
+dockit clone 1
+```
+
+This command is ideal for quickly spinning up new projects based on a pre-configured "template" project, ensuring consistency and saving setup time.
 
 ### help - Display Help
 
