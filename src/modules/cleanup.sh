@@ -42,16 +42,16 @@ show_usage() {
     echo ""
 }
 
-# 좀비 컨테이너 감지 함수
-# Detect zombie containers
-detect_zombie_containers() {
+# 끊어진 컨테이너 감지 함수
+# Detect broken containers
+detect_broken_containers() {
     
     # 모든 dockit 컨테이너 가져오기
     # Get all dockit containers
     local all_containers
     all_containers=$(docker ps -a --filter "label=com.dockit=true" --format "{{.Names}}|{{.Image}}|{{.Status}}")
     
-    local zombie_containers=()
+    local broken_containers=()
     
     while IFS='|' read -r container_name image_name status; do
         [ -z "$container_name" ] && continue
@@ -78,31 +78,31 @@ detect_zombie_containers() {
             fi
         fi
         
-        # 등록되지 않은 컨테이너는 좀비로 간주
-        # Consider unregistered containers as zombies
+        # 등록되지 않은 컨테이너는 끊어진 상태로 간주
+        # Consider unregistered containers as broken
         if [ $is_registered -eq 0 ]; then
-            zombie_containers+=("$container_name|$image_name|$status")
+            broken_containers+=("$container_name|$image_name|$status")
         fi
         
     done <<< "$all_containers"
     
     # 결과 반환
     # Return results
-    for zombie in "${zombie_containers[@]}"; do
-        echo "$zombie"
+    for broken in "${broken_containers[@]}"; do
+        echo "$broken"
     done
 }
 
-# 좀비 이미지 감지 함수  
-# Detect zombie images
-detect_zombie_images() {
+# 끊어진 이미지 감지 함수  
+# Detect broken images
+detect_broken_images() {
     
     # 모든 dockit 이미지 가져오기
     # Get all dockit images
     local all_images
     all_images=$(docker image ls --filter "reference=dockit-*" --format "{{.Repository}}|{{.ID}}|{{.CreatedSince}}|{{.Size}}")
     
-    local zombie_images=()
+    local broken_images=()
     
     while IFS='|' read -r image_name image_id created_since size; do
         [ -z "$image_name" ] && continue
@@ -119,31 +119,31 @@ detect_zombie_images() {
             is_active=1
         fi
         
-        # 컨테이너에서 사용되지 않고 활성 프로젝트가 아니면 좀비
-        # If not used by containers and not an active project, it's a zombie
-        if [ -z "$containers_using_image" ] && [ $is_active -eq 0 ]; then
-            zombie_images+=("$image_name|$image_id|$created_since|$size")
+        # 활성 프로젝트가 아니면 끊어진 상태 (컨테이너 사용 여부와 상관없이)
+        # If not an active project, it's a broken (regardless of container usage)
+        if [ $is_active -eq 0 ]; then
+            broken_images+=("$image_name|$image_id|$created_since|$size")
         fi
         
     done <<< "$all_images"
     
     # 결과 반환
     # Return results  
-    for zombie in "${zombie_images[@]}"; do
-        echo "$zombie"
+    for broken in "${broken_images[@]}"; do
+        echo "$broken"
     done
 }
 
-# 좀비 네트워크 감지 함수
-# Detect zombie networks
-detect_zombie_networks() {
+# 끊어진 네트워크 감지 함수
+# Detect broken networks
+detect_broken_networks() {
     
     # 모든 dockit 네트워크 가져오기
     # Get all dockit networks
     local all_networks
     all_networks=$(docker network ls --filter "name=dockit-" --format "{{.Name}}|{{.ID}}")
     
-    local zombie_networks=()
+    local broken_networks=()
     
     while IFS='|' read -r network_name network_id; do
         [ -z "$network_name" ] && continue
@@ -153,39 +153,40 @@ detect_zombie_networks() {
         local containers_in_network
         containers_in_network=$(docker network inspect "$network_name" --format '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null)
         
-        # 컨테이너가 없으면 좀비 네트워크
-        # If no containers, it's a zombie network
+        # 컨테이너가 없으면 끊어진 네트워크
+        # If no containers, it's a broken network
         if [ -z "$containers_in_network" ] || [ "$containers_in_network" = " " ]; then
-            zombie_networks+=("$network_name|$network_id")
+            broken_networks+=("$network_name|$network_id")
         fi
         
     done <<< "$all_networks"
     
     # 결과 반환
     # Return results
-    for zombie in "${zombie_networks[@]}"; do
-        echo "$zombie"
+    for broken in "${broken_networks[@]}"; do
+        echo "$broken"
     done
 }
 
-# 좀비 컨테이너 정리 함수
-# Clean zombie containers
+# 끊어진 컨테이너 정리 함수
+# Clean broken containers
 cleanup_containers() {
-    local zombie_containers=()
+    local skip_confirm="${1:-false}"
+    local broken_containers=()
     while IFS= read -r line; do
-        [ -n "$line" ] && zombie_containers+=("$line")
-    done < <(detect_zombie_containers)
+        [ -n "$line" ] && broken_containers+=("$line")
+    done < <(detect_broken_containers)
     
-    if [ ${#zombie_containers[@]} -eq 0 ]; then
-        echo "$MSG_CLEANUP_NO_ZOMBIE_CONTAINERS"
+    if [ ${#broken_containers[@]} -eq 0 ]; then
+        echo "$MSG_CLEANUP_NO_BROKEN_CONTAINERS"
         return 0
     fi
     
-    echo "$(printf "$MSG_CLEANUP_FOUND_ZOMBIE_CONTAINERS" "${#zombie_containers[@]}")"
+    echo "$(printf "$MSG_CLEANUP_FOUND_BROKEN_CONTAINERS" "${#broken_containers[@]}")"
     echo ""
     
-    # 좀비 컨테이너 목록 표시
-    # Display zombie containers list
+    # 끊어진 컨테이너 목록 표시
+    # Display broken containers list
     printf "%-4s  %-25s  %-25s  %s\n" \
         "$MSG_CLEANUP_HEADER_NO" \
         "$MSG_CLEANUP_HEADER_CONTAINER" \
@@ -193,8 +194,8 @@ cleanup_containers() {
         "$MSG_CLEANUP_HEADER_STATUS"
     
     local index=1
-    for zombie in "${zombie_containers[@]}"; do
-        IFS='|' read -r container_name image_name status <<< "$zombie"
+    for broken in "${broken_containers[@]}"; do
+        IFS='|' read -r container_name image_name status <<< "$broken"
         printf "%-4s  %-25s  %-25s  %s\n" \
             "$index" \
             "$(truncate_text "$container_name" 25)" \
@@ -204,19 +205,24 @@ cleanup_containers() {
     done
     
     echo ""
-    echo -n "$MSG_CLEANUP_CONFIRM_CONTAINERS"
-    read -r confirm
     
-    # Y가 기본값이므로 빈 입력도 y로 처리
-    if [ -z "$confirm" ]; then
-        confirm="y"
-    fi
-    
-    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
-    
-    if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
-        log "INFO" "$MSG_CLEANUP_CANCELLED"
-        return 0
+    # skip_confirm가 true가 아니면 확인 프롬프트 표시
+    # Show confirmation prompt only if skip_confirm is not true
+    if [ "$skip_confirm" != "true" ]; then
+        echo -n "$MSG_CLEANUP_CONFIRM_CONTAINERS"
+        read -r confirm
+        
+        # Y가 기본값이므로 빈 입력도 y로 처리
+        if [ -z "$confirm" ]; then
+            confirm="y"
+        fi
+        
+        confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+        
+        if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
+            log "INFO" "$MSG_CLEANUP_CANCELLED"
+            return 0
+        fi
     fi
     
     # 컨테이너 정리 실행 (스피너 사용)
@@ -226,8 +232,8 @@ cleanup_containers() {
     
     # 작업을 async_tasks로 추가
     tasks=()
-    for zombie in "${zombie_containers[@]}"; do
-        IFS='|' read -r container_name image_name status <<< "$zombie"
+    for broken in "${broken_containers[@]}"; do
+        IFS='|' read -r container_name image_name status <<< "$broken"
         add_task "$(printf "$MSG_CLEANUP_REMOVING_CONTAINER" "$container_name")" \
                  "docker stop \"$container_name\" &>/dev/null && docker rm \"$container_name\" &>/dev/null"
     done
@@ -236,8 +242,8 @@ cleanup_containers() {
     async_tasks_no_exit "$(get_message MSG_CLEANUP_REMOVING_COMPLETED)"
     
     # 결과 확인
-    for zombie in "${zombie_containers[@]}"; do
-        IFS='|' read -r container_name image_name status <<< "$zombie"
+    for broken in "${broken_containers[@]}"; do
+        IFS='|' read -r container_name image_name status <<< "$broken"
         if ! docker ps -a --format "{{.Names}}" | grep -q "^${container_name}$"; then
             ((removed_count++))
         else
@@ -256,24 +262,25 @@ cleanup_containers() {
     fi
 }
 
-# 좀비 이미지 정리 함수
-# Clean zombie images  
+# 끊어진 이미지 정리 함수
+# Clean broken images  
 cleanup_images() {
-    local zombie_images=()
+    local skip_confirm="${1:-false}"
+    local broken_images=()
     while IFS= read -r line; do
-        [ -n "$line" ] && zombie_images+=("$line")
-    done < <(detect_zombie_images)
+        [ -n "$line" ] && broken_images+=("$line")
+    done < <(detect_broken_images)
     
-    if [ ${#zombie_images[@]} -eq 0 ]; then
-        echo "$MSG_CLEANUP_NO_ZOMBIE_IMAGES"
+    if [ ${#broken_images[@]} -eq 0 ]; then
+        echo "$MSG_CLEANUP_NO_BROKEN_IMAGES"
         return 0
     fi
     
-    echo "$(printf "$MSG_CLEANUP_FOUND_ZOMBIE_IMAGES" "${#zombie_images[@]}")"
+    echo "$(printf "$MSG_CLEANUP_FOUND_BROKEN_IMAGES" "${#broken_images[@]}")"
     echo ""
     
-    # 좀비 이미지 목록 표시
-    # Display zombie images list
+    # 끊어진 이미지 목록 표시
+    # Display broken images list
     printf "%-4s  %-12s  %-13s  %-6s  %s\n" \
         "$MSG_CLEANUP_HEADER_NO" \
         "$MSG_CLEANUP_HEADER_ID" \
@@ -282,8 +289,8 @@ cleanup_images() {
         "$MSG_CLEANUP_HEADER_NAME"
     
     local index=1
-    for zombie in "${zombie_images[@]}"; do
-        IFS='|' read -r image_name image_id created_since size <<< "$zombie"
+    for broken in "${broken_images[@]}"; do
+        IFS='|' read -r image_name image_id created_since size <<< "$broken"
         local image_id_short="${image_id:0:12}"
         printf "%-4s  %-12s  %-13s  %-6s  %s\n" \
             "$index" \
@@ -295,19 +302,24 @@ cleanup_images() {
     done
     
     echo ""
-    echo -n "$MSG_CLEANUP_CONFIRM_IMAGES"
-    read -r confirm
     
-    # Y가 기본값이므로 빈 입력도 y로 처리
-    if [ -z "$confirm" ]; then
-        confirm="y"
-    fi
-    
-    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
-    
-    if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
-        log "INFO" "$MSG_CLEANUP_CANCELLED"
-        return 0
+    # skip_confirm가 true가 아니면 확인 프롬프트 표시
+    # Show confirmation prompt only if skip_confirm is not true
+    if [ "$skip_confirm" != "true" ]; then
+        echo -n "$MSG_CLEANUP_CONFIRM_IMAGES"
+        read -r confirm
+        
+        # Y가 기본값이므로 빈 입력도 y로 처리
+        if [ -z "$confirm" ]; then
+            confirm="y"
+        fi
+        
+        confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+        
+        if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
+            log "INFO" "$MSG_CLEANUP_CANCELLED"
+            return 0
+        fi
     fi
     
     # 이미지 정리 실행
@@ -315,8 +327,8 @@ cleanup_images() {
     local removed_count=0
     local failed_count=0
     
-    for zombie in "${zombie_images[@]}"; do
-        IFS='|' read -r image_name image_id created_since size <<< "$zombie"
+    for broken in "${broken_images[@]}"; do
+        IFS='|' read -r image_name image_id created_since size <<< "$broken"
         
         echo -n "$(printf "$MSG_CLEANUP_REMOVING_IMAGE" "$image_name")"
         
@@ -340,32 +352,33 @@ cleanup_images() {
     fi
 }
 
-# 좀비 네트워크 정리 함수
-# Clean zombie networks
+# 끊어진 네트워크 정리 함수
+# Clean broken networks
 cleanup_networks() {
-    local zombie_networks=()
+    local skip_confirm="${1:-false}"
+    local broken_networks=()
     while IFS= read -r line; do
-        [ -n "$line" ] && zombie_networks+=("$line")
-    done < <(detect_zombie_networks)
+        [ -n "$line" ] && broken_networks+=("$line")
+    done < <(detect_broken_networks)
     
-    if [ ${#zombie_networks[@]} -eq 0 ]; then
-        echo "$MSG_CLEANUP_NO_ZOMBIE_NETWORKS"
+    if [ ${#broken_networks[@]} -eq 0 ]; then
+        echo "$MSG_CLEANUP_NO_BROKEN_NETWORKS"
         return 0
     fi
     
-    echo "$(printf "$MSG_CLEANUP_FOUND_ZOMBIE_NETWORKS" "${#zombie_networks[@]}")"
+    echo "$(printf "$MSG_CLEANUP_FOUND_BROKEN_NETWORKS" "${#broken_networks[@]}")"
     echo ""
     
-    # 좀비 네트워크 목록 표시
-    # Display zombie networks list
+    # 끊어진 네트워크 목록 표시
+    # Display broken networks list
     printf "%-4s  %-12s  %s\n" \
         "$MSG_CLEANUP_HEADER_NO" \
         "$MSG_CLEANUP_HEADER_ID" \
         "$MSG_CLEANUP_HEADER_NAME"
     
     local index=1
-    for zombie in "${zombie_networks[@]}"; do
-        IFS='|' read -r network_name network_id <<< "$zombie"
+    for broken in "${broken_networks[@]}"; do
+        IFS='|' read -r network_name network_id <<< "$broken"
         local network_id_short="${network_id:0:12}"
         printf "%-4s  %-12s  %s\n" \
             "$index" \
@@ -375,19 +388,24 @@ cleanup_networks() {
     done
     
     echo ""
-    echo -n "$MSG_CLEANUP_CONFIRM_NETWORKS"
-    read -r confirm
     
-    # Y가 기본값이므로 빈 입력도 y로 처리
-    if [ -z "$confirm" ]; then
-        confirm="y"
-    fi
-    
-    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
-    
-    if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
-        log "INFO" "$MSG_CLEANUP_CANCELLED"
-        return 0
+    # skip_confirm가 true가 아니면 확인 프롬프트 표시
+    # Show confirmation prompt only if skip_confirm is not true
+    if [ "$skip_confirm" != "true" ]; then
+        echo -n "$MSG_CLEANUP_CONFIRM_NETWORKS"
+        read -r confirm
+        
+        # Y가 기본값이므로 빈 입력도 y로 처리
+        if [ -z "$confirm" ]; then
+            confirm="y"
+        fi
+        
+        confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+        
+        if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
+            log "INFO" "$MSG_CLEANUP_CANCELLED"
+            return 0
+        fi
     fi
     
     # 네트워크 정리 실행
@@ -395,8 +413,8 @@ cleanup_networks() {
     local removed_count=0
     local failed_count=0
     
-    for zombie in "${zombie_networks[@]}"; do
-        IFS='|' read -r network_name network_id <<< "$zombie"
+    for broken in "${broken_networks[@]}"; do
+        IFS='|' read -r network_name network_id <<< "$broken"
         
         echo -n "$(printf "$MSG_CLEANUP_REMOVING_NETWORK" "$network_name")"
         
@@ -420,41 +438,41 @@ cleanup_networks() {
     fi
 }
 
-# 모든 좀비 리소스 정리 함수
-# Clean all zombie resources
+# 모든 끊어진 리소스 정리 함수
+# Clean all broken resources
 cleanup_all() {
     echo "$MSG_CLEANUP_ALL_START"
     echo ""
     
     # 각 리소스별 감지
     # Detect each resource type
-    local zombie_containers=()
+    local broken_containers=()
     while IFS= read -r line; do
-        [ -n "$line" ] && zombie_containers+=("$line")
-    done < <(detect_zombie_containers)
+        [ -n "$line" ] && broken_containers+=("$line")
+    done < <(detect_broken_containers)
     
-    local zombie_images=()
+    local broken_images=()
     while IFS= read -r line; do
-        [ -n "$line" ] && zombie_images+=("$line")
-    done < <(detect_zombie_images)
+        [ -n "$line" ] && broken_images+=("$line")
+    done < <(detect_broken_images)
     
-    local zombie_networks=()
+    local broken_networks=()
     while IFS= read -r line; do
-        [ -n "$line" ] && zombie_networks+=("$line")
-    done < <(detect_zombie_networks)
+        [ -n "$line" ] && broken_networks+=("$line")
+    done < <(detect_broken_networks)
     
     # 요약 정보 표시
     # Display summary
     echo "$MSG_CLEANUP_ALL_SUMMARY"
-    echo "  $(printf "$MSG_CLEANUP_SUMMARY_CONTAINERS" "${#zombie_containers[@]}")"
-    echo "  $(printf "$MSG_CLEANUP_SUMMARY_IMAGES" "${#zombie_images[@]}")"
-    echo "  $(printf "$MSG_CLEANUP_SUMMARY_NETWORKS" "${#zombie_networks[@]}")"
+    echo "  $(printf "$MSG_CLEANUP_SUMMARY_CONTAINERS" "${#broken_containers[@]}")"
+    echo "  $(printf "$MSG_CLEANUP_SUMMARY_IMAGES" "${#broken_images[@]}")"
+    echo "  $(printf "$MSG_CLEANUP_SUMMARY_NETWORKS" "${#broken_networks[@]}")"
     echo ""
     
-    local total_count=$((${#zombie_containers[@]} + ${#zombie_images[@]} + ${#zombie_networks[@]}))
+    local total_count=$((${#broken_containers[@]} + ${#broken_images[@]} + ${#broken_networks[@]}))
     
     if [ $total_count -eq 0 ]; then
-        echo "$MSG_CLEANUP_ALL_NO_ZOMBIES"
+        echo "$MSG_CLEANUP_ALL_NO_BROKENS"
         return 0
     fi
     
@@ -480,22 +498,79 @@ cleanup_all() {
     log "INFO" "$MSG_CLEANUP_ALL_EXECUTING"
     echo ""
     
-    if [ ${#zombie_containers[@]} -gt 0 ]; then
+    if [ ${#broken_containers[@]} -gt 0 ]; then
         echo "$MSG_CLEANUP_ALL_STEP_CONTAINERS"
-        cleanup_containers
+        cleanup_containers "true"
         echo ""
     fi
     
-    if [ ${#zombie_networks[@]} -gt 0 ]; then
+    if [ ${#broken_networks[@]} -gt 0 ]; then
         echo "$MSG_CLEANUP_ALL_STEP_NETWORKS"
-        cleanup_networks
+        cleanup_networks "true"
         echo ""
     fi
     
-    if [ ${#zombie_images[@]} -gt 0 ]; then
+    if [ ${#broken_images[@]} -gt 0 ]; then
         echo "$MSG_CLEANUP_ALL_STEP_IMAGES"
-        cleanup_images  
+        cleanup_images "true"
         echo ""
+    fi
+    
+    # 컨테이너와 이미지 정리 후 추가로 끊어진 네트워크 재감지 및 정리
+    # Re-detect and clean networks that became broken after container/image cleanup
+    local additional_broken_networks=()
+    while IFS= read -r line; do
+        [ -n "$line" ] && additional_broken_networks+=("$line")
+    done < <(detect_broken_networks)
+    
+    if [ ${#additional_broken_networks[@]} -gt 0 ]; then
+        # 이미 정리된 네트워크들은 제외하고 새로 감지된 것들만 정리
+        local new_networks=()
+        for new_network in "${additional_broken_networks[@]}"; do
+            local found=false
+            for old_network in "${broken_networks[@]}"; do
+                if [ "$new_network" = "$old_network" ]; then
+                    found=true
+                    break
+                fi
+            done
+            if [ "$found" = false ]; then
+                new_networks+=("$new_network")
+            fi
+        done
+        
+        if [ ${#new_networks[@]} -gt 0 ]; then
+            echo "$MSG_CLEANUP_ALL_STEP_ADDITIONAL_NETWORKS"
+            log "INFO" "$(printf "추가로 끊어진 네트워크 %d개를 감지했습니다." "${#new_networks[@]}")"
+            
+            # 새로 감지된 네트워크들 정리
+            local removed_count=0
+            local failed_count=0
+            
+            for broken in "${new_networks[@]}"; do
+                IFS='|' read -r network_name network_id <<< "$broken"
+                
+                echo -n "$(printf "$MSG_CLEANUP_REMOVING_NETWORK" "$network_name")"
+                
+                if docker network rm "$network_name" &>/dev/null; then
+                    echo "✓"
+                    ((removed_count++))
+                else
+                    echo "✗"
+                    ((failed_count++))
+                fi
+            done
+            
+            if [ $removed_count -gt 0 ]; then
+                log "SUCCESS" "$(printf "$MSG_CLEANUP_REMOVED_NETWORKS" "$removed_count")"
+            fi
+            
+            if [ $failed_count -gt 0 ]; then
+                log "WARNING" "$(printf "$MSG_CLEANUP_FAILED_NETWORKS" "$failed_count")"
+            fi
+            
+            echo ""
+        fi
     fi
     
     log "SUCCESS" "$MSG_CLEANUP_ALL_COMPLETED"
@@ -509,20 +584,20 @@ show_status() {
     
     # 각 리소스별 감지
     # Detect each resource type
-    local zombie_containers=()
+    local broken_containers=()
     while IFS= read -r line; do
-        [ -n "$line" ] && zombie_containers+=("$line")
-    done < <(detect_zombie_containers)
+        [ -n "$line" ] && broken_containers+=("$line")
+    done < <(detect_broken_containers)
     
-    local zombie_images=()
+    local broken_images=()
     while IFS= read -r line; do
-        [ -n "$line" ] && zombie_images+=("$line")
-    done < <(detect_zombie_images)
+        [ -n "$line" ] && broken_images+=("$line")
+    done < <(detect_broken_images)
     
-    local zombie_networks=()
+    local broken_networks=()
     while IFS= read -r line; do
-        [ -n "$line" ] && zombie_networks+=("$line")
-    done < <(detect_zombie_networks)
+        [ -n "$line" ] && broken_networks+=("$line")
+    done < <(detect_broken_networks)
     
     # 레지스트리 프로젝트 수 확인
     # Check registry project count
@@ -542,22 +617,22 @@ show_status() {
     echo "   $(printf "$MSG_CLEANUP_STATUS_PROJECT_DETAIL" "$project_count" "$running_count" "$stopped_count")"
     echo ""
     
-    if [ ${#zombie_containers[@]} -gt 0 ]; then
-        echo "⚠️  $(printf "$MSG_CLEANUP_STATUS_ZOMBIE_CONTAINERS" "${#zombie_containers[@]}")"
+    if [ ${#broken_containers[@]} -gt 0 ]; then
+        echo "⚠️  $(printf "$MSG_CLEANUP_STATUS_BROKEN_CONTAINERS" "${#broken_containers[@]}")"
     fi
     
-    if [ ${#zombie_images[@]} -gt 0 ]; then
-        echo "⚠️  $(printf "$MSG_CLEANUP_STATUS_ZOMBIE_IMAGES" "${#zombie_images[@]}")"
+    if [ ${#broken_images[@]} -gt 0 ]; then
+        echo "⚠️  $(printf "$MSG_CLEANUP_STATUS_BROKEN_IMAGES" "${#broken_images[@]}")"
     fi
     
-    if [ ${#zombie_networks[@]} -gt 0 ]; then
-        echo "⚠️  $(printf "$MSG_CLEANUP_STATUS_ZOMBIE_NETWORKS" "${#zombie_networks[@]}")"
+    if [ ${#broken_networks[@]} -gt 0 ]; then
+        echo "⚠️  $(printf "$MSG_CLEANUP_STATUS_BROKEN_NETWORKS" "${#broken_networks[@]}")"
     fi
     
-    local total_zombies=$((${#zombie_containers[@]} + ${#zombie_images[@]} + ${#zombie_networks[@]}))
+    local total_brokens=$((${#broken_containers[@]} + ${#broken_images[@]} + ${#broken_networks[@]}))
     
-    if [ $total_zombies -eq 0 ]; then
-        echo "✅ $MSG_CLEANUP_STATUS_NO_ZOMBIES"
+    if [ $total_brokens -eq 0 ]; then
+        echo "✅ $MSG_CLEANUP_STATUS_NO_BROKENS"
     else
         echo ""
         echo "💡 $MSG_CLEANUP_STATUS_CLEANUP_HINT"

@@ -720,13 +720,17 @@ prune_images() {
     echo -n "$MSG_IMAGE_PRUNE_CONFIRM"
     read -r confirm
     
+    # Check confirmation (Y가 기본값)
+    # 확인 검사
+    if [ -z "$confirm" ]; then
+        confirm="y"
+    fi
+    
     # Convert to lowercase for comparison
     # 소문자로 변환해서 비교
     confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
     
-    # Check confirmation
-    # 확인 검사
-    if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
+    if [ "$confirm" = "n" ] || [ "$confirm" = "no" ]; then
         log "INFO" "$MSG_IMAGE_PRUNE_CANCELLED"
         return 0
     fi

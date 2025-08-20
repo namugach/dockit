@@ -55,7 +55,7 @@ To remove Dockit from your system:
 - **🔄 Real-time Docker status synchronization** - Automatic detection and reflection of external Docker changes
 - **♻️ Image reuse functionality** - Reuse images from other projects for maximum resource efficiency
 - **🗂️ Comprehensive image management** - Complete image management with list, remove, prune, clean commands
-- **🧹 Zombie resource cleanup** - Safely remove unused Docker networks and volumes.
+- **🧹 Broken resource cleanup** - Safely remove unused Docker networks and volumes.
 - **📊 Extended project state system** - Complete lifecycle management with none, ready, error states
 - **📁 Directory name validation and auto-rename** - Automatic detection and conversion of uppercase directory names to Docker-compliant lowercase format
 - Automatic application of current user settings (UID/GID) to container

@@ -28,7 +28,7 @@ This document explains how to use Dockit in detail.
     - [run](#run---automatic-execution)
     - [ps](#ps---container-list)
     - [clone](#clone---project-clone)
-    - [cleanup](#cleanup---zombie-resource-cleanup)
+    - [cleanup](#cleanup---broken-resource-cleanup)
     - [network](#network---manage-networks)
     - [help](#help---help)
 5. [Configuration Files](#configuration-files)
@@ -871,7 +871,7 @@ dockit clone 1
 
 This command is ideal for quickly spinning up new projects based on a pre-configured "template" project, ensuring consistency and saving setup time.
 
-### cleanup - Clean up zombie resources
+### cleanup - Clean up broken resources
 
 Cleans up unused Docker resources (networks, volumes, etc.) to optimize the system.
 
@@ -879,7 +879,7 @@ Cleans up unused Docker resources (networks, volumes, etc.) to optimize the syst
 dockit cleanup
 ```
 
-This command finds and removes Docker networks and volumes that are no longer associated with any `dockit` projects. This allows you to safely clean up "zombie" resources that are unnecessarily consuming disk space.
+This command finds and removes Docker networks and volumes that are no longer associated with any `dockit` projects. This allows you to safely clean up "broken" resources that are unnecessarily consuming disk space.
 
 #### Key Features:
 - **Automatic Detection**: Automatically identifies networks and volumes that are not being used by any projects currently registered in the `dockit` registry.

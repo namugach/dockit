@@ -797,7 +797,7 @@ MSG_IMAGE_PRUNE_NO_UNUSED="사용하지 않는 dockit 이미지를 찾을 수 �
 MSG_IMAGE_PRUNE_ALL_IN_USE="모든 dockit 이미지가 현재 컨테이너에서 사용 중입니다."
 MSG_IMAGE_PRUNE_FOUND="%d개의 사용하지 않는 dockit 이미지를 찾았습니다:"
 MSG_IMAGE_PRUNE_SPACE_TO_FREE="해제될 총 공간: %s"
-MSG_IMAGE_PRUNE_CONFIRM="이 사용하지 않는 이미지들을 제거하시겠습니까? [y/N]: "
+MSG_IMAGE_PRUNE_CONFIRM="이 사용하지 않는 이미지들을 제거하시겠습니까? [Y/n]: "
 MSG_IMAGE_PRUNE_CANCELLED="이미지 정리가 취소되었습니다"
 MSG_IMAGE_PRUNE_REMOVING="사용하지 않는 dockit 이미지를 제거하는 중..."
 MSG_IMAGE_PRUNE_REMOVING_IMAGE="%s 제거 중... "
@@ -1001,12 +1001,12 @@ MSG_PROJECT_LIST_UNKNOWN="???"
 MSG_PROJECT_LIST_HEADER="등록된 프로젝트 (%d)"
 
 # Cleanup 모듈 메시지
-MSG_CLEANUP_MODULE_USAGE_TITLE="dockit cleanup - 좀비 리소스 정리"
+MSG_CLEANUP_MODULE_USAGE_TITLE="dockit cleanup - 끊어진 리소스 정리"
 MSG_CLEANUP_MODULE_COMMANDS="사용 가능한 명령어:"
-MSG_CLEANUP_MODULE_CONTAINERS="  containers    좀비 컨테이너 정리"
+MSG_CLEANUP_MODULE_CONTAINERS="  containers    끊어진 컨테이너 정리"
 MSG_CLEANUP_MODULE_IMAGES="  images        사용하지 않는 이미지 정리"
 MSG_CLEANUP_MODULE_NETWORKS="  networks      사용하지 않는 네트워크 정리"
-MSG_CLEANUP_MODULE_ALL="  all           모든 좀비 리소스 정리"
+MSG_CLEANUP_MODULE_ALL="  all           모든 끊어진 리소스 정리"
 MSG_CLEANUP_MODULE_EXAMPLES="사용 예시:"
 MSG_CLEANUP_MODULE_EXAMPLE_CONTAINERS="  dockit cleanup containers"
 MSG_CLEANUP_MODULE_EXAMPLE_IMAGES="  dockit cleanup images"
@@ -1014,18 +1014,18 @@ MSG_CLEANUP_MODULE_EXAMPLE_NETWORKS="  dockit cleanup networks"
 MSG_CLEANUP_MODULE_EXAMPLE_ALL="  dockit cleanup all"
 
 # Cleanup 감지 메시지
-MSG_CLEANUP_DETECTING_CONTAINERS="좀비 컨테이너를 찾는 중..."
+MSG_CLEANUP_DETECTING_CONTAINERS="끊어진 컨테이너를 찾는 중..."
 MSG_CLEANUP_DETECTING_IMAGES="사용하지 않는 이미지를 찾는 중..."
 MSG_CLEANUP_DETECTING_NETWORKS="사용하지 않는 네트워크를 찾는 중..."
 
 # Cleanup 결과 메시지
-MSG_CLEANUP_NO_ZOMBIE_CONTAINERS="좀비 컨테이너를 찾을 수 없습니다."
-MSG_CLEANUP_NO_ZOMBIE_IMAGES="사용하지 않는 이미지를 찾을 수 없습니다."
-MSG_CLEANUP_NO_ZOMBIE_NETWORKS="사용하지 않는 네트워크를 찾을 수 없습니다."
+MSG_CLEANUP_NO_BROKEN_CONTAINERS="끊어진 컨테이너를 찾을 수 없습니다."
+MSG_CLEANUP_NO_BROKEN_IMAGES="사용하지 않는 이미지를 찾을 수 없습니다."
+MSG_CLEANUP_NO_BROKEN_NETWORKS="사용하지 않는 네트워크를 찾을 수 없습니다."
 
-MSG_CLEANUP_FOUND_ZOMBIE_CONTAINERS="%d개의 좀비 컨테이너를 찾았습니다:"
-MSG_CLEANUP_FOUND_ZOMBIE_IMAGES="%d개의 사용하지 않는 이미지를 찾았습니다:"
-MSG_CLEANUP_FOUND_ZOMBIE_NETWORKS="%d개의 사용하지 않는 네트워크를 찾았습니다:"
+MSG_CLEANUP_FOUND_BROKEN_CONTAINERS="%d개의 끊어진 컨테이너를 찾았습니다:"
+MSG_CLEANUP_FOUND_BROKEN_IMAGES="%d개의 사용하지 않는 이미지를 찾았습니다:"
+MSG_CLEANUP_FOUND_BROKEN_NETWORKS="%d개의 사용하지 않는 네트워크를 찾았습니다:"
 
 # Cleanup 헤더 메시지
 MSG_CLEANUP_HEADER_NO="NO"
@@ -1041,7 +1041,7 @@ MSG_CLEANUP_HEADER_NAME="이름"
 MSG_CLEANUP_CONFIRM_CONTAINERS="이 컨테이너들을 제거하시겠습니까? [Y/n]: "
 MSG_CLEANUP_CONFIRM_IMAGES="이 이미지들을 제거하시겠습니까? [Y/n]: "
 MSG_CLEANUP_CONFIRM_NETWORKS="이 네트워크들을 제거하시겠습니까? [Y/n]: "
-MSG_CLEANUP_CONFIRM_ALL="모든 좀비 리소스를 제거하시겠습니까? [Y/n]: "
+MSG_CLEANUP_CONFIRM_ALL="모든 끊어진 리소스를 제거하시겠습니까? [Y/n]: "
 
 # Cleanup 실행 메시지
 MSG_CLEANUP_REMOVING_CONTAINER="컨테이너 제거 중: %s... "
@@ -1060,39 +1060,40 @@ MSG_CLEANUP_FAILED_NETWORKS="%d개의 네트워크 제거에 실패했습니다.
 MSG_CLEANUP_CANCELLED="정리가 취소되었습니다."
 
 # Cleanup all 메시지
-MSG_CLEANUP_ALL_START="모든 좀비 리소스 정리를 시작합니다."
+MSG_CLEANUP_ALL_START="모든 끊어진 리소스 정리를 시작합니다."
 MSG_CLEANUP_ALL_SUMMARY="📋 정리할 리소스 요약:"
-MSG_CLEANUP_SUMMARY_CONTAINERS="좀비 컨테이너: %d개"
+MSG_CLEANUP_SUMMARY_CONTAINERS="끊어진 컨테이너: %d개"
 MSG_CLEANUP_SUMMARY_IMAGES="사용하지 않는 이미지: %d개"
 MSG_CLEANUP_SUMMARY_NETWORKS="사용하지 않는 네트워크: %d개"
 
-MSG_CLEANUP_ALL_NO_ZOMBIES="정리할 좀비 리소스가 없습니다."
+MSG_CLEANUP_ALL_NO_BROKENS="정리할 끊어진 리소스가 없습니다."
 MSG_CLEANUP_ALL_EXECUTING="정리를 시작합니다..."
-MSG_CLEANUP_ALL_STEP_CONTAINERS="🗂️  좀비 컨테이너 정리 중..."
+MSG_CLEANUP_ALL_STEP_CONTAINERS="🗂️  끊어진 컨테이너 정리 중..."
 MSG_CLEANUP_ALL_STEP_IMAGES="🗂️  사용하지 않는 이미지 정리 중..."
 MSG_CLEANUP_ALL_STEP_NETWORKS="🗂️  사용하지 않는 네트워크 정리 중..."
+MSG_CLEANUP_ALL_STEP_ADDITIONAL_NETWORKS="🗂️  추가로 끊어진 네트워크 정리 중..."
 MSG_CLEANUP_ALL_COMPLETED="모든 정리 작업이 완료되었습니다."
 
 # Cleanup 상태 메시지
 MSG_CLEANUP_STATUS_TITLE="📊 Dockit 시스템 상태"
 MSG_CLEANUP_STATUS_PROJECTS="프로젝트"
 MSG_CLEANUP_STATUS_PROJECT_DETAIL="총 %d개 (실행 중: %d, 중지됨: %d)"
-MSG_CLEANUP_STATUS_ZOMBIE_CONTAINERS="좀비 컨테이너 %d개 발견"
-MSG_CLEANUP_STATUS_ZOMBIE_IMAGES="사용하지 않는 이미지 %d개 발견"
-MSG_CLEANUP_STATUS_ZOMBIE_NETWORKS="사용하지 않는 네트워크 %d개 발견"
-MSG_CLEANUP_STATUS_NO_ZOMBIES="모든 리소스가 정상 상태입니다."
+MSG_CLEANUP_STATUS_BROKEN_CONTAINERS="끊어진 컨테이너 %d개 발견"
+MSG_CLEANUP_STATUS_BROKEN_IMAGES="사용하지 않는 이미지 %d개 발견"
+MSG_CLEANUP_STATUS_BROKEN_NETWORKS="사용하지 않는 네트워크 %d개 발견"
+MSG_CLEANUP_STATUS_NO_BROKENS="모든 리소스가 정상 상태입니다."
 MSG_CLEANUP_STATUS_CLEANUP_HINT="정리하려면:"
 
 # Cleanup 오류 메시지
 MSG_CLEANUP_MAIN_UNKNOWN_COMMAND="알 수 없는 명령어: %s"
-MSG_HELP_CLEANUP="  cleanup  - 좀비 리소스 정리 (containers, images, networks, all)"
+MSG_HELP_CLEANUP="  cleanup  - 끊어진 리소스 정리 (containers, images, networks, all)"
 
 # cleanup 자동완성 메시지
-MSG_COMPLETION_CLEANUP="좀비 리소스 정리"
-MSG_CLEANUP_COMPLETION_CONTAINERS="좀비 컨테이너 정리"
+MSG_COMPLETION_CLEANUP="끊어진 리소스 정리"
+MSG_CLEANUP_COMPLETION_CONTAINERS="끊어진 컨테이너 정리"
 MSG_CLEANUP_COMPLETION_IMAGES="사용하지 않는 이미지 정리"
 MSG_CLEANUP_COMPLETION_NETWORKS="사용하지 않는 네트워크 정리"
-MSG_CLEANUP_COMPLETION_ALL="모든 좀비 리소스 정리"
+MSG_CLEANUP_COMPLETION_ALL="모든 끊어진 리소스 정리"
 MSG_CLEANUP_COMPLETION_STATUS="시스템 상태 표시"
 
 # Network 모듈 메시지

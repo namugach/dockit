@@ -408,24 +408,24 @@ list_main() {
     print_header "$format"
     cat "$temp_file"
     
-    # -a 옵션이 지정된 경우 좀비 컨테이너도 표시
-    # Show zombie containers if -a option is specified
+    # -a 옵션이 지정된 경우 끊어진 컨테이너도 표시
+    # Show broken containers if -a option is specified
     if [ "$show_all" = true ]; then
-        local zombie_containers=()
+        local broken_containers=()
         while IFS= read -r line; do
-            [ -n "$line" ] && zombie_containers+=("$line")
-        done < <(detect_zombie_containers)
-        if [ ${#zombie_containers[@]} -gt 0 ]; then
+            [ -n "$line" ] && broken_containers+=("$line")
+        done < <(detect_broken_containers)
+        if [ ${#broken_containers[@]} -gt 0 ]; then
             echo ""
-            echo "⚠️  좀비 컨테이너 (${#zombie_containers[@]})"
+            echo "⚠️  끊어진 컨테이너 (${#broken_containers[@]})"
             
-            local zombie_format="%-4s  %-25s  %-25s  %s\n"
-            printf "$zombie_format" "NO" "컨테이너" "이미지" "상태"
+            local broken_format="%-4s  %-25s  %-25s  %s\n"
+            printf "$broken_format" "NO" "컨테이너" "이미지" "상태"
             
             local index=1
-            for zombie in "${zombie_containers[@]}"; do
-                IFS='|' read -r container_name image_name status <<< "$zombie"
-                printf "$zombie_format" \
+            for broken in "${broken_containers[@]}"; do
+                IFS='|' read -r container_name image_name status <<< "$broken"
+                printf "$broken_format" \
                     "$index" \
                     "$(truncate_text "$container_name" 25)" \
                     "$(truncate_text "$image_name" 25)" \
