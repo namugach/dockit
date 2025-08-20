@@ -8,6 +8,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 source "$MODULES_DIR/registry.sh"
+source "$UTILS_DIR/async_tasks.sh"
 
 # Function to truncate text if it's longer than max_length
 # 텍스트가 최대 길이보다 길면 잘라내는 함수
@@ -206,6 +207,11 @@ cleanup_containers() {
     echo -n "$MSG_CLEANUP_CONFIRM_CONTAINERS"
     read -r confirm
     
+    # Y가 기본값이므로 빈 입력도 y로 처리
+    if [ -z "$confirm" ]; then
+        confirm="y"
+    fi
+    
     confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
     
     if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
@@ -213,23 +219,28 @@ cleanup_containers() {
         return 0
     fi
     
-    # 컨테이너 정리 실행
-    # Execute container cleanup
+    # 컨테이너 정리 실행 (스피너 사용)
+    # Execute container cleanup (with spinner)
     local removed_count=0
     local failed_count=0
     
+    # 작업을 async_tasks로 추가
+    tasks=()
     for zombie in "${zombie_containers[@]}"; do
         IFS='|' read -r container_name image_name status <<< "$zombie"
-        
-        echo -n "$(printf "$MSG_CLEANUP_REMOVING_CONTAINER" "$container_name")"
-        
-        # 컨테이너 중지 및 제거
-        # Stop and remove container
-        if docker stop "$container_name" &>/dev/null && docker rm "$container_name" &>/dev/null; then
-            echo "✓"
+        add_task "$(printf "$MSG_CLEANUP_REMOVING_CONTAINER" "$container_name")" \
+                 "docker stop \"$container_name\" &>/dev/null && docker rm \"$container_name\" &>/dev/null"
+    done
+    
+    # 스피너 실행
+    async_tasks_no_exit "$(get_message MSG_CLEANUP_REMOVING_COMPLETED)"
+    
+    # 결과 확인
+    for zombie in "${zombie_containers[@]}"; do
+        IFS='|' read -r container_name image_name status <<< "$zombie"
+        if ! docker ps -a --format "{{.Names}}" | grep -q "^${container_name}$"; then
             ((removed_count++))
         else
-            echo "✗"
             ((failed_count++))
         fi
     done
@@ -286,6 +297,11 @@ cleanup_images() {
     echo ""
     echo -n "$MSG_CLEANUP_CONFIRM_IMAGES"
     read -r confirm
+    
+    # Y가 기본값이므로 빈 입력도 y로 처리
+    if [ -z "$confirm" ]; then
+        confirm="y"
+    fi
     
     confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
     
@@ -362,6 +378,11 @@ cleanup_networks() {
     echo -n "$MSG_CLEANUP_CONFIRM_NETWORKS"
     read -r confirm
     
+    # Y가 기본값이므로 빈 입력도 y로 처리
+    if [ -z "$confirm" ]; then
+        confirm="y"
+    fi
+    
     confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
     
     if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
@@ -407,9 +428,20 @@ cleanup_all() {
     
     # 각 리소스별 감지
     # Detect each resource type
-    local zombie_containers=($(detect_zombie_containers))
-    local zombie_images=($(detect_zombie_images))
-    local zombie_networks=($(detect_zombie_networks))
+    local zombie_containers=()
+    while IFS= read -r line; do
+        [ -n "$line" ] && zombie_containers+=("$line")
+    done < <(detect_zombie_containers)
+    
+    local zombie_images=()
+    while IFS= read -r line; do
+        [ -n "$line" ] && zombie_images+=("$line")
+    done < <(detect_zombie_images)
+    
+    local zombie_networks=()
+    while IFS= read -r line; do
+        [ -n "$line" ] && zombie_networks+=("$line")
+    done < <(detect_zombie_networks)
     
     # 요약 정보 표시
     # Display summary
@@ -429,6 +461,11 @@ cleanup_all() {
     echo -n "$MSG_CLEANUP_CONFIRM_ALL"
     read -r confirm
     
+    # Y가 기본값이므로 빈 입력도 y로 처리
+    if [ -z "$confirm" ]; then
+        confirm="y"
+    fi
+    
     confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
     
     if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
@@ -436,8 +473,9 @@ cleanup_all() {
         return 0
     fi
     
-    # 순차적으로 정리 (컨테이너 → 이미지 → 네트워크)
-    # Clean up sequentially (containers → images → networks)
+    # 순차적으로 정리 (컨테이너 → 네트워크 → 이미지)
+    # Clean up sequentially (containers → networks → images)
+    # 네트워크를 먼저 정리해야 컨테이너와의 연결 문제가 없음
     echo ""
     log "INFO" "$MSG_CLEANUP_ALL_EXECUTING"
     echo ""
@@ -448,15 +486,15 @@ cleanup_all() {
         echo ""
     fi
     
-    if [ ${#zombie_images[@]} -gt 0 ]; then
-        echo "$MSG_CLEANUP_ALL_STEP_IMAGES"
-        cleanup_images  
-        echo ""
-    fi
-    
     if [ ${#zombie_networks[@]} -gt 0 ]; then
         echo "$MSG_CLEANUP_ALL_STEP_NETWORKS"
         cleanup_networks
+        echo ""
+    fi
+    
+    if [ ${#zombie_images[@]} -gt 0 ]; then
+        echo "$MSG_CLEANUP_ALL_STEP_IMAGES"
+        cleanup_images  
         echo ""
     fi
     

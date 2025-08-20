@@ -238,7 +238,12 @@ prune_networks() {
     done
     
     echo ""
-    read -p "$(get_message MSG_NETWORK_PRUNE_CONFIRM) [y/N]: " confirm
+    read -p "$(get_message MSG_NETWORK_PRUNE_CONFIRM) [Y/n]: " confirm
+    
+    # Y가 기본값이므로 빈 입력도 y로 처리
+    if [ -z "$confirm" ]; then
+        confirm="y"
+    fi
     
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         local removed_count=0

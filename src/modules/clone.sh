@@ -11,6 +11,7 @@ source "$SCRIPT_DIR/common.sh" "clone"
 # Load modules
 # 모듈 로드
 source "$MODULES_DIR/registry.sh"
+source "$UTILS_DIR/async_tasks.sh"
 
 # Clone specific constants
 # Clone 관련 상수 정의
@@ -470,7 +471,16 @@ execute_docker_commit() {
     new_image_ref=$(generate_dockit_name "$target_path")
     
     printf "${CYAN}$(printf "$MSG_CLONE_INFO_CREATING_NEW_IMAGE" "$new_image_ref")${NC}\n"
-    if ! timeout $DOCKER_COMMIT_TIMEOUT docker commit "$SOURCE_PROJECT_CONTAINER" "$new_image_ref"; then
+    
+    # 스피너를 사용하여 docker commit 실행
+    tasks=()
+    add_task "$(printf "$MSG_CLONE_INFO_CREATING_NEW_IMAGE" "$new_image_ref")" \
+             "timeout $DOCKER_COMMIT_TIMEOUT docker commit \"$SOURCE_PROJECT_CONTAINER\" \"$new_image_ref\""
+    
+    async_tasks_no_exit "$MSG_CLONE_SUCCESS_COMMIT_COMPLETE"
+    
+    # commit 결과 확인
+    if ! docker image inspect "$new_image_ref" &>/dev/null; then
         printf "${RED}${MSG_CLONE_ERROR_COMMIT_FAILED}${NC}\n"
         return 1
     fi

@@ -320,10 +320,10 @@ MSG_INSTALL_TOOL_MISSING="%s이(가) 설치되어 있지 않습니다. 먼저 %s
 MSG_INSTALL_DEPENDENCIES_OK="모든 의존성이 충족되었습니다."
 MSG_INSTALL_CHECKING_EXISTING="기존 설치 확인 중..."
 MSG_INSTALL_ALREADY_INSTALLED="dockit이 이미 설치되어 있습니다."
-MSG_INSTALL_REINSTALL="다시 설치하시겠습니까? [y/N]"
+MSG_INSTALL_REINSTALL="다시 설치하시겠습니까? [Y/n]"
 MSG_INSTALL_CANCELLED="설치가 취소되었습니다."
 MSG_INSTALL_DIR_EXISTS="프로젝트 디렉토리가 이미 존재합니다: %s"
-MSG_INSTALL_OVERWRITE="덮어쓰시겠습니까? [y/N]"
+MSG_INSTALL_OVERWRITE="덮어쓰시겠습니까? [Y/n]"
 MSG_INSTALL_CHECKING_PERMISSIONS="권한 확인 중..."
 MSG_INSTALL_NO_PERMISSION="쓰기 권한이 없습니다: %s"
 MSG_INSTALL_USE_SUDO="sudo로 실행하거나 디렉토리 권한을 확인해주세요."
@@ -743,7 +743,7 @@ MSG_IMAGE_REMOVE_STOP_FIRST="먼저 이 컨테이너들을 중지하고 제거�
 MSG_IMAGE_REMOVE_STOP_COMMAND="컨테이너 중지: dockit stop <컨테이너_이름>"
 MSG_IMAGE_REMOVE_DOWN_COMMAND="컨테이너 제거: dockit down <컨테이너_이름>"
 MSG_IMAGE_REMOVE_TO_BE_REMOVED="제거될 이미지:"
-MSG_IMAGE_REMOVE_CONFIRM="이 이미지를 제거하시겠습니까? [y/N]: "
+MSG_IMAGE_REMOVE_CONFIRM="이 이미지를 제거하시겠습니까? [Y/n]: "
 MSG_IMAGE_REMOVE_CANCELLED="이미지 제거가 취소되었습니다"
 MSG_IMAGE_REMOVE_REMOVING="이미지 '%s' 제거 중..."
 MSG_IMAGE_REMOVE_SUCCESS="이미지 '%s'가 성공적으로 제거되었습니다"
@@ -769,7 +769,7 @@ MSG_IMAGE_CLEAN_SPACE_TO_FREE="• 해제될 총 공간: %s"
 MSG_IMAGE_CLEAN_WARNING_IN_USE="⚠️  경고: %d개의 이미지가 현재 컨테이너에서 사용 중입니다!"
 MSG_IMAGE_CLEAN_AUTO_REMOVAL="이 컨테이너들은 자동으로 중지되고 제거됩니다."
 MSG_IMAGE_CLEAN_DANGER_ZONE="🚨 위험 구역: 이 작업은 되돌릴 수 없습니다!"
-MSG_IMAGE_CLEAN_FIRST_CONFIRM="정말로 모든 %d개의 dockit 이미지를 제거하시겠습니까? [y/N]: "
+MSG_IMAGE_CLEAN_FIRST_CONFIRM="정말로 모든 %d개의 dockit 이미지를 제거하시겠습니까? [Y/n]: "
 MSG_IMAGE_CLEAN_FINAL_WARNING="⚠️  최종 경고: 모든 dockit 이미지가 영구적으로 삭제됩니다!"
 MSG_IMAGE_CLEAN_TYPE_DELETE="확인하려면 'DELETE'를 (대문자로) 입력하세요:"
 MSG_IMAGE_CLEAN_CONFIRMATION="확인: "
@@ -797,7 +797,7 @@ MSG_IMAGE_PRUNE_NO_UNUSED="사용하지 않는 dockit 이미지를 찾을 수 �
 MSG_IMAGE_PRUNE_ALL_IN_USE="모든 dockit 이미지가 현재 컨테이너에서 사용 중입니다."
 MSG_IMAGE_PRUNE_FOUND="%d개의 사용하지 않는 dockit 이미지를 찾았습니다:"
 MSG_IMAGE_PRUNE_SPACE_TO_FREE="해제될 총 공간: %s"
-MSG_IMAGE_PRUNE_CONFIRM="이 사용하지 않는 이미지들을 제거하시겠습니까? [y/N]: "
+MSG_IMAGE_PRUNE_CONFIRM="이 사용하지 않는 이미지들을 제거하시겠습니까? [Y/n]: "
 MSG_IMAGE_PRUNE_CANCELLED="이미지 정리가 취소되었습니다"
 MSG_IMAGE_PRUNE_REMOVING="사용하지 않는 dockit 이미지를 제거하는 중..."
 MSG_IMAGE_PRUNE_REMOVING_IMAGE="%s 제거 중... "
@@ -899,7 +899,7 @@ MSG_BASE_VALIDATE_ERROR_NOT_FOUND="베이스 이미지 '%s'를 찾을 수 없습
 MSG_BASE_VALIDATE_FAILED="%d개의 베이스 이미지를 찾을 수 없습니다."
 
 # Base reset 메시지
-MSG_BASE_RESET_CONFIRM="베이스 이미지 설정을 기본값으로 초기화하시겠습니까? [y/N]: "
+MSG_BASE_RESET_CONFIRM="베이스 이미지 설정을 기본값으로 초기화하시겠습니까? [Y/n]: "
 MSG_BASE_RESET_SUCCESS="베이스 이미지 설정이 기본값으로 초기화되었습니다."
 MSG_BASE_RESET_CANCELLED="초기화가 취소되었습니다."
 
@@ -1038,10 +1038,10 @@ MSG_CLEANUP_HEADER_SIZE="크기"
 MSG_CLEANUP_HEADER_NAME="이름"
 
 # Cleanup 확인 메시지
-MSG_CLEANUP_CONFIRM_CONTAINERS="이 컨테이너들을 제거하시겠습니까? [y/N]: "
-MSG_CLEANUP_CONFIRM_IMAGES="이 이미지들을 제거하시겠습니까? [y/N]: "
-MSG_CLEANUP_CONFIRM_NETWORKS="이 네트워크들을 제거하시겠습니까? [y/N]: "
-MSG_CLEANUP_CONFIRM_ALL="모든 좀비 리소스를 제거하시겠습니까? [y/N]: "
+MSG_CLEANUP_CONFIRM_CONTAINERS="이 컨테이너들을 제거하시겠습니까? [Y/n]: "
+MSG_CLEANUP_CONFIRM_IMAGES="이 이미지들을 제거하시겠습니까? [Y/n]: "
+MSG_CLEANUP_CONFIRM_NETWORKS="이 네트워크들을 제거하시겠습니까? [Y/n]: "
+MSG_CLEANUP_CONFIRM_ALL="모든 좀비 리소스를 제거하시겠습니까? [Y/n]: "
 
 # Cleanup 실행 메시지
 MSG_CLEANUP_REMOVING_CONTAINER="컨테이너 제거 중: %s... "
@@ -1124,4 +1124,8 @@ MSG_NETWORK_PRUNE_REMOVED="네트워크 삭제됨"
 MSG_NETWORK_PRUNE_FAILED="네트워크 삭제 실패"
 MSG_NETWORK_PRUNE_COMPLETED="네트워크 정리 완료"
 MSG_NETWORK_PRUNE_CANCELLED="네트워크 정리가 취소되었습니다."
+
+
+# Cleanup 완료 메시지
+MSG_CLEANUP_REMOVING_COMPLETED="정리 작업 완료"
 

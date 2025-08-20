@@ -123,6 +123,48 @@ async_tasks_hide_finish_message() {
   init_spinner
   run_spinner
 }
+
+# clone 전용 비차단 async_tasks (exit하지 않음)
+# Non-blocking async_tasks for clone (does not exit)
+async_tasks_no_exit() {
+  local done_message="${1:-$MSG_ASYNC_DONE}"  # 기본값으로 메시지 변수 사용
+  
+  # EXIT 트랩 없이 INT/TERM만 처리
+  trap "cleanup_no_exit interrupt \"$done_message\"" INT TERM
+  
+  init_spinner_vars
+  run_tasks
+  init_spinner
+  run_spinner
+  cleanup_no_exit normal "$done_message"
+  
+  # 트랩 해제
+  trap - INT TERM
+}
+
+# clone 전용 정리 함수 (exit하지 않음)
+# Cleanup function for clone (does not exit)
+cleanup_no_exit() {
+  local mode=$1   # normal / interrupt
+  local done_msg=$2  # 완료 메시지
+  
+  for pid in "${pids[@]}"; do kill "$pid" 2>/dev/null; done
+  [[ -n $orig_stty ]] && stty "$orig_stty"
+  tput cnorm
+
+  if [[ $mode == "normal" ]]; then
+    # 스피너 영역만 지우고 완료 메시지 출력
+    [[ $lines -gt 0 ]] && printf "\033[%dA\033[J" "$lines"
+    if [ -n "$done_msg" ]; then
+      printf "${cyan}✔${reset} %s\n" "$done_msg"
+    fi
+  else
+    # 강제 종료 시 화면 전부 정리
+    printf "\033[2J\033[H"
+    return 1  # exit 대신 return 사용
+  fi
+}
+
 # 8. 테스트 
 # echo "멀티 작업 스피너 테스트"
 # echo "------------------------"

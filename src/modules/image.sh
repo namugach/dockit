@@ -8,6 +8,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 source "$MODULES_DIR/registry.sh"
+source "$UTILS_DIR/async_tasks.sh"
 
 # Show usage function
 # 사용법 표시 함수
@@ -247,15 +248,21 @@ remove_image() {
         local removed_containers=0
         local failed_containers=0
         
+        # 스피너를 사용하여 컨테이너 제거
+        tasks=()
         for container in "${containers_array[@]}"; do
-            echo -n "  컨테이너 제거 중: $container... "
-            
-            # Stop and remove container
-            if docker stop "$container" &>/dev/null && docker rm "$container" &>/dev/null; then
-                echo "✓"
+            add_task "컨테이너 제거 중: $container" \
+                     "docker stop \"$container\" &>/dev/null && docker rm \"$container\" &>/dev/null"
+        done
+        
+        # 스피너 실행
+        async_tasks_no_exit "컨테이너 제거 완료"
+        
+        # 결과 확인
+        for container in "${containers_array[@]}"; do
+            if ! docker ps -a --format "{{.Names}}" | grep -q "^${container}$"; then
                 ((removed_containers++))
             else
-                echo "✗"
                 ((failed_containers++))
             fi
         done
