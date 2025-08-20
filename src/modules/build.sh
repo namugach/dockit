@@ -296,7 +296,7 @@ handle_numeric_arguments() {
             "project_build_action '$project_path' '$project_id' '$cache_option' >/dev/null 2>&1"
     done
 
-    async_tasks "$MSG_BUILD_TASK_COMPLETE"
+    async_tasks_no_exit "$MSG_BUILD_TASK_COMPLETE"
 }
 
 # Handle "all" argument (build all projects)
@@ -358,7 +358,7 @@ handle_all_argument() {
             "project_build_action '$project_path' '$project_id' '$cache_option' >/dev/null 2>&1"
     done
 
-    async_tasks "$MSG_BUILD_TASK_COMPLETE"
+    async_tasks_no_exit "$MSG_BUILD_TASK_COMPLETE"
 }
 
 # Execute main function if script is run directly

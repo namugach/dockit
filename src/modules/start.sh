@@ -215,7 +215,7 @@ handle_numeric_arguments() {
         fi
     done
 
-    async_tasks "$MSG_TASKS_DONE"
+    async_tasks_no_exit "$MSG_TASKS_DONE"
 }
 
 
@@ -273,7 +273,7 @@ start_main() {
                 fi
             done
             
-            async_tasks "$MSG_TASKS_DONE"
+            async_tasks_no_exit "$MSG_TASKS_DONE"
             ;;
         *)
             # 숫자 인자 처리 시도

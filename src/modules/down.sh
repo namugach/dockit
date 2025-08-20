@@ -112,7 +112,7 @@ handle_numeric_arguments() {
             "project_down_action '$project_path' '$project_id' >/dev/null 2>&1"
     done
 
-    async_tasks "$MSG_TASKS_DONE"
+    async_tasks_no_exit "$MSG_TASKS_DONE"
 }
 
 # 프로젝트별 down 액션 함수
@@ -190,7 +190,7 @@ handle_all_argument() {
             "project_down_action '$project_path' '$project_id' >/dev/null 2>&1"
     done
 
-    async_tasks "$MSG_TASKS_DONE"
+    async_tasks_no_exit "$MSG_TASKS_DONE"
 }
 
 # 메인 함수

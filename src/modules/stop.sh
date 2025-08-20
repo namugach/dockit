@@ -159,7 +159,7 @@ handle_numeric_arguments() {
         fi
     done
 
-    async_tasks "$MSG_TASKS_DONE"
+    async_tasks_no_exit "$MSG_TASKS_DONE"
 }
 
 

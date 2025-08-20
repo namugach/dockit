@@ -121,7 +121,7 @@ perform_all_containers_action() {
     done
 
     # -- 5) 비동기 작업 실행 ----------------------------
-    async_tasks "$MSG_TASKS_DONE"
+    async_tasks_no_exit "$MSG_TASKS_DONE"
 
     # -- 6) 결과 집계 & 출력 -----------------------------
     local ok fail
