@@ -263,7 +263,10 @@ get_and_check_containers() {
         echo -e "${YELLOW}$(get_message MSG_LIST_NO_CONTAINERS)${NC}"
         echo ""
         echo "$(get_message MSG_LIST_RUN_INIT_HINT)"
-        echo "  dockit init"
+        echo "ex A)  "
+        echo "dockit ls -> dockit up index"
+        echo "ex B)"
+        echo "mkdir project_name -> cd project_name -> dockit run"
         echo ""
         return 1
     fi
