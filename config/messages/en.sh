@@ -1010,3 +1010,98 @@ MSG_CLONE_PROGRESS_STEP_5="Registering project"
 MSG_CLONE_ERROR_CANNOT_DETERMINE_NAME="[ERROR] Cannot determine a valid project name."
 MSG_CLONE_INFO_CHANGE_DIR="cd %s"
 MSG_CLONE_INFO_START_DOCKIT="dockit start this"
+
+# Cleanup module messages
+MSG_CLEANUP_MODULE_USAGE_TITLE="dockit cleanup - Clean up orphaned resources"
+MSG_CLEANUP_MODULE_COMMANDS="Available commands:"
+MSG_CLEANUP_MODULE_CONTAINERS="  containers    Clean zombie containers"
+MSG_CLEANUP_MODULE_IMAGES="  images        Clean unused images"
+MSG_CLEANUP_MODULE_NETWORKS="  networks      Clean unused networks"
+MSG_CLEANUP_MODULE_ALL="  all           Clean all zombie resources"
+MSG_CLEANUP_MODULE_EXAMPLES="Examples:"
+MSG_CLEANUP_MODULE_EXAMPLE_CONTAINERS="  dockit cleanup containers"
+MSG_CLEANUP_MODULE_EXAMPLE_IMAGES="  dockit cleanup images"
+MSG_CLEANUP_MODULE_EXAMPLE_NETWORKS="  dockit cleanup networks"
+MSG_CLEANUP_MODULE_EXAMPLE_ALL="  dockit cleanup all"
+
+# Cleanup detection messages
+MSG_CLEANUP_DETECTING_CONTAINERS="Detecting zombie containers..."
+MSG_CLEANUP_DETECTING_IMAGES="Detecting unused images..."
+MSG_CLEANUP_DETECTING_NETWORKS="Detecting unused networks..."
+
+# Cleanup result messages
+MSG_CLEANUP_NO_ZOMBIE_CONTAINERS="No zombie containers found."
+MSG_CLEANUP_NO_ZOMBIE_IMAGES="No unused images found."
+MSG_CLEANUP_NO_ZOMBIE_NETWORKS="No unused networks found."
+
+MSG_CLEANUP_FOUND_ZOMBIE_CONTAINERS="Found %d zombie containers:"
+MSG_CLEANUP_FOUND_ZOMBIE_IMAGES="Found %d unused images:"
+MSG_CLEANUP_FOUND_ZOMBIE_NETWORKS="Found %d unused networks:"
+
+# Cleanup header messages
+MSG_CLEANUP_HEADER_NO="NO"
+MSG_CLEANUP_HEADER_CONTAINER="CONTAINER"
+MSG_CLEANUP_HEADER_IMAGE="IMAGE"
+MSG_CLEANUP_HEADER_STATUS="STATUS"
+MSG_CLEANUP_HEADER_ID="ID"
+MSG_CLEANUP_HEADER_CREATED="CREATED"
+MSG_CLEANUP_HEADER_SIZE="SIZE"
+MSG_CLEANUP_HEADER_NAME="NAME"
+
+# Cleanup confirmation messages
+MSG_CLEANUP_CONFIRM_CONTAINERS="Remove these containers? [y/N]: "
+MSG_CLEANUP_CONFIRM_IMAGES="Remove these images? [y/N]: "
+MSG_CLEANUP_CONFIRM_NETWORKS="Remove these networks? [y/N]: "
+MSG_CLEANUP_CONFIRM_ALL="Remove all zombie resources? [y/N]: "
+
+# Cleanup execution messages
+MSG_CLEANUP_REMOVING_CONTAINER="Removing container: %s... "
+MSG_CLEANUP_REMOVING_IMAGE="Removing image: %s... "
+MSG_CLEANUP_REMOVING_NETWORK="Removing network: %s... "
+
+# Cleanup completion messages
+MSG_CLEANUP_REMOVED_CONTAINERS="%d containers removed."
+MSG_CLEANUP_REMOVED_IMAGES="%d images removed."
+MSG_CLEANUP_REMOVED_NETWORKS="%d networks removed."
+
+MSG_CLEANUP_FAILED_CONTAINERS="Failed to remove %d containers."
+MSG_CLEANUP_FAILED_IMAGES="Failed to remove %d images."
+MSG_CLEANUP_FAILED_NETWORKS="Failed to remove %d networks."
+
+MSG_CLEANUP_CANCELLED="Cleanup cancelled."
+
+# Cleanup all messages
+MSG_CLEANUP_ALL_START="Starting cleanup of all zombie resources."
+MSG_CLEANUP_ALL_SUMMARY="📋 Resources to clean:"
+MSG_CLEANUP_SUMMARY_CONTAINERS="Zombie containers: %d"
+MSG_CLEANUP_SUMMARY_IMAGES="Unused images: %d"
+MSG_CLEANUP_SUMMARY_NETWORKS="Unused networks: %d"
+
+MSG_CLEANUP_ALL_NO_ZOMBIES="No zombie resources to clean."
+MSG_CLEANUP_ALL_EXECUTING="Starting cleanup..."
+MSG_CLEANUP_ALL_STEP_CONTAINERS="🗂️  Cleaning zombie containers..."
+MSG_CLEANUP_ALL_STEP_IMAGES="🗂️  Cleaning unused images..."
+MSG_CLEANUP_ALL_STEP_NETWORKS="🗂️  Cleaning unused networks..."
+MSG_CLEANUP_ALL_COMPLETED="All cleanup tasks completed."
+
+# Cleanup status messages
+MSG_CLEANUP_STATUS_TITLE="📊 Dockit System Status"
+MSG_CLEANUP_STATUS_PROJECTS="Projects"
+MSG_CLEANUP_STATUS_PROJECT_DETAIL="Total %d (running: %d, stopped: %d)"
+MSG_CLEANUP_STATUS_ZOMBIE_CONTAINERS="Found %d zombie containers"
+MSG_CLEANUP_STATUS_ZOMBIE_IMAGES="Found %d unused images"
+MSG_CLEANUP_STATUS_ZOMBIE_NETWORKS="Found %d unused networks"
+MSG_CLEANUP_STATUS_NO_ZOMBIES="All resources are in normal state."
+MSG_CLEANUP_STATUS_CLEANUP_HINT="To clean up:"
+
+# Cleanup error messages
+MSG_CLEANUP_MAIN_UNKNOWN_COMMAND="Unknown command: %s"
+MSG_HELP_CLEANUP="  cleanup  - Clean up zombie resources (containers, images, networks, all)"
+
+# cleanup completion messages
+MSG_COMPLETION_CLEANUP="Clean up zombie resources"
+MSG_CLEANUP_COMPLETION_CONTAINERS="Clean up zombie containers"
+MSG_CLEANUP_COMPLETION_IMAGES="Clean up unused images"
+MSG_CLEANUP_COMPLETION_NETWORKS="Clean up unused networks"
+MSG_CLEANUP_COMPLETION_ALL="Clean up all zombie resources"
+MSG_CLEANUP_COMPLETION_STATUS="Show system status"

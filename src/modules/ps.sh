@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 source "$UTILS_DIR/async_tasks.sh"
 source "$MODULES_DIR/registry.sh"
+source "$MODULES_DIR/cleanup.sh"
 
 # Function to truncate text if it's longer than max_length
 # 텍스트가 최대 길이보다 길면 잘라내는 함수
@@ -359,6 +360,15 @@ collect_container_data() {
 # Main function for listing dockit containers
 # dockit 컨테이너 목록 표시를 위한 메인 함수
 list_main() {
+    local show_all=false
+    
+    # 인자 처리
+    # Handle arguments
+    if [ "$1" = "-a" ] || [ "$1" = "--all" ]; then
+        show_all=true
+        shift
+    fi
+    
     # Docker 사용 가능 여부 확인
     if ! check_docker_availability; then
         exit 1
@@ -397,6 +407,35 @@ list_main() {
     # 헤더와 함께 모든 정보를 한 번에 출력
     print_header "$format"
     cat "$temp_file"
+    
+    # -a 옵션이 지정된 경우 좀비 컨테이너도 표시
+    # Show zombie containers if -a option is specified
+    if [ "$show_all" = true ]; then
+        local zombie_containers=()
+        while IFS= read -r line; do
+            [ -n "$line" ] && zombie_containers+=("$line")
+        done < <(detect_zombie_containers)
+        if [ ${#zombie_containers[@]} -gt 0 ]; then
+            echo ""
+            echo "⚠️  좀비 컨테이너 (${#zombie_containers[@]})"
+            
+            local zombie_format="%-4s  %-25s  %-25s  %s\n"
+            printf "$zombie_format" "NO" "컨테이너" "이미지" "상태"
+            
+            local index=1
+            for zombie in "${zombie_containers[@]}"; do
+                IFS='|' read -r container_name image_name status <<< "$zombie"
+                printf "$zombie_format" \
+                    "$index" \
+                    "$(truncate_text "$container_name" 25)" \
+                    "$(truncate_text "$image_name" 25)" \
+                    "$status"
+                ((index++))
+            done
+            echo ""
+            echo "💡 정리하려면: dockit cleanup containers"
+        fi
+    fi
     
     # 임시 파일 삭제
     rm -f "$temp_file"

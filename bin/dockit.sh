@@ -127,6 +127,10 @@ execute_command() {
             source "$MODULES_DIR/clone.sh"
             clone_main "$@"
             ;;
+        cleanup)
+            source "$MODULES_DIR/cleanup.sh"
+            cleanup_main "$@"
+            ;;
         help)
             source "$MODULES_DIR/help.sh"
             show_help

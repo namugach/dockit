@@ -203,24 +203,27 @@ remove_image() {
     local containers_using_image
     containers_using_image=$(find_containers_using_image "$image_name")
     
-    if [ -n "$containers_using_image" ]; then
-        log "WARNING" "$(printf "$MSG_IMAGE_REMOVE_IN_USE" "$containers_using_image")"
-        echo "$MSG_IMAGE_REMOVE_STOP_FIRST"
-        echo ""
-        echo "$MSG_IMAGE_REMOVE_STOP_COMMAND"
-        echo "$MSG_IMAGE_REMOVE_DOWN_COMMAND"
-        return 1
-    fi
-    
     # Show image information
     # 이미지 정보 표시
     echo "$MSG_IMAGE_REMOVE_TO_BE_REMOVED"
     docker image ls --filter "reference=$image_name" --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.CreatedSince}}\t{{.Size}}"
     echo ""
     
+    # Show warning if containers are using this image
+    # 컨테이너가 이미지를 사용 중인 경우 경고 표시
+    if [ -n "$containers_using_image" ]; then
+        echo "⚠️  이미지를 사용하는 컨테이너가 있습니다: $containers_using_image"
+        echo "   이 컨테이너들도 함께 중지되고 제거됩니다."
+        echo ""
+    fi
+    
     # Confirmation prompt
     # 확인 프롬프트
-    echo -n "$MSG_IMAGE_REMOVE_CONFIRM"
+    if [ -n "$containers_using_image" ]; then
+        echo -n "이미지와 관련 컨테이너를 모두 제거하시겠습니까? [y/N]: "
+    else
+        echo -n "$MSG_IMAGE_REMOVE_CONFIRM"
+    fi
     read -r confirm
     
     # Convert to lowercase for comparison
@@ -232,6 +235,40 @@ remove_image() {
     if [ "$confirm" != "y" ] && [ "$confirm" != "yes" ]; then
         log "INFO" "$MSG_IMAGE_REMOVE_CANCELLED"
         return 0
+    fi
+    
+    # Remove containers first if they exist
+    # 컨테이너가 있는 경우 먼저 제거
+    if [ -n "$containers_using_image" ]; then
+        echo ""
+        log "INFO" "관련 컨테이너를 제거하는 중..."
+        
+        local containers_array=($containers_using_image)
+        local removed_containers=0
+        local failed_containers=0
+        
+        for container in "${containers_array[@]}"; do
+            echo -n "  컨테이너 제거 중: $container... "
+            
+            # Stop and remove container
+            if docker stop "$container" &>/dev/null && docker rm "$container" &>/dev/null; then
+                echo "✓"
+                ((removed_containers++))
+            else
+                echo "✗"
+                ((failed_containers++))
+            fi
+        done
+        
+        if [ $failed_containers -gt 0 ]; then
+            log "WARNING" "$failed_containers개의 컨테이너 제거에 실패했습니다."
+        fi
+        
+        if [ $removed_containers -gt 0 ]; then
+            log "SUCCESS" "$removed_containers개의 컨테이너가 제거되었습니다."
+        fi
+        
+        echo ""
     fi
     
     # Remove the image

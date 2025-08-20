@@ -109,6 +109,17 @@ _dockit() {
                 _describe 'base_option' base_options
                 return 0
                 ;;
+            cleanup)
+                cleanup_options=(
+                    "containers:$(dockit_get_message MSG_CLEANUP_COMPLETION_CONTAINERS)"
+                    "images:$(dockit_get_message MSG_CLEANUP_COMPLETION_IMAGES)"
+                    "networks:$(dockit_get_message MSG_CLEANUP_COMPLETION_NETWORKS)"
+                    "all:$(dockit_get_message MSG_CLEANUP_COMPLETION_ALL)"
+                    "status:$(dockit_get_message MSG_CLEANUP_COMPLETION_STATUS)"
+                )
+                _describe 'cleanup_option' cleanup_options
+                return 0
+                ;;
         esac
         return 0
     fi
@@ -141,6 +152,7 @@ _dockit() {
         "image:$(dockit_get_message MSG_COMPLETION_IMAGE)"
         "base:$(dockit_get_message MSG_COMPLETION_BASE)"
         "clone:$(dockit_get_message MSG_COMPLETION_CLONE)"
+        "cleanup:$(dockit_get_message MSG_COMPLETION_CLEANUP)"
     )
     
     # 자동완성 설명 표시
