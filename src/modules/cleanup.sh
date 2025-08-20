@@ -573,6 +573,12 @@ cleanup_all() {
         fi
     fi
     
+    # 레지스트리에서 끊어진 프로젝트 정리
+    # Clean up broken projects from registry
+    echo "🗂️  레지스트리 정리 중..."
+    cleanup_registry
+    echo ""
+    
     log "SUCCESS" "$MSG_CLEANUP_ALL_COMPLETED"
 }
 
