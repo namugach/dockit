@@ -77,6 +77,7 @@ Dockit provides the following main commands:
 - `ps`: List containers with useful command examples
 - `base`: Base image management (ls, set, add, remove, validate, reset) with number-based selection
 - `image`: Docker image management (ls, remove, prune, clean)
+- `network`: Manage dockit networks (ls, prune)
 - `clone`: Clone existing project with new configuration and rollback support
 - `cleanup`: Clean up unused Docker networks and volumes
 - `migrate`: Upgrade to a newer version

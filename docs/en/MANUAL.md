@@ -29,6 +29,7 @@ This document explains how to use Dockit in detail.
     - [ps](#ps---container-list)
     - [clone](#clone---project-clone)
     - [cleanup](#cleanup---zombie-resource-cleanup)
+    - [network](#network---manage-networks)
     - [help](#help---help)
 5. [Configuration Files](#configuration-files)
 6. [Troubleshooting](#troubleshooting)
@@ -884,6 +885,29 @@ This command finds and removes Docker networks and volumes that are no longer as
 - **Automatic Detection**: Automatically identifies networks and volumes that are not being used by any projects currently registered in the `dockit` registry.
 - **Safe Cleanup**: It first shows a list of resources to be removed and proceeds with the actual deletion only after receiving user confirmation.
 - **System Optimization**: Keeps your Docker environment clean and prevents potential conflicts by removing unnecessary resources.
+
+### network - Manage Networks
+
+Manages Docker networks created by dockit.
+
+```bash
+dockit network <subcommand>
+```
+
+#### Subcommands:
+
+-   **ls, list**: Displays a list of all networks created by dockit.
+-   **prune**: Finds and removes dockit networks that are not used by any container.
+
+#### Usage Examples:
+
+```bash
+# View all dockit networks
+dockit network ls
+
+# Clean up unused networks
+dockit network prune
+```
 
 ### help - Display Help
 
