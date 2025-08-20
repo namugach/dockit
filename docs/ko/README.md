@@ -79,7 +79,7 @@ Dockit을 시스템에서 제거하려면:
 - `image`: Docker 이미지 관리 (ls, remove, prune, clean)
 - `network`: dockit 네트워크 관리 (ls, prune)
 - `clone`: 기존 프로젝트 복제 및 새 설정으로 구성 (롤백 지원)
-- `cleanup`: 사용되지 않는 Docker 네트워크 및 볼륨 정리
+- `cleanup`: 사용되지 않는 Docker 네트워크 및 볼륨 정리. `all` 옵션으로 레지스트리까지 정리합니다.
 - `migrate`: 새 버전으로 업그레이드
 - `help`: 도움말 표시
 

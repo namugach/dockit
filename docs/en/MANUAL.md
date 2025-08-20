@@ -881,10 +881,13 @@ dockit cleanup
 
 This command finds and removes Docker networks and volumes that are no longer associated with any `dockit` projects. This allows you to safely clean up "broken" resources that are unnecessarily consuming disk space.
 
+When used with the `all` option, it cleans up all resources such as containers, images, networks, and volumes, and finally, completely removes any broken project information remaining in the registry to maintain a clean system state.
+
 #### Key Features:
 - **Automatic Detection**: Automatically identifies networks and volumes that are not being used by any projects currently registered in the `dockit` registry.
 - **Safe Cleanup**: It first shows a list of resources to be removed and proceeds with the actual deletion only after receiving user confirmation.
 - **System Optimization**: Keeps your Docker environment clean and prevents potential conflicts by removing unnecessary resources.
+- **Complete Cleanup (`all` option)**: After cleaning up all resources, it also cleans up metadata in the registry, providing a complete cleanup process.
 
 ### network - Manage Networks
 

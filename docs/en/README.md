@@ -79,7 +79,7 @@ Dockit provides the following main commands:
 - `image`: Docker image management (ls, remove, prune, clean)
 - `network`: Manage dockit networks (ls, prune)
 - `clone`: Clone existing project with new configuration and rollback support
-- `cleanup`: Clean up unused Docker networks and volumes
+- `cleanup`: Clean up unused Docker networks and volumes. With the `all` option, it also cleans up the registry.
 - `migrate`: Upgrade to a newer version
 - `help`: Display help information
 
