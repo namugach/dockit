@@ -1111,9 +1111,28 @@ MSG_NETWORK_NO_NETWORKS="No running dockit networks found."
 MSG_NETWORK_CREATE_HINT="Start a project to create networks."
 
 # Help 메시지
-MSG_HELP_NETWORK="  network  - Show dockit networks list"
+MSG_HELP_NETWORK="  network  - Manage dockit networks (ls, prune)"
 
 
 # Network 자동완성 메시지
 MSG_COMPLETION_NETWORK="Show networks list"
+
+
+# Network 서브커맨드 메시지
+MSG_NETWORK_USAGE="Usage: dockit network [command]"
+MSG_NETWORK_SUBCOMMANDS="Commands"
+MSG_NETWORK_EXAMPLES="Examples"
+MSG_NETWORK_HELP_LIST="Show networks list"
+MSG_NETWORK_HELP_PRUNE="Remove unused networks"
+MSG_NETWORK_UNKNOWN_COMMAND="Unknown command"
+
+# Network prune 메시지
+MSG_NETWORK_PRUNE_CHECKING="Looking for unused networks..."
+MSG_NETWORK_PRUNE_NO_UNUSED="No unused networks to remove."
+MSG_NETWORK_PRUNE_FOUND="Found unused networks:"
+MSG_NETWORK_PRUNE_CONFIRM="Do you want to remove these networks?"
+MSG_NETWORK_PRUNE_REMOVED="Network removed"
+MSG_NETWORK_PRUNE_FAILED="Failed to remove network"
+MSG_NETWORK_PRUNE_COMPLETED="Network cleanup completed"
+MSG_NETWORK_PRUNE_CANCELLED="Network cleanup cancelled."
 

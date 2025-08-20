@@ -1100,9 +1100,28 @@ MSG_NETWORK_NO_NETWORKS="실행 중인 dockit 네트워크가 없습니다."
 MSG_NETWORK_CREATE_HINT="네트워크를 생성하려면 프로젝트를 시작하세요."
 
 # Help 메시지
-MSG_HELP_NETWORK="  network  - dockit 네트워크 목록 표시"
+MSG_HELP_NETWORK="  network  - dockit 네트워크 관리 (ls, prune)"
 
 
 # Network 자동완성 메시지
 MSG_COMPLETION_NETWORK="네트워크 목록 표시"
+
+
+# Network 서브커맨드 메시지
+MSG_NETWORK_USAGE="사용법: dockit network [command]"
+MSG_NETWORK_SUBCOMMANDS="명령어"
+MSG_NETWORK_EXAMPLES="예시"
+MSG_NETWORK_HELP_LIST="네트워크 목록 표시"
+MSG_NETWORK_HELP_PRUNE="사용하지 않는 네트워크 정리"
+MSG_NETWORK_UNKNOWN_COMMAND="알 수 없는 명령어"
+
+# Network prune 메시지
+MSG_NETWORK_PRUNE_CHECKING="사용하지 않는 네트워크를 찾는 중..."
+MSG_NETWORK_PRUNE_NO_UNUSED="정리할 사용하지 않는 네트워크가 없습니다."
+MSG_NETWORK_PRUNE_FOUND="사용하지 않는 네트워크를 찾았습니다:"
+MSG_NETWORK_PRUNE_CONFIRM="이 네트워크들을 삭제하시겠습니까?"
+MSG_NETWORK_PRUNE_REMOVED="네트워크 삭제됨"
+MSG_NETWORK_PRUNE_FAILED="네트워크 삭제 실패"
+MSG_NETWORK_PRUNE_COMPLETED="네트워크 정리 완료"
+MSG_NETWORK_PRUNE_CANCELLED="네트워크 정리가 취소되었습니다."
 

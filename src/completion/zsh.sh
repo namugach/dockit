@@ -120,6 +120,15 @@ _dockit() {
                 _describe 'cleanup_option' cleanup_options
                 return 0
                 ;;
+            network)
+                network_options=(
+                    "ls:$(dockit_get_message MSG_NETWORK_HELP_LIST)"
+                    "list:$(dockit_get_message MSG_NETWORK_HELP_LIST)"
+                    "prune:$(dockit_get_message MSG_NETWORK_HELP_PRUNE)"
+                )
+                _describe 'network_option' network_options
+                return 0
+                ;;
         esac
         return 0
     fi

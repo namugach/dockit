@@ -124,6 +124,11 @@ _dockit_completion() {
         # Second argument completion for cleanup command
         COMPREPLY=( $(compgen -W "containers images networks all status" -- ${cur}) )
         return 0
+    elif [ "$COMP_CWORD" -eq 2 ] && [ "$prev" = "network" ]; then
+        # network 명령어의 두 번째 인자 자동완성
+        # Second argument completion for network command
+        COMPREPLY=( $(compgen -W "ls list prune" -- ${cur}) )
+        return 0
     fi
 }
 

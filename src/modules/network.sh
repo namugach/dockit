@@ -149,14 +149,9 @@ format_network_info() {
         "$project_display"
 }
 
-# Main function for listing dockit networks
-# dockit 네트워크 목록 표시를 위한 메인 함수
-network_main() {
-    # Docker 사용 가능 여부 확인
-    if ! check_docker_availability; then
-        exit 1
-    fi
-    
+# List dockit networks (same as main function without subcommand)
+# dockit 네트워크 목록 표시 (서브커맨드 없이 메인 함수와 동일)
+list_networks() {
     # 레지스트리 조용히 정리 실행 (메시지 없이)
     # Silently clean up registry (without messages)
     cleanup_registry > /dev/null 2>&1
@@ -189,7 +184,127 @@ network_main() {
     done
     
     echo ""
-    echo "💡 정리하려면: dockit cleanup networks"
+    echo "💡 정리하려면: dockit network prune"
+}
+
+# Prune unused dockit networks
+# 사용하지 않는 dockit 네트워크 정리
+prune_networks() {
+    local unused_networks=()
+    
+    # 모든 dockit 네트워크 가져오기
+    local all_networks=$(get_dockit_networks)
+    
+    if [ -z "$all_networks" ]; then
+        echo -e "${YELLOW}$(get_message MSG_NETWORK_NO_NETWORKS)${NC}"
+        return 0
+    fi
+
+    echo "$(get_message MSG_NETWORK_PRUNE_CHECKING)"
+    
+    # 각 네트워크가 사용 중인지 확인
+    for network_id in $all_networks; do
+        local network_name=$(docker network inspect "$network_id" --format '{{.Name}}' 2>/dev/null)
+        
+        # 네트워크에 연결된 컨테이너 확인
+        local connected_containers=$(docker network inspect "$network_id" --format '{{range $k, $v := .Containers}}{{$k}} {{end}}' 2>/dev/null)
+        
+        if [ -z "$connected_containers" ]; then
+            unused_networks+=("$network_id|$network_name")
+        fi
+    done
+
+    if [ ${#unused_networks[@]} -eq 0 ]; then
+        echo -e "${GREEN}$(get_message MSG_NETWORK_PRUNE_NO_UNUSED)${NC}"
+        return 0
+    fi
+
+    echo ""
+    echo "$(get_message MSG_NETWORK_PRUNE_FOUND) ${#unused_networks[@]}"
+    echo ""
+    
+    local format="%-4s  %-13s  %-30s\n"
+    printf "$format" "NO" "NETWORK ID" "NAME"
+    
+    local index=1
+    for network_info in "${unused_networks[@]}"; do
+        IFS='|' read -r network_id network_name <<< "$network_info"
+        local name_display=$(truncate_text "$network_name" 30)
+        printf "$format" \
+            "$index" \
+            "${network_id:0:12}" \
+            "$name_display"
+        ((index++))
+    done
+    
+    echo ""
+    read -p "$(get_message MSG_NETWORK_PRUNE_CONFIRM) [y/N]: " confirm
+    
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        local removed_count=0
+        for network_info in "${unused_networks[@]}"; do
+            IFS='|' read -r network_id network_name <<< "$network_info"
+            if docker network rm "$network_id" >/dev/null 2>&1; then
+                echo "$(get_message MSG_NETWORK_PRUNE_REMOVED): $network_name"
+                ((removed_count++))
+            else
+                echo "$(get_message MSG_NETWORK_PRUNE_FAILED): $network_name"
+            fi
+        done
+        echo ""
+        echo -e "${GREEN}$(get_message MSG_NETWORK_PRUNE_COMPLETED): $removed_count${NC}"
+    else
+        echo "$(get_message MSG_NETWORK_PRUNE_CANCELLED)"
+    fi
+}
+
+# Show network command usage
+# 네트워크 명령어 사용법 표시
+show_network_usage() {
+    cat << EOF
+$(get_message MSG_NETWORK_USAGE)
+
+$(get_message MSG_NETWORK_SUBCOMMANDS):
+  list | ls  - $(get_message MSG_NETWORK_HELP_LIST)
+  prune      - $(get_message MSG_NETWORK_HELP_PRUNE)
+
+$(get_message MSG_NETWORK_EXAMPLES):
+  dockit network ls
+  dockit network prune
+EOF
+}
+
+# Main function for network command with subcommands
+# 서브커맨드가 있는 네트워크 명령어 메인 함수
+network_main() {
+    local subcommand="$1"
+    shift
+
+    # Docker 사용 가능 여부 확인
+    if ! check_docker_availability; then
+        exit 1
+    fi
+
+    case "$subcommand" in
+        "")
+            show_network_usage
+            ;;
+        "list" | "ls")
+            list_networks "$@"
+            ;;
+        "prune")
+            prune_networks "$@"
+            ;;
+        "help" | "-h" | "--help")
+            show_network_usage
+            ;;
+        *)
+            echo -e "${RED}$(get_message MSG_NETWORK_UNKNOWN_COMMAND): $subcommand${NC}"
+            echo ""
+            show_network_usage
+            exit 1
+            ;;
+    esac
 }
 
 # Run main function if this script is called directly
