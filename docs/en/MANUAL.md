@@ -1,20 +1,20 @@
 # Dockit User Manual
 
-This document explains the detailed usage of Dockit.
+This document explains how to use Dockit in detail.
 
 ## Table of Contents
 
 1. [Introduction](#introduction)
 2. [Installation](#installation)
-3. [New Major Features](#new-major-features)
+3. [New Key Features](#new-key-features)
     - [Real-time Docker Status Synchronization](#real-time-docker-status-synchronization)
-    - [Image Reuse Functionality](#image-reuse-functionality)
-    - [Extended Project State System](#extended-project-state-system)
+    - [Image Reuse Feature](#image-reuse-feature)
+    - [Expanded Project Status System](#expanded-project-status-system)
 4. [Commands](#commands)
-    - [init](#init---initialization)
+    - [init](#init---initialize)
     - [start](#start---start-container)
     - [build](#build---build-docker-image)
-    - [up](#up---start-container-in-background)
+    - [up](#up---start-container-in-the-background)
     - [stop](#stop---stop-container)
     - [down](#down---remove-container)
     - [connect](#connect---connect-to-container)
@@ -23,35 +23,36 @@ This document explains the detailed usage of Dockit.
     - [ls](#ls---quick-project-list)
     - [base](#base---base-image-management)
     - [image](#image---image-management)
-    - [migrate](#migrate---upgrade-version)
-    - [setup](#setup---complete-environment-setup)
-    - [run](#run---automated-run)
-    - [ps](#ps---list-containers)
-    - [clone](#clone---clone-project)
-    - [help](#help---display-help)
-5. [Configuration File](#configuration-file)
+    - [migrate](#migrate---version-upgrade)
+    - [setup](#setup---full-environment-setup)
+    - [run](#run---automatic-execution)
+    - [ps](#ps---container-list)
+    - [clone](#clone---project-clone)
+    - [cleanup](#cleanup---zombie-resource-cleanup)
+    - [help](#help---help)
+5. [Configuration Files](#configuration-files)
 6. [Troubleshooting](#troubleshooting)
 
 ## Introduction
 
-Dockit is a modular shell script tool for quickly setting up and managing development environments using Docker. It provides a consistent development environment through Docker containers and helps configure the same environment across different operating systems.
+Dockit is a modular shell script tool designed to quickly set up and manage development environments using Docker. This tool provides a consistent development environment through Docker containers and helps configure the same environment across various operating systems.
 
-The main goals of Dockit are:
-- Reduce the complexity of setting up development environments
-- Provide a consistent development environment
-- Improve the portability of development setups
-- Configure standardized environments for team work
+Dockit's main goals are:
+- To reduce the complexity of development environment setup
+- To provide a consistent development environment
+- To enhance the portability of development setups
+- To configure a standardized environment for team collaboration
 
 ## Installation
 
 ### Requirements
 
-- Docker must be installed
-- Bash shell environment is required
+- Docker must be installed.
+- A Bash shell environment is required.
 
-### Installation Method
+### Installation Guide
 
-To install Dockit, run the following commands:
+To install Dockit, execute the following commands:
 
 ```bash
 # Clone the repository
@@ -62,7 +63,7 @@ cd dockit
 ./bin/install.sh
 ```
 
-This command installs Dockit to your system and adds the necessary paths to your shell environment.
+This command installs Dockit on your system and adds the necessary paths to your shell environment.
 After installation, you can use the `dockit` command from any directory.
 
 ### Uninstallation
@@ -73,357 +74,364 @@ To remove Dockit from your system:
 ./bin/uninstall.sh
 ```
 
-## New Major Features
+## New Key Features
 
 ### Real-time Docker Status Synchronization
 
-Starting from Dockit v1.3.0, the `dockit list` command automatically synchronizes registry information with actual Docker status in real-time.
+Starting from Dockit v1.3.0, the `dockit list` command synchronizes registry information with the actual Docker status in real-time.
 
 #### Key Features:
-- **Automatic state detection**: Checks actual Docker image and container status for each project when running `dockit list`
-- **External change detection**: Automatically reflects image/container status changes made directly with Docker commands
-- **Manual error state preservation**: `error` states set due to build failures are not automatically changed
-- **Performance optimization**: Safely skips when Docker is unavailable or registry files don't exist
+- **Automatic Status Detection**: Checks the actual Docker image and container status for each project upon running `dockit list`.
+- **External Change Detection**: Automatically reflects the status of images/containers changed directly via Docker commands.
+- **Manual `error` Status Preservation**: The `error` status set by a build failure is not automatically changed.
+- **Performance Optimization**: Safely skips if Docker is not available or registry files do not exist.
 
-#### Example Usage:
+#### Example Scenario:
 ```bash
-# Delete image externally
+# Delete an image externally
 docker image rm my-project-image
 
-# Running dockit list automatically changes state from ready → none
+# Running dockit list will automatically change the status from ready → none
 dockit list
 ```
 
-### Image Reuse Functionality
+### Image Reuse Feature
 
-You can reuse images already built by other projects to increase development efficiency and save system resources.
+You can reuse an image already built in another project to improve development efficiency and save system resources.
 
-#### Usage:
+#### How to Use:
 ```bash
 dockit init
-# Select 'l - Reuse image' from the options
+# Choose 'l - Reuse image' from the options
 # Enter the absolute path of the project to reuse (e.g., /home/user/project)
 ```
 
 #### Key Features:
-- **Path-based image sharing**: Input absolute path to share images from that project
-- **Automatic validation**: Checks if the specified path's image exists
-- **Resource efficiency**: Saves build time and system resources
-- **Safe reuse**: Validates image existence before reuse setup
+- **Path-based Image Sharing**: Automatically generates and reuses the image name from the project at the given absolute path.
+- **Image Existence Verification**: Automatically checks if the image from the specified path actually exists.
+- **Safe Reuse**: Provides options to retry or cancel if the image does not exist.
+- **Resource Efficiency**: Saves disk space by sharing the same base environment across multiple projects.
 
-#### Workflow:
-```bash
-dockit init
-# Select 'l - Reuse image'
-# Enter absolute path: /home/hgs/my-base-project
-# Image existence verified and reuse configured
+#### Use Cases:
+- Using the same development environment for multiple projects.
+- Sharing a standardized development image within a team.
+- Reducing the time for building base images.
+
+### Expanded Project Status System
+
+New statuses have been added to more accurately track the entire project lifecycle.
+
+#### New Statuses:
+- **`none`**: The state after project initialization but before the image is built.
+- **`ready`**: The state where the image build is complete and the container is ready to run.
+- **`error`**: The state where an image build has failed or another error has occurred.
+
+#### Existing Statuses:
+- **`running`**: The container is currently running.
+- **`stopped`**: The container is stopped.
+- **`down`**: The container has been removed (the image may still exist).
+
+#### State Transition Flow:
+```
+init → none → build → ready → up → running
+                ↓              ↓
+              error          stopped → down
 ```
 
-#### Important Notes:
-- Extracts image name from `.dockit_project/.env` file at the specified path
-- Verifies that the image actually exists in Docker
-- Prompts for retry if image doesn't exist
-- Original project's image settings are preserved
-
-### Extended Project State System
-
-Dockit v1.3.0 introduces an expanded state system for complete project lifecycle management.
-
-#### New States:
-- **`none`**: After initialization, before build
-- **`ready`**: Image build completed, ready to run
-- **`error`**: Build failed or error state
-
-#### Existing States:
-- **`running`**: Container is currently running
-- **`stopped`**: Container exists but is stopped
-- **`down`**: Container has been removed
-
-#### Complete Lifecycle:
-```
-init → none → build → ready → up → running → stop → stopped → down → ready
-                ↓ (build failure)
-              error
-```
-
-#### State Color Display:
-- **`none`** (blue): After initialization, before build
-- **`ready`** (cyan): Image build completed, ready to run
-- **`error`** (red): Build failed or error state
-- **`running`** (green): Container running
-- **`stopped`** (yellow): Container stopped
-- **`down`** (gray): Container removed
+#### Status Color Indicators:
+- `none`: Blue
+- `ready`: Cyan
+- `error`: Red
+- `running`: Green
+- `stopped`: Yellow
+- `down`: Gray
 
 ## Commands
 
 Dockit provides the following commands:
 
-### init - Initialization
+### init - Initialize
 
-Initialize and configure the Docker development environment.
+Initializes and sets up the Docker development environment.
 
 ```bash
 dockit init
 ```
 
 This command performs the following tasks:
-- Creates the `.dockit_project` directory
-- Collects user configuration information
-- Builds a Docker image or reuses an existing image
-- Creates a docker-compose.yml file
+- Creates the `.dockit_project` directory.
+- Gathers user configuration information.
+- Builds a Docker image or reuses an existing one.
+- Creates a `docker-compose.yml` file.
 
-#### Directory Name Validation and Auto-rename:
+#### Directory Name Validation and Auto-Rename:
 
-Before starting initialization, the system automatically validates whether the current directory name complies with Docker image naming rules.
+Before initialization, it automatically checks if the current directory name is compliant with Docker image naming rules.
 
 **Key Features:**
-- **Uppercase Detection**: Automatically checks if the directory name contains uppercase letters
-- **Auto Conversion**: Converts camelCase to snake_case (e.g., `MyProject` → `my_project`)
-- **Safe Changes**: Verifies target directory existence and prevents conflicts
-- **Auto Restart**: Automatically restarts initialization in the new location after directory change
+- **Detects Uppercase**: Automatically checks for uppercase letters in the directory name.
+- **Auto-conversion**: Converts camelCase to snake_case (e.g., `MyProject` → `my_project`).
+- **Safe Renaming**: Checks if the target directory exists to prevent conflicts.
+- **Auto-restart**: Automatically restarts initialization in the new directory after renaming.
 
-**Usage Example:**
+**Example Scenario:**
 ```bash
 # Current directory: /home/user/MyProject
 dockit init
 
-# Warning message displayed:
-# "Current directory name contains uppercase letters."
+# A warning message is displayed:
+# "The current directory name contains uppercase letters."
 # "Docker image names only allow lowercase letters."
 # 
 # Current: /home/user/MyProject
 # Suggested: /home/user/my_project
 # 
-# Do you want to change the directory name? [Y/n]: Y
+# Do you want to rename the directory? [Y/n]: Y
 
-# Auto change and restart initialization in new directory
+# After automatic renaming, initialization restarts in the new directory.
 ```
 
-**User Options:**
-- **Y (default)**: Change to suggested name and continue initialization
-- **n**: Cancel change, use current name as-is or recommend manual change
+**User Choices:**
+- **Y (default)**: Renames the directory to the suggested name and continues initialization.
+- **n**: Cancels the renaming, advising to use the current name or rename manually.
 
 #### Initialization Options:
 
-During initialization, you can choose between two approaches:
+You can choose between two methods during initialization:
 
-**1. Build New Image** (default option):
-- Configure username, UID/GID, password, working directory, etc.
-- Select base image (Ubuntu, CentOS, Alpine, etc.)
-- Build a new Docker image for project-specific customized environment
+**1. Build a new image** (default option):
+- Set username, UID/GID, password, working directory, etc.
+- Choose a base image (Ubuntu, CentOS, Alpine, etc.).
+- Build a new Docker image to create a custom environment for each project.
 
-**2. Image Reuse** (`l - Reuse image` option):
-- Reuse an image already built by another project
-- Enter the **absolute path** of the project to reuse (e.g., `/home/user/my-project`)
-- Automatically validates image existence
-- Saves system resources and build time
+**2. Reuse an image** (`l - Reuse image` option):
+- Reuse an image already built by another project.
+- Enter the **absolute path** of the project to reuse (e.g., `/home/user/my-base-project`).
+- The setup is completed after verifying the image's existence.
 
 #### Image Reuse Workflow:
 ```bash
 dockit init
-# Select 'l - Reuse image'
+# Choose 'l - Reuse image'
 # Enter absolute path: /home/hgs/my-base-project
-# Image existence verified and reuse setup complete
+# The reuse setup is completed after verifying the image's existence.
 ```
 
-#### Important Notes for Reuse:
-- Extracts image name from `.dockit_project/.env` file at the specified path
-- Verifies that the image actually exists in Docker
-- Prompts for retry if image doesn't exist
-- Preserves original project's image configuration
-- The reusing project inherits the image but maintains its own container settings
+#### Notes on Reusing Images:
+- Extracts the image name from the `.dockit_project/.env` file at the specified path.
+- Verifies that the image actually exists in Docker.
+- If the image does not exist, it offers to retry or build a new one.
 
-During initialization, you can configure the following information:
+During initialization, you can configure the following:
 - Username
 - UID/GID
 - Password
 - Working directory
-- Image name
+- Image name (for new builds) or the path of the image to reuse
 - Container name
 
 ### Start Command
 
-The `start` command allows you to start containers. If a container doesn't exist, it will offer to create and start it automatically.
+This command is used to start containers. It offers an option to automatically create and start a container if it doesn't exist.
 
 Usage:
 ```bash
-dockit start [options]
+dockit start [option]
 ```
 
 Options:
-- (no arguments): Shows a list of available containers
-- `number`: Starts the container with the specified number from the list
-- `"this"`: Starts the container for the current project directory
-- `"all"`: Starts all dockit containers
+- (no arguments): Displays a list of available containers.
+- `number`: Starts the container with the specified number from the list.
+- `"this"`: Starts the container in the current project directory.
+- `"all"`: Starts all dockit containers.
 
 **Auto-creation Feature:**
-When a container doesn't exist, the command will ask:
-- "Container doesn't exist. Do you want to create and start the container? (Y/n)"
-- If you choose 'Y', it will automatically run `dockit up` to create and start the container
-- If you choose 'n', the operation will be cancelled
+If a container does not exist, you will be prompted:
+- "The container does not exist. Do you want to create and start it? (Y/n)"
+- Choosing 'Y' will automatically run `dockit up` to create and start the container.
+- Choosing 'n' will cancel the operation.
 
 Examples:
 ```bash
-dockit start           # Shows container list
-dockit start 1         # Starts container number 1 (creates if doesn't exist)
-dockit start 1 2 3     # Starts containers number 1, 2, and 3
-dockit start this      # Starts container for current project (creates if doesn't exist)
-dockit start all       # Starts all dockit containers
+dockit start           # Display container list
+dockit start 1         # Start container 1 (creates if not present)
+dockit start 1 2 3     # Start containers 1, 2, and 3
+dockit start this      # Start the container for the current project (creates if not present)
+dockit start all       # Start all dockit containers
 ```
 
 ### build - Build Docker Image
 
-Build a Docker image for the development environment.
+Builds a Docker image for the development environment.
 
 ```bash
-dockit build [options]
+dockit build [option]
 ```
 
 #### Options:
-- (no arguments): Build current project image
-- `number`: Build image for specified project number
-- `"this"`: Build image for current project directory
-- `"all"`: Build all dockit projects in parallel
-- `--no-cache`: Forces a rebuild of the image without using Docker cache
+- (no arguments): Builds the image for the current project.
+- `number`: Builds the project for the specified number from the list.
+- `"this"`: Builds the image for the current project directory.
+- `"all"`: Builds all dockit projects in parallel.
+- `--no-cache`: Forces a rebuild of the image without using the Docker cache.
 
 #### Usage Examples:
 ```bash
-dockit build              # Build current project (with cache)
-dockit build 1            # Build project number 1
-dockit build this         # Build current project
+dockit build              # Build the current project (using cache)
+dockit build 1            # Build project 1
+dockit build this         # Build the current project
 dockit build all          # Build all projects in parallel
-dockit build --no-cache   # Force rebuild current project without cache
+dockit build --no-cache   # Force rebuild the current project without cache
 dockit build 1 --no-cache # Build project 1 without cache
 ```
 
 #### Key Features:
-- **Parallel builds**: When using `all` option, builds multiple projects simultaneously to save time
-- **Isolated build failures**: One project's build failure doesn't affect other projects
-- **Automatic state management**: Automatically transitions to `ready` state on success, `error` state on failure
-- **Container cleanup**: Automatically stops and removes existing containers before building
-- **Cache control**: Use `--no-cache` to force complete rebuild when needed
+- **Parallel Build**: The `all` option saves time by building multiple projects simultaneously.
+- **Isolated Build Failure**: A build failure in one project does not affect others.
+- **Automatic State Management**: Automatically transitions to the `ready` state on success, and to the `error` state on failure.
+- **Container Cleanup**: Automatically stops and removes the existing container before a build.
+
+This command performs the following tasks:
+- Builds an image using `.dockit_project/Dockerfile`.
+- Applies user modifications to the Dockerfile in the build.
+- Resolves Docker caching issues with the `--no-cache` option.
+- Detects UID conflicts and handles user setup automatically.
+
+#### Customizing Dockerfile:
+You can directly modify the `.dockit_project/Dockerfile` created by `dockit init`:
+- Install additional packages.
+- Set environment variables.
+- Add custom settings.
+- Apply changes by running `dockit build` after modification.
+
+#### Automatic UID Conflict Handling:
+If a user with the same UID already exists in the base image:
+- It automatically detects the existing user.
+- Applies the set password to that user.
+- Grants sudo privileges automatically.
+- Ensures a smooth working environment without file permission issues.
 
 ### Up Command
 
-Start containers in background without connection prompt.
+Starts the container in the background without a connection prompt.
 
 Usage:
 ```bash
-dockit up [options]
+dockit up [option]
 ```
 
 Options:
-- (no arguments): Shows a list of available containers
-- `number`: Starts the container with the specified number from the list
-- `"this"`: Starts the container for the current project directory
-- `"all"`: Starts all dockit containers
+- (no arguments): Displays a list of available containers.
+- `number`: Starts the container with the specified number from the list.
+- `"this"`: Starts the container in the current project directory.
+- `"all"`: Starts all dockit containers.
 
 This command performs the following tasks:
-- Starts containers using Docker Compose in detached mode
-- Does not ask for container connection
-- Shows the container status information
-- Useful for automated scripts or when you don't need to connect immediately
+- Starts the container in detached mode using Docker Compose.
+- Does not prompt for connection.
+- Displays container status information.
+- Useful for automation scripts or when immediate connection is not needed.
 
 Examples:
 ```bash
-dockit up             # Shows container list
-dockit up 1           # Starts container number 1
-dockit up 1 2 3       # Starts containers number 1, 2, and 3
-dockit up this        # Starts container for current project
-dockit up all         # Starts all dockit containers
+dockit up             # Display container list
+dockit up 1           # Start container 1
+dockit up 1 2 3       # Start containers 1, 2, and 3
+dockit up this        # Start the container for the current project
+dockit up all         # Start all dockit containers
 ```
 
 ### Stop Command
 
-The `stop` command allows you to stop running containers. This preserves the container state.
+This command is used to stop a running container. It preserves the container's state.
 
 Usage:
 ```bash
-dockit stop [options]
+dockit stop [option]
 ```
 
 Options:
-- (no arguments): Shows a list of available containers
-- `number`: Stops the container with the specified number from the list
-- `"this"`: Stops the container for the current project directory
-- `"all"`: Stops all dockit containers
+- (no arguments): Displays a list of available containers.
+- `number`: Stops the container with the specified number from the list.
+- `"this"`: Stops the container in the current project directory.
+- `"all"`: Stops all dockit containers.
 
 Examples:
 ```bash
-dockit stop           # Shows container list
-dockit stop 1         # Stops container number 1
-dockit stop 1 2 3     # Stops containers number 1, 2, and 3
-dockit stop this      # Stops container for current project
-dockit stop all       # Stops all dockit containers
+dockit stop           # Display container list
+dockit stop 1         # Stop container 1
+dockit stop 1 2 3     # Stop containers 1, 2, and 3
+dockit stop this      # Stop the container for the current project
+dockit stop all       # Stop all dockit containers
 ```
 
 ### Down Command
 
-Completely remove containers.
+Completely removes a container.
 
 Usage:
 ```bash
-dockit down [options]
+dockit down [option]
 ```
 
 Options:
-- (no arguments): Shows a list of available containers
-- `number`: Removes the container with the specified number from the list
-- `"this"`: Removes the container for the current project directory
-- `"all"`: Removes all dockit containers
+- (no arguments): Displays a list of available containers.
+- `number`: Removes the container with the specified number from the list.
+- `"this"`: Removes the container in the current project directory.
+- `"all"`: Removes all dockit containers.
 
-This command stops and removes containers. Be careful as all data stored in the containers will be deleted.
+This command stops and removes the container. Use with caution, as all data inside the container will be deleted.
 
 Examples:
 ```bash
-dockit down           # Shows container list
-dockit down 1         # Removes container number 1
-dockit down 1 2 3     # Removes containers number 1, 2, and 3
-dockit down this      # Removes container for current project
-dockit down all       # Removes all dockit containers
+dockit down           # Display container list
+dockit down 1         # Remove container 1
+dockit down 1 2 3     # Remove containers 1, 2, and 3
+dockit down this      # Remove the container for the current project
+dockit down all       # Remove all dockit containers
 ```
 
 ### Connect Command
 
-Connect to a container with automatic creation and start capabilities.
+A container connection command with auto-creation and auto-start features.
 
 Usage:
 ```bash
-dockit connect [options]
+dockit connect [option]
 ```
 
 Options:
-- (no arguments): Shows usage information
-- `number`: Connects to the container with the specified number from the list
-- `"this"`: Connects to the container for the current project directory
+- (no arguments): Displays usage information.
+- `number`: Connects to the container with the specified number from the list.
+- `"this"`: Connects to the container in the current project directory.
 
 **Auto-creation and Auto-start Features:**
 
-1. **When container doesn't exist:**
-   - "Container doesn't exist. Do you want to create, start and connect to the container? (Y/n)"
-   - If you choose 'Y', it will automatically run `dockit up` to create and start the container, then connect
-   - If you choose 'n', the operation will be cancelled
+1.  **If the container does not exist:**
+    - "The container does not exist. Would you like to create, start, and then connect? (Y/n)"
+    - Choosing 'Y' will automatically run `dockit up` to create and start the container, then connect.
+    - Choosing 'n' will cancel the operation.
 
-2. **When container is stopped:**
-   - "Container is stopped. Do you want to start and connect to the container? (Y/n)"
-   - If you choose 'Y', it will start the container and then connect
-   - If you choose 'n', the operation will be cancelled
+2.  **If the container is stopped:**
+    - "The container is stopped. Would you like to start it and then connect? (Y/n)"
+    - Choosing 'Y' will start the container and then connect.
+    - Choosing 'n' will cancel the operation.
 
-3. **When container is running:**
-   - Connects immediately to the container
+3.  **If the container is running:**
+    - It connects to the container immediately.
 
 Examples:
 ```bash
-dockit connect         # Shows usage information
-dockit connect 1       # Connects to container number 1 (creates/starts if needed)
-dockit connect this    # Connects to current project container (creates/starts if needed)
+dockit connect         # Display usage information
+dockit connect 1       # Connect to container 1 (creates/starts if necessary)
+dockit connect this    # Connect to the current project's container (creates/starts if necessary)
 ```
 
-This command provides a seamless workflow where you can connect to any container with a single command, regardless of its current state.
+This command provides a seamless workflow to connect to any container with a single command, regardless of its current state.
 
 ### status - Check Status
 
-Check the current status of the container.
+Checks the current status of the container.
 
 ```bash
 dockit status
@@ -447,7 +455,7 @@ This command displays the following information:
   - Container User UID
   - Container User GID
 
-- **Container Status** (if container exists):
+- **Container Status** (if the container exists):
   - Container ID
   - Running State
   - Creation Time
@@ -455,72 +463,75 @@ This command displays the following information:
   - IP Address (if running)
   - Port Information (if running)
 
-The host user configuration and container user information are always shown separately, which is particularly useful for diagnosing permission issues. Even if the container has not been created yet, you can still check the host configuration.
+Host user settings and container user information are always displayed separately, making it particularly useful for diagnosing permission issues. Even if the container has not yet been created, you can still check the host settings.
 
 ### list - Project List
 
-Display all projects created with dockit and provide real-time Docker status synchronization.
+Displays a list of all projects created with dockit, providing real-time Docker status synchronization.
 
 ```bash
-dockit list
+dockit list [option]
 ```
+
+#### Options:
+- **-d, --delete**: Removes projects from the registry. You can remove multiple projects at once.
 
 #### Key Features:
 
 **Real-time Status Synchronization**:
-- Checks actual Docker status for each project every time the command runs
-- Automatically detects and reflects Docker image/container status changes made externally
-- Manual `error` states are excluded from automatic changes and preserved
+- Checks the actual Docker status of each project every time the command is run.
+- Automatically detects and reflects the status of Docker images/containers changed externally.
+- Manually set `error` states are preserved and not automatically changed.
 
 **Display Information**:
 - Project number
-- Project path (in simplified form)
+- Project path (in a simplified form)
 - Current project status (color-coded)
 - Image name
 - Container name
 
 #### Status Color Display:
-- **`none`** (blue): After initialization, before build
-- **`ready`** (cyan): Image build completed, ready to run
-- **`error`** (red): Build failed or error state
-- **`running`** (green): Container running
-- **`stopped`** (yellow): Container stopped
-- **`down`** (gray): Container removed
+- **`none`** (blue): After initialization, before the image is built
+- **`ready`** (cyan): Image build is complete, ready to run the container
+- **`error`** (red): Build failed or another error occurred
+- **`running`** (green): The container is running
+- **`stopped`** (yellow): The container is stopped
+- **`down`** (gray): The container has been removed
 
 #### Synchronization Example:
 ```bash
-# Delete image directly with Docker
+# Delete an image directly using Docker
 docker image rm my-project-image
 
-# Running dockit list automatically changes state from ready → none
+# Running dockit list will automatically change the status from ready → none
 dockit list
 ```
 
 #### Path Display:
-- Uses `~` shorthand for home directory
-- Shows simplified paths for better readability
-- Marks invalid projects with warning indicators
+- Displays the home directory as `~`.
+- Shows a simplified path for better readability.
+- Displays a warning for projects with issues.
 
-This feature ensures that the actual Docker status and registry information always match when managing multiple projects.
+This feature ensures that the actual Docker status and registry information are always consistent when managing multiple projects.
 
 ### ls - Quick Project List
 
-List all projects created with dockit (alias for `list` command).
+Displays a list of all projects created with dockit (an alias for the `list` command).
 
 ```bash
 dockit ls
 ```
 
-This is a convenient short alias for the `list` command, providing the same functionality:
+This is a convenient shorthand for the `list` command and provides the same functionality:
 - Real-time Docker status synchronization
 - Color-coded status display
 - Project information overview
 
-Perfect for quick status checks when you want to type fewer characters. All features of the `list` command are available through this alias.
+Perfect for a quick status check with less typing. All features of the `list` command are available through this alias.
 
 ### base - Base Image Management
 
-Provides functionality for managing base images (ubuntu, node, python, etc.) used in projects.
+Provides features to manage the base images (e.g., ubuntu, node, python) used in projects.
 
 ```bash
 dockit base <command> [options]
@@ -534,8 +545,8 @@ dockit base list
 # or
 dockit base ls
 ```
-- Displays all available base images with numbers
-- Shows current selected base image with `*` marker
+- Displays all available base images with numbers.
+- Marks the currently selected base image with a `*`.
 - Example:
   ```
      1. * namugach/ubuntu-basic:24.04-kor (currently selected)
@@ -549,8 +560,8 @@ dockit base ls
 ```bash
 dockit base set <image_or_number>
 ```
-- Sets the default base image
-- Can select by image name or number
+- Sets the default base image.
+- Can be selected by image name or number.
 - Examples:
   ```bash
   dockit base set ubuntu:22.04    # Set by name
@@ -561,7 +572,7 @@ dockit base set <image_or_number>
 ```bash
 dockit base add <image>
 ```
-- Adds a new base image to the list
+- Adds a new base image to the list.
 - Examples:
   ```bash
   dockit base add golang:1.21
@@ -574,9 +585,9 @@ dockit base remove <image_or_number> [image2] [image3] ...
 # or
 dockit base rm <image_or_number> [image2] [image3] ...
 ```
-- Removes base images from the list
-- Can remove multiple images at once
-- Currently selected image is automatically skipped
+- Removes base images from the list.
+- Can remove multiple images at once.
+- The currently selected image is automatically skipped.
 - Examples:
   ```bash
   dockit base rm 5                    # Remove one
@@ -591,34 +602,34 @@ dockit base validate
 # or
 dockit base check
 ```
-- Checks if all base images in the list actually exist
-- Validates image existence on Docker Hub
-- Shows list of non-existent images
+- Checks if all base images in the list actually exist.
+- Validates image existence on Docker Hub.
+- Displays a list of non-existent images.
 
 **6. reset - Reset to defaults**
 ```bash
 dockit base reset
 ```
-- Resets base image list to default values
-- Executes after confirmation prompt
+- Resets the base image list to its default values.
+- Executes after a confirmation prompt.
 
 #### Key Features:
 
 **Number-based Interface**:
-- Simple number selection instead of long image names
-- Easy and fast selection with `dockit base set 2` format
+- Allows selection with simple numbers instead of long image names.
+- Easy and fast selection, like `dockit base set 2`.
 
 **Multiple Operations Support**:
-- Remove multiple images at once: `dockit base rm 1 2 3`
-- Freely mix numbers and names: `dockit base rm 1 ubuntu:22.04 3`
+- Remove multiple images at once: `dockit base rm 1 2 3`.
+- Freely mix numbers and names: `dockit base rm 1 ubuntu:22.04 3`.
 
 **Smart Protection**:
-- Currently selected base image is automatically skipped during removal
-- Operation summary: "Removal completed: 2 successful, 1 skipped, 0 failed"
+- The currently selected base image is automatically skipped during removal.
+- Provides a summary of the operation: "Removal completed: 2 successful, 1 skipped, 0 failed".
 
 **Language Independent**:
-- Free base image selection regardless of language settings
-- Can use English base images in Korean environment
+- Allows free selection of base images regardless of language settings.
+- Can use English base images even in a Korean environment.
 
 #### Usage Scenarios:
 
@@ -653,7 +664,7 @@ This functionality allows you to easily select and manage optimized base images 
 
 ### image - Image Management
 
-Provides comprehensive functionality for managing Docker images created by dockit.
+Provides comprehensive features for managing Docker images created by dockit.
 
 ```bash
 dockit image <command> [options]
@@ -667,128 +678,129 @@ dockit image list
 # or
 dockit image ls
 ```
-- Displays all Docker images created by dockit in table format
-- Includes number, image ID, creation date, size, and image name
-- Provides guidance on image creation if no images exist
-- `ls` is a convenient short alias for `list`
+- Displays all Docker images created by dockit in a table format.
+- Includes number, image ID, creation date, size, and image name.
+- Provides instructions on how to create an image if none exist.
+- `ls` is a convenient alias for `list`.
 
-**2. remove - Remove specific image**
+**2. remove - Remove a specific image**
 ```bash
 dockit image remove <image_name_or_number>
 ```
-- Removes specific image by name or list number
+- Removes a specific image by its name or list number.
 - Examples:
   ```bash
   dockit image remove 1                        # Remove by number
   dockit image remove dockit-home-user-project # Remove by name
   ```
 
-**3. prune - Clean unused images**
+**3. prune - Clean up unused images**
 ```bash
 dockit image prune
 ```
-- Finds and removes dockit images not used by any containers
-- Shows image list and estimated space savings before removal
-- Provides safe confirmation prompt
+- Finds and removes dockit images that are not being used by any container.
+- Displays a list of images to be removed and the estimated space savings before deletion.
+- Provides a safe confirmation prompt.
+- **Safety Feature**: Protects base images registered in the local registry from being deleted.
 
 **4. clean - Remove all images**
 ```bash
 dockit image clean
 ```
-- Completely removes all dockit images and related containers
-- Very powerful feature that cannot be undone
-- 2-stage safety confirmation process:
-  1. First confirmation: Enter 'y' or 'yes'
-  2. Second confirmation: Enter 'DELETE' (uppercase)
+- Completely removes all dockit images and their related containers.
+- This is a very powerful feature and cannot be undone.
+- It has a 2-stage safety confirmation process:
+  1. First confirmation: Enter 'y' or 'yes'.
+  2. Second confirmation: Enter 'DELETE' (in uppercase).
 
 #### Key Features:
 
 **Safety Measures**:
-- Targets only dockit images to protect system images
-- Automatically detects and warns about containers using images
-- Provides detailed information before removal (usage status, estimated space savings, etc.)
+- Targets only dockit images to protect system images.
+- Automatically detects and warns about containers using the images.
+- Provides detailed information before removal (usage status, estimated space savings, etc.).
 
 **Detailed Analysis**:
-- Shows usage status for each image (in use/unused)
-- Provides container dependency information
-- Calculates total images, images in use, and estimated space savings
+- Displays the usage status for each image (in use/unused).
+- Provides container dependency information.
+- Calculates the total number of images, images in use, and estimated space savings.
 
 **Automated Cleanup**:
-- `clean` command automatically stops and removes related containers
-- Visual progress indicators for each step (✓/✗/⚠️)
+- The `clean` command also automatically stops and removes related containers.
+- Visually indicates the progress of each step (✓/✗/⚠️).
 
 #### Usage Scenarios:
 
 **Regular Maintenance**:
 ```bash
-# Clean only unused images (safe)
+# Clean up only unused images (safe)
 dockit image prune
 
-# Complete development environment reset (caution required)
+# Completely reset the development environment (requires caution)
 dockit image clean
 ```
 
 **Specific Image Management**:
 ```bash
-# Check image list
+# Check the image list
 dockit image list
 
-# Remove specific image
+# Remove a specific image
 dockit image remove 3
 ```
 
-This functionality allows you to effectively manage Docker image usage and optimize system resources.
+This feature allows you to effectively manage Docker image usage and optimize system resources.
 
 ### migrate - Upgrade Version
 
-Upgrade Dockit to a newer version while preserving user settings.
+Upgrades Dockit to a new version while preserving user settings.
 
 ```bash
 dockit migrate
 ```
 
 This command performs the following tasks:
-- Creates a backup of the current configuration
-- Initializes the environment for the new version
-- Migrates user settings to the new version
-- Preserves custom configuration
+- Creates a backup of the current settings.
+- Initializes the new version environment.
+- Migrates user settings to the new version.
+- Preserves user-customized settings.
 
-The migration process is designed to be safe and includes automatic rollback in case of failure.
+The migration process is designed to be safe and includes an automatic rollback feature in case of failure.
 
 ### setup - Complete Environment Setup
 
-Run initialization, build, start, and connect in one go.
+Initializes, builds, starts, and connects to the container all at once.
 
 ```bash
 dockit setup
 ```
 
-This command provides a streamlined process by sequentially performing these tasks:
-- Initializes the Docker development environment (equivalent to `init`)
-- Builds the Docker image (equivalent to `build`)
-- Starts the container (equivalent to `up`)
-- Connects to the container (equivalent to `connect`)
+This command provides a streamlined process by sequentially performing the following tasks:
+- Initializes the Docker development environment (same as the `init` command).
+- Builds the Docker image (same as the `build` command).
+- Starts the container (same as the `up` command).
+- Connects to the container (same as the `connect` command).
 
-At each step, you will be prompted to confirm whether you want to proceed, allowing you to stop at any point in the process. This is ideal for those who want to set up their entire environment with a single command while maintaining control over each step.
+Since a confirmation prompt is displayed at each step, you can stop at any point. This command is ideal for users who want to set up the entire environment with a single command while still controlling each step.
 
 ### run - Automated Run
 
-Automatically run initialization, build, and start in one command.
+Automatically initializes, builds, and starts in one go.
 
 ```bash
 dockit run
 ```
 
-This command performs the following tasks without user confirmation prompts:
-- Initializes the Docker development environment (equivalent to `init`)
-- Builds the Docker image (equivalent to `build`)
-- Starts the container in background (equivalent to `up`)
+This command sequentially performs the following tasks without user confirmation prompts:
+- Initializes the Docker development environment (same as the `init` command).
+- Builds the Docker image (same as the `build` command).
+- Starts the container in the background (same as the `up` command).
 
-Unlike the `setup` command which prompts for confirmation at each step, the `run` command executes all operations automatically in sequence. This is ideal for scripts or situations where you want to perform all operations without interruption.
+Unlike the `setup` command, which asks for user confirmation at each step, the `run` command executes all tasks automatically in sequence. This is ideal for scripts or situations where you want to perform all operations without interruption.
 
 ### ps - List Containers
 
-List all dockit containers (running and stopped).
+Lists all containers created by dockit (both running and stopped).
 
 ```bash
 dockit ps
@@ -797,22 +809,24 @@ dockit ps
 This command displays the following information for all containers created with dockit:
 - Container ID (12 characters)
 - Image name
-- Container name (displayed in simplified form)
+- Container name (in a simplified form)
 - Creation date and time
 - Status (running or stopped, color-coded)
 - IP address (for running containers)
 - Exposed ports (for running containers)
 
 Container names are displayed in a simplified form for better readability:
-- The 'dockit-' prefix is removed
-- The meaningful last part of the directory path is shown instead of the full path
+- The 'dockit-' prefix is removed.
+- It shows the meaningful last part of the directory name instead of the full path.
   - Example: 'dockit-home-hgs-dockit-test-temp-b' → 'temp-b'
 
-This feature is particularly useful when managing multiple dockit environments, making it easy to identify and check the status of containers created from different projects at a glance.
+Additionally, after the command execution, it provides useful `dockit` command combination examples based on the current container status to help you easily perform the next action.
+
+This feature is very useful when managing multiple dockit environments, making it easy to distinguish and check the status of containers created from different projects at a glance.
 
 ### clone - Clone Project
 
-Clone an existing Dockit project to create a new one with a similar environment. This command streamlines the process of duplicating a project setup, including its Docker image and configurations.
+Clones an existing Dockit project to create a new project with a similar environment. This command simplifies the process of duplicating a project setup, including its Docker image and configurations.
 
 ```bash
 dockit clone <source_project> [new_project_name]
@@ -820,16 +834,16 @@ dockit clone <source_project> [new_project_name]
 
 #### Arguments:
 
--   `<source_project>`: The source project to clone. This can be the project's number from the `dockit ls` list, its full ID, or a unique prefix of the ID.
--   `[new_project_name]` (Optional): The name for the new cloned project. If not provided, you will be prompted to enter a name.
+-   `<source_project>`: The source project to be cloned. It can be the project number from the `dockit ls` list, its full ID, or a unique prefix of the ID.
+-   `[new_project_name]` (Optional): The name for the new, cloned project. If not provided, you will be prompted to enter a name.
 
 #### Key Features:
 
--   **Image Committing**: Creates a new Docker image from the source project's running container state.
+-   **Image Committing**: Creates a new Docker image from the state of the source project's running container.
 -   **Configuration Duplication**: Copies all configuration files from the source project's `.dockit_project` directory.
--   **Automatic Naming**: Suggests a new project name and handles potential naming conflicts.
+-   **Automatic Naming**: Suggests a name for the new project and handles potential name conflicts.
 -   **Rollback Mechanism**: If any step of the cloning process fails, it automatically rolls back the changes, such as removing the created directory, image, and registry entry.
--   **Interactive and Non-interactive Modes**: Works interactively by prompting for a new name, or non-interactively if the new name is provided as an argument.
+-   **Interactive and Non-interactive Modes**: Operates interactively by prompting for a new name, or non-interactively if the new name is provided as an argument.
 
 #### Workflow:
 
@@ -856,9 +870,24 @@ dockit clone 1
 
 This command is ideal for quickly spinning up new projects based on a pre-configured "template" project, ensuring consistency and saving setup time.
 
+### cleanup - Clean up zombie resources
+
+Cleans up unused Docker resources (networks, volumes, etc.) to optimize the system.
+
+```bash
+dockit cleanup
+```
+
+This command finds and removes Docker networks and volumes that are no longer associated with any `dockit` projects. This allows you to safely clean up "zombie" resources that are unnecessarily consuming disk space.
+
+#### Key Features:
+- **Automatic Detection**: Automatically identifies networks and volumes that are not being used by any projects currently registered in the `dockit` registry.
+- **Safe Cleanup**: It first shows a list of resources to be removed and proceeds with the actual deletion only after receiving user confirmation.
+- **System Optimization**: Keeps your Docker environment clean and prevents potential conflicts by removing unnecessary resources.
+
 ### help - Display Help
 
-Display help information.
+Displays help information.
 
 ```bash
 dockit help
@@ -928,4 +957,4 @@ This file can be manually edited as needed.
 **Solution**:
 - **From v1.2.0, this is automatically resolved.** The Dockerfile automatically detects UID conflicts and sets passwords for existing users.
 - If changes are not reflected due to Docker caching, use `dockit build --no-cache`.
-- Manual verification: You can check the user account status by examining the `/etc/shadow` file inside the container. 
+- Manual verification: You can check the user account status by examining the `/etc/shadow` file inside the container.

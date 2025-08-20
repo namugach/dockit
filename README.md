@@ -6,7 +6,7 @@
 
 [English](docs/en/README.md) | [한국어](docs/ko/README.md)
 
-[![Version](https://img.shields.io/badge/version-1.8.4-blue.svg)](bin/VERSION)
+[![Version](https://img.shields.io/badge/version-1.9.0-blue.svg)](bin/VERSION)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](docs/meta/LICENSE)
 
 Dockit is a modular shell script tool for quickly setting up and managing development environments using Docker.
@@ -55,6 +55,7 @@ To remove Dockit from your system:
 - **🔄 Real-time Docker status synchronization** - Automatic detection and reflection of external Docker changes
 - **♻️ Image reuse functionality** - Reuse images from other projects for maximum resource efficiency
 - **🗂️ Comprehensive image management** - Complete image management with list, remove, prune, clean commands
+- **🧹 Zombie resource cleanup** - Safely remove unused Docker networks and volumes.
 - **📊 Extended project state system** - Complete lifecycle management with none, ready, error states
 - **📁 Directory name validation and auto-rename** - Automatic detection and conversion of uppercase directory names to Docker-compliant lowercase format
 - Automatic application of current user settings (UID/GID) to container
@@ -80,11 +81,13 @@ To remove Dockit from your system:
 - `status`: Check container status
 - `setup`: Run initialization, build, start, and connect in one go
 - `run`: Automatically initialize, build, and start container without interaction
-- `list`: List all projects created with dockit (real-time Docker status synchronization)
+- `list`: List all projects created with dockit (real-time Docker status synchronization, with -d or --delete option)
 - `ls`: List all projects created with dockit (alias for list)
+- `ps`: List containers with useful command examples
 - `base`: Base image management (ls, set, add, remove, validate, reset) with number-based selection
 - `image`: Docker image management (ls, remove, prune, clean)
 - `clone`: Clone existing project with new configuration and rollback support
+- `cleanup`: Clean up unused Docker networks and volumes
 - `migrate`: Upgrade to a newer version
 - `help`: Display help information
 
