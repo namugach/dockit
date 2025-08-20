@@ -19,4 +19,7 @@ services:
 networks:
   ${CONTAINER_NAME}:
     name: ${CONTAINER_NAME}
-    driver: bridge 
+    driver: bridge
+    labels:
+      - "com.dockit=true"
+      - "com.dockit.project=${CONTAINER_NAME}" 

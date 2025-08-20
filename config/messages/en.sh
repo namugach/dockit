@@ -1105,3 +1105,15 @@ MSG_CLEANUP_COMPLETION_IMAGES="Clean up unused images"
 MSG_CLEANUP_COMPLETION_NETWORKS="Clean up unused networks"
 MSG_CLEANUP_COMPLETION_ALL="Clean up all zombie resources"
 MSG_CLEANUP_COMPLETION_STATUS="Show system status"
+
+# Network 모듈 메시지
+MSG_NETWORK_NO_NETWORKS="No running dockit networks found."
+MSG_NETWORK_CREATE_HINT="Start a project to create networks."
+
+# Help 메시지
+MSG_HELP_NETWORK="  network  - Show dockit networks list"
+
+
+# Network 자동완성 메시지
+MSG_COMPLETION_NETWORK="Show networks list"
+

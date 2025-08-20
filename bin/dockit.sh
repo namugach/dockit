@@ -131,6 +131,10 @@ execute_command() {
             source "$MODULES_DIR/cleanup.sh"
             cleanup_main "$@"
             ;;
+        network)
+            source "$MODULES_DIR/network.sh"
+            network_main "$@"
+            ;;
         help)
             source "$MODULES_DIR/help.sh"
             show_help

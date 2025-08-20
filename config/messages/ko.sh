@@ -1094,3 +1094,15 @@ MSG_CLEANUP_COMPLETION_IMAGES="사용하지 않는 이미지 정리"
 MSG_CLEANUP_COMPLETION_NETWORKS="사용하지 않는 네트워크 정리"
 MSG_CLEANUP_COMPLETION_ALL="모든 좀비 리소스 정리"
 MSG_CLEANUP_COMPLETION_STATUS="시스템 상태 표시"
+
+# Network 모듈 메시지
+MSG_NETWORK_NO_NETWORKS="실행 중인 dockit 네트워크가 없습니다."
+MSG_NETWORK_CREATE_HINT="네트워크를 생성하려면 프로젝트를 시작하세요."
+
+# Help 메시지
+MSG_HELP_NETWORK="  network  - dockit 네트워크 목록 표시"
+
+
+# Network 자동완성 메시지
+MSG_COMPLETION_NETWORK="네트워크 목록 표시"
+

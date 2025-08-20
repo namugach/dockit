@@ -153,6 +153,7 @@ _dockit() {
         "base:$(dockit_get_message MSG_COMPLETION_BASE)"
         "clone:$(dockit_get_message MSG_COMPLETION_CLONE)"
         "cleanup:$(dockit_get_message MSG_COMPLETION_CLEANUP)"
+        "network:$(dockit_get_message MSG_COMPLETION_NETWORK)"
     )
     
     # 자동완성 설명 표시
