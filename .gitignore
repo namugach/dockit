@@ -8,3 +8,4 @@ create.md
 bin/_reset.sh
 __*
 prompt
+.vscode
