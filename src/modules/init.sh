@@ -524,6 +524,39 @@ check_base_image() {
     log "INFO" "$MSG_USING_BASE_IMAGE: $BASE_IMAGE"
 }
 
+# Check and create .gitconfig if not exists
+# .gitconfig 파일이 없으면 생성
+check_and_create_gitconfig() {
+    local gitconfig_path="$HOME/.gitconfig"
+    
+    if [ ! -f "$gitconfig_path" ]; then
+        log "INFO" "git 설정 파일이 없습니다. 기본 .gitconfig 파일을 생성합니다..."
+        
+        # 기본 .gitconfig 파일 생성
+        cat > "$gitconfig_path" << 'EOF'
+[user]
+    name = Your Name
+    email = your.email@example.com
+
+[init]
+    defaultBranch = main
+
+[core]
+    editor = nano
+    autocrlf = false
+
+[push]
+    default = simple
+
+[pull]
+    rebase = false
+EOF
+        
+        log "SUCCESS" "기본 .gitconfig 파일이 생성되었습니다: $gitconfig_path"
+        log "INFO" "컨테이너 실행 후 'git config' 명령으로 사용자 정보를 설정하세요"
+    fi
+}
+
 
 # Create Docker Compose file
 # Docker Compose 파일 생성
@@ -575,6 +608,7 @@ init_main() {
     display_version_info
     init_project
     get_user_input
+    check_and_create_gitconfig
     create_dockerfile
     create_docker_compose
     
