@@ -445,7 +445,14 @@ async_docker_pull_with_independent_spinner() {
     
     # Docker pull을 실행하며 출력을 별도로 처리
     local exit_code=0
-    while IFS= read -r line; do
+    
+    # 임시 파일을 사용하여 종료 코드 캡처
+    local temp_exit_file="${TMPDIR:-/tmp}/dockit_exit_$$"
+    
+    {
+        stdbuf -o0 -e0 docker pull "$image" 2>&1
+        echo $? > "$temp_exit_file"
+    } | while IFS= read -r line; do
         # 하위 항목들 파싱 (기존 로직 유지)
         if [[ "$line" =~ ^[a-f0-9]+:.*Downloading.*MB ]]; then
             recent_lines+=("  ${gray}⬇${reset} $line")
@@ -479,11 +486,15 @@ async_docker_pull_with_independent_spinner() {
         
         # 스피너 상태 업데이트 (Docker 출력이 있을 때만)
         update_spinner_state "${recent_lines[@]}"
-        
-    done < <(stdbuf -o0 -e0 docker pull "$image" 2>&1)
+    done
     
     # docker pull 종료 코드 확인
-    exit_code=${PIPESTATUS[0]}
+    if [[ -f "$temp_exit_file" ]]; then
+        exit_code=$(cat "$temp_exit_file")
+        rm -f "$temp_exit_file"
+    else
+        exit_code=1  # 파일이 없으면 실패로 간주
+    fi
     
     # 스피너 정지 및 최종 메시지 출력
     if [[ $exit_code -eq 0 ]]; then
