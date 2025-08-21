@@ -6,7 +6,7 @@
 # 베이스 이미지 설정 로드
 # Load base image configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEFAULT_IMAGE=$(cat "$SCRIPT_DIR/base_image" 2>/dev/null || echo "namugach/ubuntu-basic:24.04-kor")
+DEFAULT_IMAGE=$(cat "$SCRIPT_DIR/base_image" 2>/dev/null || echo "ubuntu:24.04")
 
 # 언어별 로케일 매핑
 # Locale mapping by language
