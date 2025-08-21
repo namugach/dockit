@@ -714,7 +714,17 @@ detect_actual_user() {
     # 베이스 이미지가 없으면 풀 시도
     if ! docker image inspect "$BASE_IMAGE" &>/dev/null; then
         log "INFO" "Base image not found locally, attempting to pull..."
-        if ! docker pull "$BASE_IMAGE" &>/dev/null; then
+        
+        # Docker 실시간 출력이 가능한 유틸리티 사용
+        # Use utility with Docker live output capability
+        source "$UTILS_DIR/async_tasks.sh"
+        
+        # Docker pull을 실시간 출력과 함께 실행
+        local display_name="$(basename "$BASE_IMAGE")"
+        async_docker_pull_with_independent_spinner "$BASE_IMAGE" "$display_name" "이미지 다운로드 완료"
+        
+        # 결과 확인
+        if [ $? -ne 0 ]; then
             log "WARNING" "Failed to pull base image, using fallback user: $USERNAME"
             export ACTUAL_USER="$USERNAME"
             return 0
